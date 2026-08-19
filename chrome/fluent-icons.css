@@ -1,0 +1,128 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- ICONS
+ *
+ * Two parts:
+ *   1. Retune Thunderbird's own SVG set (full-strength, consistent sizing).
+ *      Its "new" icons are already thin-outline 16px and context-coloured --
+ *      close cousins of Fluent, so this is the bulk of the win for no assets.
+ *   2. Swap the highest-visibility actions to real Segoe Fluent Icons glyphs,
+ *      so those silhouettes match Windows exactly.
+ *
+ * All codepoints below were verified by rendering SegoeIcons.ttf, not from
+ * memory -- several plausible-looking guesses (E901, E8A8, E11B) turned out
+ * to be blanks or unrelated shapes.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * 1. RETUNE THE EXISTING SET
+ * Fluent icons are full-strength; Thunderbird dims them to .85 by default.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --toolbarbutton-icon-fill-opacity: 1 !important;
+}
+
+toolbarbutton .toolbarbutton-icon,
+.button img,
+.toolbar-button img {
+  opacity: 1 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. SEGOE FLUENT ICONS -- MESSAGE HEADER ACTIONS
+ *
+ * These buttons carry their icon via `list-style-image`, which cannot hold a
+ * font glyph. So the image is suppressed and the glyph injected as ::before.
+ *
+ * This is the alignment-sensitive part of the theme. If any glyph sits high,
+ * low, or clipped, adjust --fluent-glyph-size / the translate below rather
+ * than per-button.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --fluent-glyph-size: 16px;
+  --fluent-glyph-font: "Segoe Fluent Icons";
+}
+
+.hdrReplyButton,
+.hdrReplyToSenderButton,
+.hdrDummyReplyButton,
+.hdrReplyAllButton,
+.hdrForwardButton,
+.hdrArchiveButton,
+.hdrJunkButton,
+.hdrTrashButton {
+  list-style-image: none !important;
+}
+
+.hdrReplyButton > .toolbarbutton-icon,
+.hdrReplyToSenderButton > .toolbarbutton-icon,
+.hdrDummyReplyButton > .toolbarbutton-icon,
+.hdrReplyAllButton > .toolbarbutton-icon,
+.hdrForwardButton > .toolbarbutton-icon,
+.hdrArchiveButton > .toolbarbutton-icon,
+.hdrJunkButton > .toolbarbutton-icon,
+.hdrTrashButton > .toolbarbutton-icon {
+  display: none !important;
+}
+
+.hdrReplyButton::before,
+.hdrReplyToSenderButton::before,
+.hdrDummyReplyButton::before,
+.hdrReplyAllButton::before,
+.hdrForwardButton::before,
+.hdrArchiveButton::before,
+.hdrJunkButton::before,
+.hdrTrashButton::before {
+  font-family: var(--fluent-glyph-font) !important;
+  font-size: var(--fluent-glyph-size) !important;
+  font-weight: normal !important;
+  line-height: 1 !important;
+  margin-inline-end: 6px !important;
+  color: currentColor !important;
+  -moz-context-properties: none !important;
+}
+
+/* Verified codepoints */
+.hdrReplyButton::before,
+.hdrReplyToSenderButton::before,
+.hdrDummyReplyButton::before { content: "\e8ca" !important; }  /* MailReply */
+.hdrReplyAllButton::before   { content: "\e8c2" !important; }  /* MailReplyAll */
+.hdrForwardButton::before    { content: "\e89c" !important; }  /* MailForward */
+.hdrArchiveButton::before    { content: "\e7b8" !important; }  /* Archive */
+.hdrJunkButton::before       { content: "\e733" !important; }  /* Blocked */
+.hdrTrashButton::before      { content: "\e74d" !important; }  /* Delete */
+
+/* ---------------------------------------------------------------------------
+ * SPACES RAIL GLYPHS
+ *
+ * Dormant in this profile -- xulstore has "spacesToolbar":{"hidden":"true"},
+ * so the rail is not shown and these never render. Kept because they are
+ * correct if the rail is ever unhidden, and because the status-bar variant
+ * shares the class names.
+ * ------------------------------------------------------------------------- */
+
+/* The <img> is hidden ONLY for buttons that have a verified glyph below.
+ * A blanket hide turns any wrong or missing mapping into an empty square;
+ * scoping it means an unmapped button simply keeps Thunderbird's own icon.
+ * IDs read from messenger.xhtml, not guessed -- the address book button is
+ * #addressBookButton, not #contactsButton. */
+#spacesToolbar :is(#mailButton, #addressBookButton, #calendarButton,
+                   #tasksButton, #chatButton, #settingsButton) > img {
+  display: none !important;
+}
+
+#spacesToolbar :is(#mailButton, #addressBookButton, #calendarButton,
+                   #tasksButton, #chatButton, #settingsButton)::before {
+  font-family: var(--fluent-glyph-font) !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  color: currentColor !important;
+}
+
+#spacesToolbar #mailButton::before        { content: "\e715" !important; }  /* Mail */
+#spacesToolbar #addressBookButton::before { content: "\e77b" !important; }  /* Contact */
+#spacesToolbar #calendarButton::before    { content: "\e787" !important; }  /* Calendar */
+#spacesToolbar #tasksButton::before       { content: "\e9d5" !important; }  /* Checklist */
+#spacesToolbar #chatButton::before        { content: "\e8bd" !important; }  /* Chat */
+#spacesToolbar #settingsButton::before    { content: "\e713" !important; }  /* Settings */

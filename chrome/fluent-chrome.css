@@ -1,0 +1,294 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- CHROME
+ * Tabs, caption buttons, unified toolbar, search bar, spaces rail, flyouts.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * TAB STRIP
+ * Edge/Terminal style: every tab is a detached rounded rectangle. Thunderbird
+ * ships 4px 4px 0 0, which is the Explorer "merged into the content below"
+ * shape -- wrong here, because the content below is a floating card separated
+ * by a gutter, so there is nothing to merge into.
+ * ------------------------------------------------------------------------- */
+
+#tabs-toolbar {
+  /* Thunderbird paints its bottom separator as a background gradient, not a
+   * border, so border:none does not remove it. */
+  background-image: none !important;
+  --tabs-toolbar-background-color: transparent !important;
+  padding-inline: var(--fluent-gutter) !important;
+}
+
+.tabmail-tab {
+  border-radius: var(--fluent-radius-control) !important;
+  border: none !important;
+  background-color: transparent !important;
+  margin-inline: 1px !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+.tabmail-tab:hover:not([selected="true"]) {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+/* Selected tab reads as a raised card lifted off the grey base. */
+.tabmail-tab[selected="true"] {
+  background-color: var(--fluent-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+}
+
+/* Fluent's detached tab carries no accent top-line; the fill IS the state. */
+.tab-line {
+  display: none !important;
+}
+
+.tab-close-button {
+  border-radius: var(--fluent-radius-control) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * CAPTION BUTTONS
+ * Live in .titlebar-buttonbox-container inside #unifiedToolbarContainer, and
+ * are only drawn when "Hide system window titlebar" is on.
+ * Fluent metrics: 46x32, subtle fill hover, close goes Windows red.
+ * ------------------------------------------------------------------------- */
+
+/* The buttons must fill the full height of the titlebar row, as they do in
+ * native Win11 -- Fluent's 46x32 assumes a 32px titlebar, and Thunderbird's
+ * row is taller. Stretch rather than pin, or they hang at the top. */
+.titlebar-buttonbox-container,
+.titlebar-buttonbox {
+  align-items: stretch !important;
+}
+
+.titlebar-button {
+  width: 46px !important;
+  height: 100% !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  appearance: none !important;
+  background-color: transparent !important;
+  /* A XUL toolbarbutton anchors its icon top-left; without this the glyphs
+   * sit high and left inside the 46px box. */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* A XUL toolbarbutton carries an anonymous .toolbarbutton-text label next to
+ * its icon. It is empty on caption buttons but still takes width, so
+ * justify-content centres the icon+label PAIR and the glyph lands left of
+ * centre. Remove the label from layout, then let the icon centre itself. */
+.titlebar-button > .toolbarbutton-text,
+.titlebar-button > label {
+  display: none !important;
+}
+
+.titlebar-button > image,
+.titlebar-button > .toolbarbutton-icon {
+  margin: auto !important;
+  padding: 0 !important;
+}
+
+/* Thunderbird hides whichever of maximise/restore does not apply:
+ *   :root:not([sizemode="maximized"]) .titlebar-restore,
+ *   :root:is([sizemode="maximized"]) .titlebar-max { display: none; }
+ * That is a normal author declaration, so the !important display:flex above
+ * overrode it and BOTH buttons rendered. Restate it with !important so the
+ * centering does not resurrect the inactive button. */
+:root:not([sizemode="maximized"]) .titlebar-restore,
+:root:is([sizemode="maximized"]) .titlebar-max {
+  display: none !important;
+}
+
+/* When not maximised the window has 8px DWM corners; a square hover fill on
+ * the close button would poke outside them. Maximised windows are square, so
+ * this is scoped. */
+:root:not([sizemode="maximized"]) .titlebar-close {
+  border-top-right-radius: 8px !important;
+}
+
+.titlebar-button:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+.titlebar-button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* #C42B1C is the Windows 11 close-button red. Its icon must go white to stay
+ * legible, in both light and dark. */
+.titlebar-close:hover {
+  background-color: #C42B1C !important;
+}
+
+.titlebar-close:hover:active {
+  background-color: #C42B1C !important;
+  opacity: .9;
+}
+
+.titlebar-close:hover > image,
+.titlebar-close:hover > .toolbarbutton-icon {
+  fill: #FFFFFF !important;
+  color: #FFFFFF !important;
+  -moz-context-properties: fill !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * UNIFIED TOOLBAR BUTTONS
+ * 32px tall, 4px radius, Fluent subtle-fill state ladder.
+ * ------------------------------------------------------------------------- */
+
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button) {
+  min-height: var(--fluent-control-height) !important;
+  border-radius: var(--fluent-radius-control) !important;
+  border: 1px solid transparent !important;
+  background-color: transparent !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * SEARCH BAR
+ * The Fluent text input: neutral stroke all round, a stronger bottom edge at
+ * rest, and on focus that bottom edge alone becomes 2px accent. It is an
+ * underline, not a ring -- this is the most recognisable Fluent input tell.
+ * ------------------------------------------------------------------------- */
+
+.search-bar,
+#unifiedToolbar .search-bar {
+  min-block-size: var(--fluent-control-height) !important;
+  border-radius: var(--fluent-radius-control) !important;
+  background-color: var(--fluent-card) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-top-color: var(--fluent-control-stroke-top) !important;
+  border-inline-color: var(--fluent-control-stroke) !important;
+  border-bottom-color: var(--fluent-control-stroke-bottom) !important;
+  transition: border-bottom-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+.search-bar:focus-within {
+  border-bottom-width: 2px !important;
+  border-bottom-color: var(--fluent-accent) !important;
+  /* Keep the control from growing 1px when the underline thickens. */
+  padding-bottom: 0 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * SPACES RAIL
+ * A nav rail, so per the selection model it takes the authentic WinUI
+ * treatment: NEUTRAL subtle fill plus an accent pill on the leading edge --
+ * not the solid accent fill Thunderbird ships.
+ * ------------------------------------------------------------------------- */
+
+#spacesToolbar {
+  /* Thunderbird lays two gradients over the rail; they fight a flat surface. */
+  background-image: none !important;
+}
+
+.spaces-toolbar-button {
+  position: relative !important;
+  border-radius: var(--fluent-radius-control) !important;
+  background-color: transparent !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+.spaces-toolbar-button:hover:not(.current) {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+.spaces-toolbar-button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* Selected: neutral fill, NOT accent fill. */
+.spaces-toolbar-button.current,
+.spaces-toolbar-button.current:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+  color: var(--fluent-text-primary) !important;
+}
+
+/* The accent pill indicator. Grows in vertically on selection -- CSS cannot
+ * slide it between buttons the way WinUI does, so it scales in place.
+ *
+ * Uses ::after, NOT ::before: fluent-icons.css puts the Segoe Fluent glyph on
+ * ::before, and an element has only one of each. Sharing ::before made the
+ * active button's glyph inherit position:absolute and width:3px from the
+ * pill, which knocked it out of place. */
+.spaces-toolbar-button.current::after {
+  content: "" !important;
+  position: absolute !important;
+  inset-inline-start: -5px !important;
+  top: 50% !important;
+  width: var(--fluent-indicator-width) !important;
+  height: var(--fluent-indicator-height) !important;
+  border-radius: calc(var(--fluent-indicator-width) / 2) !important;
+  background-color: var(--fluent-accent) !important;
+  transform: translateY(-50%) scaleY(1) !important;
+  transform-origin: center !important;
+  animation: fluent-indicator-in var(--fluent-duration-normal) var(--fluent-ease-decelerate) !important;
+}
+
+@keyframes fluent-indicator-in {
+  from { transform: translateY(-50%) scaleY(0); }
+  to   { transform: translateY(-50%) scaleY(1); }
+}
+
+/* Icons stay full-strength in Fluent. */
+.spaces-toolbar-button > img {
+  opacity: 1 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * FLYOUTS AND MENUS
+ * 8px radius, 4px inner padding, and menu items inset 4px so hover fills a
+ * floating pill inside the menu rather than spanning edge to edge.
+ *
+ * NOTE: no box-shadow is set here on purpose. Gecko draws a native OS shadow
+ * around popup windows; adding our own on top produces a muddy double halo.
+ * Verify against the native shadow before introducing --fluent-shadow-flyout
+ * here, and only then with -moz-window-shadow: none.
+ * ------------------------------------------------------------------------- */
+
+menupopup,
+panel {
+  --panel-border-radius: var(--fluent-radius-card) !important;
+  --arrowpanel-padding: 4px !important;
+  --panel-padding: 4px !important;
+  --panel-background: var(--fluent-flyout) !important;   /* transparent under mica-popups, see fluent-tokens.css */
+  --panel-color: var(--fluent-text-primary) !important;
+  --panel-border-color: var(--fluent-card-stroke) !important;
+}
+
+menupopup > menuitem,
+menupopup > menu {
+  min-height: var(--fluent-control-height) !important;
+  margin-inline: 4px !important;
+  border-radius: var(--fluent-radius-control) !important;
+  padding-inline: 8px !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+menupopup > menuitem:hover,
+menupopup > menu:hover,
+menupopup > menuitem[_moz-menuactive="true"],
+menupopup > menu[_moz-menuactive="true"] {
+  background-color: var(--fluent-subtle-hover) !important;
+  color: var(--fluent-text-primary) !important;
+}
+
+menuseparator {
+  border-top: 1px solid var(--fluent-divider) !important;
+  border-bottom: none !important;
+  margin-inline: 8px !important;
+}

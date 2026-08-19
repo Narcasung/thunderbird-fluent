@@ -1,0 +1,214 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- CALENDAR (Tier 3)
+ * Event grid, mini-month, calendar list, today pane, agenda.
+ *
+ * calendar-views.css / today-pane.css already consume --layout-* and
+ * --selected-item-color, and now that the Calendar holdout block in
+ * fluent-tokens.css is gone, most of the grid propagates for free. What is
+ * left is:
+ *   1. --selected-item-color/-text-color were never remapped anywhere in the
+ *      theme, so Calendar (and the Address Book) fell back to Thunderbird's
+ *      own accent resolution instead of ours (which prefers Thunderbird's
+ *      configured accent over the live Windows one).
+ *   2. calendar-minimonth (side panel, today pane, event-dialog date pickers,
+ *      repeat-until pickers) is themed entirely through its own --mm* custom
+ *      properties against Thunderbird's native --color-gray-*/--color-ink-*
+ *      scale, never against --layout-*, so it needs a full retint.
+ *   3. A handful of drag/selection feedback colours are hardcoded to
+ *      Thunderbird's stock --color-blue-50 instead of the accent.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * 1. SELECTION ACCENT
+ * Calendar and Address Book read --selected-item-color directly rather than
+ * going through --layout-*. Point it at the same accent chain fluent-tokens
+ * already uses for --fluent-accent, so Calendar matches everything else.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --selected-item-color: var(--fluent-accent) !important;
+  --selected-item-text-color: var(--fluent-accent-text) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. MINI-MONTH
+ * Retint every --mm* custom property. Kept the original design's split
+ * between "today" (neutral fill, accent-coloured numeral) and "selected"
+ * (accent-tint fill, solid-accent numeral) rather than collapsing both to
+ * the same treatment -- that distinction is load-bearing for scanning a
+ * month at a glance.
+ * ------------------------------------------------------------------------- */
+
+calendar-minimonth {
+  --mmMainBackground: transparent !important;
+  --mmMainBorderColor: var(--fluent-divider) !important;
+  --mmMainBorderRadius: var(--fluent-radius-card) !important;
+
+  --mmHighlightColor: var(--fluent-accent-text) !important;
+  --mmHighlightBackground: var(--fluent-accent) !important;
+  --mmHighlightBorderColor: var(--fluent-accent) !important;
+
+  --mmBoxBackground: var(--fluent-solid-tertiary) !important;
+  --mmBoxBorderColor: var(--fluent-card-stroke) !important;
+  --mmBoxItemColor: var(--fluent-text-secondary) !important;
+  --mmBoxItemBorderColor: transparent !important;
+
+  --mmDayColor: var(--fluent-text-primary) !important;
+  --mmDayBackground: transparent !important;
+  --mmDayBorderColor: transparent !important;
+  --mmDayOtherColor: var(--fluent-text-tertiary) !important;
+  --mmDayWeekColor: var(--fluent-text-tertiary) !important;
+  --mmDayOtherBackground: transparent !important;
+  --mmDayOtherBorderColor: transparent !important;
+  --mmDayBorderRadius: var(--fluent-radius-control) !important;
+
+  --mmDayTodayColor: var(--fluent-accent) !important;
+  --mmDayTodayBackground: var(--fluent-subtle-hover) !important;
+  --mmDayTodayBorderColor: transparent !important;
+
+  --mmDaySelectedColor: var(--fluent-accent) !important;
+  --mmDaySelectedBackground: var(--fluent-accent-tint-strong) !important;
+  --mmDaySelectedBorderColor: var(--fluent-accent) !important;
+  --mmDaySelectedTodayBackground: var(--fluent-accent-tint) !important;
+  --mmDaySelectedTodayBorderColor: var(--fluent-accent) !important;
+
+  --mmDayBusyColor: var(--fluent-accent) !important;
+}
+
+/* prefers-color-scheme in the stock sheet reads the OS scheme, not the
+ * light-dark() switch at the top of userChrome.css -- if the two disagree
+ * (theme forced dark on a light-OS machine, or vice versa) that rule never
+ * fires and this hover falls back to unstyled. Restate unconditionally. */
+.minimonth-header button:is(:hover, :active),
+.minimonth-header-btn:is(:hover, :active) {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. EVENT GRID
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --viewCalendarHeaderBackground: var(--fluent-solid-tertiary) !important;
+  --viewMonthWeekLabelBackground: var(--fluent-solid-quart) !important;
+
+  /* Drag-to-create / drop-shadow feedback and the day-view selected day-label
+   * background were hardcoded to Thunderbird's stock blue, independent of
+   * the accent used everywhere else in the grid. */
+  --viewDragboxBackground: var(--fluent-accent) !important;
+  --viewDropshadowBackground: var(--fluent-accent) !important;
+  --viewDayLabelSelectedBackground: var(--fluent-accent) !important;
+}
+
+/* Event/task chip corner radius: the stock 2px reads as a rounding error
+ * next to Fluent's 4px controlCornerRadius everywhere else. */
+.calendar-color-box {
+  border-radius: var(--fluent-radius-control) !important;
+}
+
+/* Selected event chip was a hardcoded solid blue fill; match the accent. */
+calendar-month-day-box-item[selected="true"].calendar-color-box,
+calendar-event-box[selected="true"].calendar-color-box,
+calendar-editable-item[selected="true"].calendar-color-box {
+  background-color: var(--fluent-accent) !important;
+  color: var(--fluent-accent-text) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. CALENDAR LIST (side panel) -- nav surface, so neutral+pill per the rest
+ * of the theme's nav treatment. Only the two genuinely hardcoded, theme-blind
+ * colours need fixing: the disabled-calendar label and the "Enable" prompt
+ * button, both static hex regardless of light/dark.
+ * ------------------------------------------------------------------------- */
+
+#calendar-list > li[calendar-disabled]:not(.selected) > .calendar-name {
+  color: var(--fluent-text-tertiary) !important;
+}
+
+#calendar-list > li > button.calendar-enable-button {
+  color: var(--fluent-accent-text) !important;
+  background: var(--fluent-accent) !important;
+}
+
+#calendar-list > li > button.calendar-enable-button:hover,
+#calendar-list > li > button.calendar-enable-button:focus,
+#calendar-list > li > button.calendar-enable-button:active {
+  background: var(--fluent-accent-hover) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. LAYOUT: BASE AND CARDS
+ *
+ * Added for Mica. The Calendar tab had no base layer at all: stock paints
+ * #calendarContent and #today-pane-panel with --layout-background-0,
+ * #calSidebar with --sidebar-background and #view-box with
+ * --layout-background-1 -- all of which this theme maps to the card colour.
+ * The tab was therefore one edge-to-edge card, and a backdrop behind it had
+ * nothing to show through. Switching the containers to the window base and
+ * floating the panes as cards is the same split fluent-layout.css already
+ * applies to the 3pane, and it is what makes the backdrop visible here.
+ *
+ * Not gated on -moz-windows-mica: --fluent-base-chrome resolves to the opaque
+ * base when there is no backdrop, so this reads as the theme's normal
+ * base-and-cards layout either way. Only the transparency is conditional.
+ *
+ * Structure (messenger.xhtml):
+ *   #calendarTabPanel > #calendarContent
+ *     #calSidebar | #calsidebar_splitter | #calendarDisplayBox
+ *                                           #calendar-view-box (events)
+ *                                           #calendar-task-box  (tasks)
+ * #today-splitter and #today-pane-panel are NOT in there -- they are siblings
+ * of <tabmail>, a global right rail present in every mode, which is why the
+ * today pane gets its own margin instead of living inside the padding below.
+ * ------------------------------------------------------------------------- */
+
+#calendarTabPanel,
+#calendarContent,
+#calendarDisplayBox {
+  background-color: var(--fluent-base-chrome) !important;
+}
+
+#calendarContent {
+  padding: var(--fluent-gutter) !important;
+  box-sizing: border-box !important;
+}
+
+#calSidebar,
+#calendar-view-box,
+#calendar-task-box,
+#today-pane-panel {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  /* clip, not hidden: keeps content inside the rounded corners without
+   * creating a scroll container. Same reasoning as the 3pane cards. */
+  overflow: clip !important;
+}
+
+/* The today pane sits outside #calendarContent, so the gutter it needs cannot
+ * come from that padding. Inline-start is left at 0 because #today-splitter
+ * supplies that gap. */
+#today-pane-panel {
+  margin: var(--fluent-gutter) var(--fluent-gutter) var(--fluent-gutter) 0 !important;
+}
+
+/* Splitters become the gutters, exactly as the 3pane splitters do. Stock
+ * pulls #calsidebar_splitter back with margin-inline-end: -5px so that only
+ * its border shows; that has to go, or the card would sit on top of the gap. */
+#calsidebar_splitter,
+#today-splitter {
+  inline-size: var(--fluent-gutter) !important;
+  min-inline-size: var(--fluent-gutter) !important;
+  margin: 0 !important;
+  background-color: transparent !important;
+}
+
+/* Hover is deliberately excluded. Stock draws a 4px accent border on a
+ * collapsed splitter's hover, and that is the only affordance for reopening a
+ * collapsed today pane or sidebar -- a blanket border-color override would
+ * make it unreopenable by mouse. */
+#calsidebar_splitter:not(:hover),
+#today-splitter:not(:hover) {
+  border-inline-start-color: transparent !important;
+}

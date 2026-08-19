@@ -1,0 +1,207 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- LISTS
+ *
+ * The selection model splits by context, the way Windows itself does it:
+ *   FOLDER PANE (a nav pane, like Settings' sidebar)
+ *     neutral subtle fill + a 3x16 accent pill on the leading edge
+ *   THREAD PANE (a message list, like new Outlook's)
+ *     accent-tinted fill + a 3px accent bar on the leading edge
+ *
+ * A message list needs stronger tracking than a nav pane -- the authentic
+ * neutral-only fill is too quiet to keep your place across 60 rows.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * SHARED LIST GEOMETRY
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --listbox-border-radius: var(--fluent-radius-row) !important;
+  --list-item-min-height: var(--fluent-row-height-table) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * FOLDER PANE
+ * Rows live at #folderTree > li > .container. Thunderbird's own tokens drive
+ * the states, so most of this is retokenizing rather than selector surgery.
+ * ------------------------------------------------------------------------- */
+
+#folderPane,
+#folderTree {
+  --treeitem-background-hover: var(--fluent-subtle-hover) !important;
+  --treeitem-background-selected: var(--fluent-subtle-hover) !important;
+  /* Thunderbird fills the current folder with solid accent. Fluent does not:
+   * the fill stays neutral and the accent appears only as the pill. */
+  --treeitem-background-active: var(--fluent-subtle-hover) !important;
+  --treeitem-text-active: var(--fluent-text-primary) !important;
+}
+
+#folderTree li > .container {
+  position: relative !important;
+  min-height: var(--fluent-control-height) !important;
+  margin-inline: var(--fluent-row-inset) !important;
+  border-radius: var(--fluent-radius-row) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+#folderTree li > .container:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#folderTree li.selected > .container,
+#folderTree li.current > .container {
+  background-color: var(--fluent-subtle-hover) !important;
+  color: var(--fluent-text-primary) !important;
+}
+
+/* The accent pill. Scales in on selection -- CSS cannot slide it between rows
+ * the way WinUI does, so it grows in place on the newly selected row. */
+#folderTree li.selected > .container::before,
+#folderTree li.current > .container::before {
+  content: "" !important;
+  position: absolute !important;
+  inset-inline-start: 0 !important;
+  top: 50% !important;
+  width: var(--fluent-indicator-width) !important;
+  height: var(--fluent-indicator-height) !important;
+  border-radius: calc(var(--fluent-indicator-width) / 2) !important;
+  background-color: var(--fluent-accent) !important;
+  transform: translateY(-50%) !important;
+  animation: fluent-pill-in var(--fluent-duration-normal) var(--fluent-ease-decelerate) !important;
+}
+
+@keyframes fluent-pill-in {
+  from { transform: translateY(-50%) scaleY(0); }
+  to   { transform: translateY(-50%) scaleY(1); }
+}
+
+/* ---------------------------------------------------------------------------
+ * THREAD PANE -- TABLE VIEW
+ * Rows are real <tr> elements, so the leading accent bar is painted as a
+ * background gradient rather than a pseudo-element: a table-row makes a poor
+ * containing block for absolute positioning.
+ * ------------------------------------------------------------------------- */
+
+#threadTree {
+  --listbox-selected-bg: var(--fluent-subtle-hover) !important;
+  --listbox-focused-selected-bg: var(--fluent-accent-tint) !important;
+  --listbox-selected-color: var(--fluent-text-primary) !important;
+}
+
+#threadTree tr.table-layout {
+  height: var(--fluent-row-height-table) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+#threadTree tr.table-layout:hover:not(.selected) {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#threadTree tr.table-layout.selected {
+  background-color: var(--fluent-accent-tint) !important;
+  color: var(--fluent-text-primary) !important;
+  background-image: linear-gradient(to right,
+                      var(--fluent-accent) 0 var(--fluent-indicator-width),
+                      transparent var(--fluent-indicator-width)) !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Focused selection is the stronger tint; unfocused stays neutral so the
+ * window plainly reads as inactive. */
+[is="tree-view-table-body"]:is(:focus, :focus-within) > tr.table-layout.selected {
+  background-color: var(--fluent-accent-tint-strong) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * THREAD PANE -- CARDS VIEW
+ * Already card-shaped, so this mostly retokenizes and adds the leading bar.
+ * ------------------------------------------------------------------------- */
+
+#threadTree {
+  --tree-card-background: transparent !important;
+  --tree-card-background-selected: var(--fluent-accent-tint) !important;
+  --tree-card-background-selected-current: var(--fluent-accent-tint-strong) !important;
+  --tree-card-background-current: var(--fluent-subtle-hover) !important;
+  --tree-card-border-selected: transparent !important;
+  --tree-card-border-hover: transparent !important;
+  --tree-card-border-focus: var(--fluent-accent) !important;
+}
+
+#threadTree tr.card-layout {
+  min-height: var(--fluent-row-height-card) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+#threadTree tr.card-layout > td > .card-container {
+  margin-inline: var(--fluent-row-inset) !important;
+  border-radius: var(--fluent-radius-row) !important;
+  border-color: transparent !important;
+}
+
+#threadTree tr.card-layout:hover:not(.selected) > td > .card-container {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#threadTree tr.card-layout.selected > td > .card-container {
+  background-color: var(--fluent-accent-tint) !important;
+  background-image: linear-gradient(to right,
+                      var(--fluent-accent) 0 var(--fluent-indicator-width),
+                      transparent var(--fluent-indicator-width)) !important;
+  background-repeat: no-repeat !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * THREAD PANE HEADER
+ * Column headers sit on the card, so they must not paint their own surface.
+ * ------------------------------------------------------------------------- */
+
+#threadTree thead[is="tree-view-table-header"] th {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--fluent-divider) !important;
+  font-weight: var(--fluent-weight-strong) !important;
+}
+
+#threadTree thead[is="tree-view-table-header"] th:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * UNREAD EMPHASIS
+ * Fluent uses semibold in chrome, never full bold.
+ * ------------------------------------------------------------------------- */
+
+#threadTree tr[data-properties~="unread"] {
+  font-weight: var(--fluent-weight-strong) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * GENERIC LIST CONTAINERS
+ * Used by Address Book and several dialogs -- comes along for free.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --list-container-background-hover: var(--fluent-subtle-hover) !important;
+  --list-container-background-selected: var(--fluent-subtle-hover) !important;
+  --list-container-background-selected-current: var(--fluent-accent-tint) !important;
+  --list-container-background-selected-focused: var(--fluent-accent-tint) !important;
+  --list-container-background-selected-current-focused: var(--fluent-accent-tint-strong) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * SPACES STATUS-BAR BUTTONS
+ * With the spaces rail hidden, these are the visible spaces controls -- the
+ * two icons at the bottom-left. Same state ladder as the rail buttons.
+ * ------------------------------------------------------------------------- */
+
+.spaces-toolbar-statusbar-button {
+  border-radius: var(--fluent-radius-control) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+.spaces-toolbar-statusbar-button:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+.spaces-toolbar-statusbar-button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}

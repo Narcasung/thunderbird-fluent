@@ -1,0 +1,10 @@
+# Screenshot output from tools/capture.ps1 — regenerable, and captures
+# mail content that should not be committed.
+shots/
+*.png
+
+# Ad-hoc backups. Git makes these obsolete; keep them out.
+.mica-bak/
+*.bak
+*.pre-*
+*.orig

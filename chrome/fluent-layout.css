@@ -1,0 +1,197 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- LAYOUT
+ *
+ * The base-vs-card split:
+ *   BASE (flush, no radius, no shadow, window colour)
+ *     titlebar, unified toolbar, menubar, tab strip, spaces rail, status bar
+ *   CARD (inset by one gutter, 8px radius, elevation shadow, card colour)
+ *     folder pane, thread pane, message pane
+ *
+ * This is the Windows 11 convention: chrome and nav rails are base, only
+ * content is card. Same pattern as Settings and the new Outlook.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * BASE SURFACES -- messenger.xhtml
+ *
+ * #titlebar is a vbox containing, in order: unified-toolbar, menubar,
+ * tabs-toolbar. With "Hide system window titlebar" on, this whole block is
+ * the draggable window region and Thunderbird draws its own caption buttons.
+ * ------------------------------------------------------------------------- */
+
+#navigation-toolbox,
+#titlebar,
+#toolbar-menubar,
+#tabs-toolbar,
+#unifiedToolbarContainer,
+#unifiedToolbar {
+  background-color: var(--fluent-base-chrome) !important;
+  background-image: none !important;
+  color: var(--fluent-text-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Kill the hairline Thunderbird draws under the tab strip. In Fluent the
+ * chrome is one continuous surface; separation comes from the card edges. */
+#tabs-toolbar {
+  border-bottom: none !important;
+  --tabs-tabbar-border-size: 0 !important;
+}
+
+/* The spaces rail is base, flush to the window edge, full height. */
+#spacesToolbar {
+  background-color: var(--fluent-base-chrome) !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* The tab content area is the surface the cards float on. */
+#tabmail,
+#tabpanelcontainer,
+.tabmail-tab-panel {
+  background-color: var(--fluent-base-chrome) !important;
+}
+
+/* Status bar reads as base too. */
+#status-bar {
+  background-color: var(--fluent-base-chrome) !important;
+  border-top: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * THE THREE CARDS -- about:3pane
+ *
+ * body#paneLayout is a CSS grid with named areas (folders / threads / message)
+ * and the splitters occupying their own min-content tracks between them.
+ * Rather than adding grid gaps -- which would leave the splitters stranded --
+ * the splitters are widened to BECOME the gutters. That keeps the drag targets
+ * exactly where the visual gaps are.
+ * ------------------------------------------------------------------------- */
+
+/* The gutters between the cards are Mica too, which takes four transparent
+ * layers rather than one. about:3pane is a separate document inside a
+ * <browser src="about:3pane"> nested in a <stack> (messenger.xhtml,
+ * mail3PaneTabTemplate), so the paint chain is:
+ *
+ *   browser element -> stack -> document canvas (:root) -> body#paneLayout
+ *
+ * Any one of them still painting hides the backdrop. The browser is a chrome
+ * browser in the same process with no type="content", so it composites into
+ * the parent's layer tree and transparency propagates -- a remote content
+ * browser would not.
+ *
+ * The chrome half of that chain is in the MICA block at the end of this file;
+ * chrome selectors cannot reach into the sub-document, so :root there is
+ * scoped with @-moz-document to about:3pane, or it would match the root of
+ * every chrome document including messenger.xhtml itself. */
+body#paneLayout {
+  background-color: var(--fluent-base-chrome) !important;
+  padding: var(--fluent-gutter) !important;
+  box-sizing: border-box !important;
+}
+
+/* Splitters become the inter-card gutters.
+ *   --splitter-occupy-size  = space taken in the grid  (the visual gap)
+ *   --splitter-content-size = the clickable/draggable band
+ * Setting both to the gutter makes the whole gap draggable, so resizing gets
+ * easier rather than harder. The border is what drew the old 1px line. */
+#paneLayout hr[is="pane-splitter"] {
+  --splitter-occupy-size: var(--fluent-gutter) !important;
+  --splitter-content-size: var(--fluent-gutter) !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+}
+
+#folderPane,
+#threadPane,
+#messagePane {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  /* clip, not hidden: keeps content inside the rounded corners without
+   * creating a scroll container. */
+  overflow: clip !important;
+}
+
+/* Inner regions must not paint their own background over the card, or the
+ * rounded corners get squared off from the inside. */
+#folderPaneHeaderBar,
+#threadPaneHeaderBar,
+#threadTree,
+#folderTree {
+  background-color: transparent !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * MESSAGE PANE
+ * <message-pane> hosts browsers. Browsers do not always respect an ancestor's
+ * border-radius in Gecko, so the radius is restated on the inner browser.
+ * If the corners still square off in testing, the fallback is a wrapper with
+ * its own clip -- verify before assuming this is enough.
+ * ------------------------------------------------------------------------- */
+
+#messagePane browser,
+#messagepaneBox,
+#messageBrowser,
+#multiMessageBrowser,
+#webBrowser {
+  border-radius: var(--fluent-radius-card) !important;
+  background-color: var(--fluent-card) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * COLLAPSED PANES
+ * A collapsed pane must not leave a floating stroke or shadow behind.
+ * ------------------------------------------------------------------------- */
+
+#folderPane.collapsed-by-splitter,
+#messagePane.collapsed-by-splitter {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * AUTO-HIDDEN TAB BAR
+ * "Auto hide tab bar" removes the tab strip when only one tab is open. Pin it
+ * to zero height when hidden so the cards below do not shift by a partial row
+ * as tabs come and go.
+ * ------------------------------------------------------------------------- */
+
+#tabs-toolbar[collapsed="true"],
+#tabs-toolbar[hidden="true"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * MICA: THE about:3pane CHAIN
+ * Everything here is gated, so with the backdrop off the gutters go straight
+ * back to the opaque base and nothing below is reachable.
+ * ------------------------------------------------------------------------- */
+
+@media (-moz-windows-mica) {
+  /* Chrome side: the browser and the stack that wraps it. Descendant
+   * selectors stop at the document boundary, so this cannot leak into the
+   * message browsers -- those live inside about:3pane and are still painted
+   * card-coloured further up this file. */
+  #tabpanelcontainer browser[src="about:3pane"],
+  #tabpanelcontainer stack:has(> browser[src="about:3pane"]) {
+    background-color: transparent !important;
+  }
+}
+
+/* Content side: the canvas of the about:3pane document itself. The root
+ * element's background is what Gecko propagates to the canvas, so leaving
+ * :root painted would put an opaque sheet under a transparent body. */
+@-moz-document url("about:3pane") {
+  @media (-moz-windows-mica) {
+    :root {
+      background-color: transparent !important;
+    }
+  }
+}

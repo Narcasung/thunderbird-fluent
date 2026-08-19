@@ -1,0 +1,41 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird 153 ESR
+ * Entry point. Nothing but module imports and the theme switch lives here.
+ *
+ * LIGHT / DARK SWITCH -- edit the one line marked >>> THE SWITCH <<< below.
+ * Also set Thunderbird's own Appearance (Settings > General > Appearance)
+ * to the matching Light or Dark so message content agrees with the chrome.
+ *
+ * KILL SWITCH -- comment out any single @import to disable that module.
+ * To disable the whole theme: close Thunderbird, rename this folder to
+ * "chrome-disabled", reopen.
+ *
+ * TWO RULES THIS FILE MUST OBEY:
+ *   1. @import must be the FIRST thing after any @charset/@layer. CSS drops
+ *      an @import that follows @namespace or a style rule -- silently
+ *      disabling every module.
+ *   2. NO @namespace declaration. Thunderbird's chrome mixes XUL and HTML;
+ *      declaring XUL as the default namespace stops HTML type selectors
+ *      (body, hr, div) from matching anything.
+ * ========================================================================== */
+
+@import url("fluent-tokens.css");
+@import url("fluent-layout.css");
+@import url("fluent-chrome.css");
+@import url("fluent-lists.css");
+@import url("fluent-calendar.css");
+@import url("fluent-icons.css");
+
+/* >>> THE SWITCH <<<  light | dark
+ * Drives every light-dark() pair in fluent-tokens.css, and tells Gecko how to
+ * render native widgets (scrollbars, checkboxes) so they cannot desync. */
+:root {
+  color-scheme: dark !important;
+}
+
+/* Load canary. If the theme is active, the Developer Toolbox inspector will
+ * show this on :root. Quick way to tell "sheet did not load" apart from
+ * "sheet loaded but a selector missed". */
+:root {
+  --fluent-theme-loaded: "yes";
+}
