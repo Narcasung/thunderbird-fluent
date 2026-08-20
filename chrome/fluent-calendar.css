@@ -159,18 +159,13 @@ calendar-editable-item[selected="true"].calendar-color-box {
  *                                           #calendar-task-box  (tasks)
  * #today-splitter and #today-pane-panel are NOT in there -- they are siblings
  * of <tabmail>, a global right rail present in every mode, which is why the
- * today pane gets its own margin instead of living inside the padding below.
+ * today pane is styled alongside the tab's own panes rather than within them.
  * ------------------------------------------------------------------------- */
 
 #calendarTabPanel,
 #calendarContent,
 #calendarDisplayBox {
   background-color: var(--fluent-base-chrome) !important;
-}
-
-#calendarContent {
-  padding: var(--fluent-gutter) !important;
-  box-sizing: border-box !important;
 }
 
 #calSidebar,
@@ -186,9 +181,61 @@ calendar-editable-item[selected="true"].calendar-color-box {
   overflow: clip !important;
 }
 
-/* The today pane sits outside #calendarContent, so the gutter it needs cannot
- * come from that padding. Inline-start is left at 0 because #today-splitter
- * supplies that gap. */
+/* The clip above has a sizing side effect that has to be undone, but only on
+ * these two.
+ *
+ * A flex item's min-inline-size: auto resolves to min-content only while
+ * overflow is visible; any other value collapses that floor to zero. The
+ * events and task boxes are the panes that take their width from flex
+ * distribution, so losing the floor let the flex chain squeeze them below
+ * their own contents' minimum: dragging #today-splitter wide pushed the events
+ * card past it, #calendarViewHeader has no min-inline-size: 0 of its own and
+ * so overflowed instead of wrapping, the whole view laid out at that too-wide
+ * width, and the card's inline-end border ended up off-screen -- sampled at
+ * the tabmail edge with no stroke on it. Stock wraps the header onto two lines
+ * and abbreviates the day labels instead.
+ *
+ * #calSidebar and #today-pane-panel deliberately do NOT get this. Their widths
+ * come from persisted attributes (width, modewidths) that the splitters write,
+ * not from flex distribution, so an intrinsic floor does not protect them --
+ * it pins them at their content's min-content and the splitter can no longer
+ * drag them narrower. */
+#calendar-view-box,
+#calendar-task-box {
+  min-inline-size: min-content !important;
+}
+
+/* One padding on the container supplies every gutter inside the tab. XUL
+ * elements are ordinary flex containers -- toolkit's xul.css sets
+ * `* { display: flex }` -- so padding behaves normally here and needs no help
+ * from margins on the cards. */
+#calendarContent {
+  padding: var(--fluent-gutter) !important;
+  box-sizing: border-box !important;
+}
+
+/* ...except on the inline-end edge, which is the one place the gutter has two
+ * possible sources and must not take both.
+ *
+ * With the today pane open, #today-splitter sits between the events card and
+ * the today pane and is already widened to --fluent-gutter below; the padding
+ * would stack on top of it for a 16px gap where every other gutter is 8px.
+ * With the today pane closed, TodayPane.updateSplitterState() sets hidden on
+ * the splitter, it stops occupying space, and the padding is the only thing
+ * left to keep the card off the window edge.
+ *
+ * So: pad by default, stand down when the splitter is actually there. The
+ * :not([calendar-deactivated]) guard is a third state -- with every calendar
+ * disabled, .hide-when-calendar-deactivated display:none's the splitter
+ * without setting hidden on it, and the attribute test alone would conclude a
+ * gutter was being supplied by an element that is not rendering. */
+:root:not([calendar-deactivated]):has(#today-splitter:not([hidden])) #calendarContent {
+  padding-inline-end: 0 !important;
+}
+
+/* The today pane is a sibling of <tabmail>, outside #calendarContent, so that
+ * padding cannot reach it and it carries its own gutter. Inline-start is 0
+ * because #today-splitter supplies that side. */
 #today-pane-panel {
   margin: var(--fluent-gutter) var(--fluent-gutter) var(--fluent-gutter) 0 !important;
 }

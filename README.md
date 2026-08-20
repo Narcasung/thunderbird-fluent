@@ -15,6 +15,7 @@ under which switching to a MailExtension would actually pay off.
 chrome/     the deployable stylesheets — mirrors the profile chrome/ folder
 tools/      capture.ps1 (screenshots), sync.ps1 (repo <-> profile)
 docs/       handoff notes from prior working sessions
+profile/    user.js — the Mica prefs, deployed to the profile root
 ```
 
 `chrome/userChrome.css` is the entry point: module imports, the light/dark
@@ -35,7 +36,12 @@ what runs.
 2. Copy `chrome/*.css` into
    `%APPDATA%\Thunderbird\Profiles\<profile>\chrome\`, or run
    `tools\sync.ps1 -Push`.
-3. Restart Thunderbird. There is no hot reload — every CSS change needs a full
+3. Copy `profile/user.js` into the profile root — beside `prefs.js`, not in
+   `chrome/`. It carries the three Mica prefs; without them the theme still
+   renders, but every transparent surface degrades to its opaque fallback and
+   there is no backdrop. `prefs.js` is rewritten on quit, which is why these
+   live in `user.js`.
+4. Restart Thunderbird. There is no hot reload — every CSS change needs a full
    restart.
 
 To disable: close Thunderbird, rename the profile's `chrome` folder, reopen.
@@ -62,13 +68,13 @@ on, and sampling settled both immediately.
 | Tier 1–2: 3-pane, chrome, tabs, lists, icons | Shipped, verified light + dark |
 | Tier 3: Calendar | Shipped, verified light + dark |
 | Tier 3: Settings, Address Book, Account Settings | Abandoned — see below |
-| Mica backdrop | In progress at time of import |
+| Mica backdrop: window, menus, 3-pane gutters | Shipped, verified by pixel-sampling |
+| Mica backdrop: Calendar tab | Shipped, verified by pixel-sampling |
 | Tier 4: message content (`userContent.css`) | Out of scope by decision |
 
-**This snapshot was taken mid-Mica-work.** `fluent-tokens.css` and
-`fluent-layout.css` were being edited in another session when the repo was
-created, so the initial commit is a work-in-progress state, not a known-good
-release.
+Transparency is gated on the `-moz-windows-mica` and `-moz-windows-mica-popups`
+media features, so the theme degrades to opaque by itself when the backdrop is
+off, unsupported, or dropped by DWM. Install step 3 is what turns it on.
 
 ## Why three pages could not be themed
 
