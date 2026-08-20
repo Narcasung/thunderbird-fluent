@@ -68,7 +68,8 @@ on, and sampling settled both immediately.
 | Tier 1–2: 3-pane, chrome, tabs, lists, icons | Shipped, verified light + dark |
 | Tier 3: Calendar | Shipped, verified light + dark |
 | Tier 3: Account Settings, Address Book | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
-| Tier 3: Settings, Advanced Preferences, Add-ons Manager | Reachable and measured, not themed — see below |
+| Tier 3: Settings and its sub-dialogs | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
+| Tier 3: Advanced Preferences, Add-ons Manager | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
 | Mica backdrop: window, menus, 3-pane gutters | Shipped, verified by pixel-sampling |
 | Mica backdrop: Calendar tab | Shipped, verified by pixel-sampling |
 | Mica backdrop: content tabs | Not reachable — see below |
@@ -174,6 +175,27 @@ toolkit's 700 bold on modified prefs, card elevation, and hyperlinks.
 Add-ons Manager has one known gap: `addon-updates-message` and
 `message-bar-stack` are shadow DOM. Its core UI (`addon-card`, `categories-box`,
 `addon-page-header`) is light DOM and reachable.
+
+Settings held to the same pattern — the palette landed from the selector list
+alone, and the per-page work was structure: two cards with the gutter as margin
+(`.main-content` is pinned to `100vh`, so body padding would overflow the
+viewport by exactly the padding), the sticky search strip repainted onto the
+card it now sits on, and the category list moved from upstream's accent-tinted
+label to the folder-pane model. Measured on the final capture: base `#202020`,
+both panes `#2B2B2B`, an 8px gutter between `#3A3A3A` strokes, selected row
+`#373737` with a 3×16 accent pill centred on a 48px row, fields `#303030` at
+32px.
+
+Its sub-dialogs carry one trap worth keeping. They are separate documents, and
+the `<dialog>` element does not cover the last row of its own document —
+toolkit's `dialog.css` gives `:host` an asymmetric `padding-block: 8px 10px`.
+Upstream hides the gap by keeping the canvas next to the dialog surface
+(`:root[dialogroot]` moves `--background-color-canvas` to `--color-gray-80`).
+Mapping that token to the window base, which is right for a page, therefore
+draws a 1px window-coloured line across the bottom of every sub-dialog. It was
+`#202020` at `y=1003` under `#2B2B2B` on both sides; the fix is to move the
+canvas back to the card inside the sub-dialog scope. The other three edges
+sampled clean, which is what pointed at the padding rather than at the fill.
 
 Fingerprint for "no override landed": TB 153 dark stock
 `--layout-background-0` is `#18181b` and `-1` is `#27272a`. Sampling those

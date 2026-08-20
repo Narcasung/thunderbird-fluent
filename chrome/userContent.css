@@ -1136,9 +1136,28 @@
                url-prefix("chrome://calendar/content/preferences/"),
                url-prefix("chrome://mozapps/content/preferences/") {
 
-  /* No background rule: dialog.css paints dialog/window from
-   * --color-surface-base, mapped to the card in the shared block, which is
-   * what .dialogBox around it already uses. */
+  /* The dialog box itself needs no fill rule: dialog.css paints dialog/window
+   * from --color-surface-base, mapped to the card in the shared block, which is
+   * what .dialogBox around it already uses.
+   *
+   * The CANVAS BEHIND that box does. The <dialog> element does not cover the
+   * last row of its document -- toolkit's dialog.css gives :host an asymmetric
+   * padding-block of 8px/10px -- so the root canvas shows through as a hairline
+   * along the bottom edge. Upstream hides it by making the two colours equal:
+   * common-shared.css has a :root[dialogroot] rule that moves
+   * --background-color-canvas to --color-gray-80, next to the dialog surface.
+   * The shared block above maps that token to the window base instead, which is
+   * right for a page and wrong here, so it is moved back to the card.
+   *
+   * Measured on tools\settings4.png before this rule: a 1px #202020 line at
+   * y=1003 running the full width of the Connection dialog, with #2B2B2B above
+   * and below it and the dialog's own #3A3A3A stroke at y=1014. The other three
+   * edges were clean, which is what pointed at the padding rather than at the
+   * fill. */
+  :root {
+    --background-color-canvas: var(--fluent-card) !important;
+    background-color: var(--fluent-card) !important;
+  }
 
   /* No <select> in any of these documents either; textarea IS listed because
    * connection.xhtml has one. */
