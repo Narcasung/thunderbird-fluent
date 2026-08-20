@@ -68,7 +68,9 @@
 
 @-moz-document url-prefix("about:accountsettings"),
                url-prefix("chrome://messenger/content/am-"),
-               url-prefix("about:addressbook") {
+               url-prefix("about:addressbook"),
+               url-prefix("about:config"),
+               url-prefix("about:addons") {
 
   /* --- 1. Fluent tokens. Values mirror fluent-tokens.css section 1. Mica is
    * deliberately absent: these pages sit inside a tab, on the card surface,
@@ -118,6 +120,7 @@
     --fluent-indicator-height:  16px;
 
     --fluent-shadow-card:       0 2px 4px light-dark(rgba(0, 0, 0, .04), rgba(0, 0, 0, .26));
+    --fluent-shadow-flyout:     0 8px 16px light-dark(rgba(0, 0, 0, .14), rgba(0, 0, 0, .48));
 
     --fluent-duration-fast:     150ms;
     --fluent-duration-normal:   250ms;
@@ -636,4 +639,137 @@
    * the cascade. So these pages stay opaque on --fluent-base, and the cards on
    * --fluent-card, which is also what they looked like when they read best.
    * ---------------------------------------------------------------------- */
+}
+
+
+/* ============================================================================
+ * ADVANCED PREFERENCES -- about:config
+ *
+ * The shared block above already does nearly all of this page. Measured on a
+ * capture with the two URIs newly added and nothing else written: canvas
+ * #202020 (--fluent-base), row hover #2D2D2D (our .06 overlay), table border
+ * #303030 and search-field border #3A3A3A (our .07 stroke resolved against
+ * #202020 and #2B2B2B respectively), field fill #2B2B2B (--fluent-card).
+ *
+ * The row striping is ours too, though not through a token this file maps
+ * directly. Thunderbird injects chrome://messenger/skin/aboutExtra.css into
+ * this page (aboutAddonsExtra.js does it, despite the name) and that sheet
+ * restates the striping as --layout-background-1, which section 2 above maps
+ * to --fluent-card. So the toolkit's own
+ * --table-row-background-color-alternate never gets a chance to matter here
+ * and is deliberately NOT mapped: it would be a rule that fires on nothing.
+ *
+ * That leaves two things the palette cannot express, both below.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:config") {
+
+  /* The prefs table is a card, not a control: aboutconfig.css gives it
+   * --border-radius-small, which section 3 maps to Fluent's 4px control
+   * radius. Everything else card-shaped in this theme uses the 8px overlay
+   * radius, and this table is the only surface on the page. */
+  #prefs {
+    border-radius: var(--fluent-radius-card) !important;
+  }
+
+  /* Modified prefs. aboutconfig.css marks them with --font-weight-bold, which
+   * the toolkit defines as 700. Fluent's strong weight is 600 -- 700 on Segoe
+   * UI Variable is heavier than anything else the theme uses. */
+  #prefs > tr.has-user-value {
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+}
+
+
+/* ============================================================================
+ * ADD-ONS MANAGER -- about:addons
+ *
+ * Also mostly done by the shared block. Measured on the same capture: canvas
+ * #202020, sidebar and cards #2B2B2B (--fluent-card, the sidebar via
+ * --sidebar-background which aboutExtra.css reads), buttons #383838 with a
+ * #464646 hairline (--fluent-solid-quart under our .07 stroke).
+ *
+ * The category rail is already right by accident of good tokens.
+ * categories-box.mjs renders moz-page-nav-buttons, whose shadow sheet defines
+ * --page-nav-button-background-color-selected as --button-background-color and
+ * the radius as --button-border-radius -- both mapped in section 5. Selection
+ * measured #383838 at the theme's 4px radius, which is the treatment.
+ *
+ * WHAT IS NOT DONE, AND WHY
+ * The accent pill that marks selection on every other nav surface in this
+ * theme (section 9, and fluent-lists.css in the chrome) cannot be drawn here.
+ * It needs a pseudo-element on the selected row, and the row is a <button>
+ * inside moz-page-nav-button's shadow root. The three ways out are all closed:
+ * the host does not reflect `selected` to an attribute (moz-page-nav.mjs
+ * declares it `{ type: Boolean }` with no `reflect`), so no host selector can
+ * see the state; ::before on a shadow host is generated but never slotted, so
+ * it does not render; and :has() does not cross a shadow boundary. Custom
+ * properties are the only thing that gets in, which is why this block is
+ * tokens and two rules.
+ *
+ * Notification banners (addon-updates-message, message-bar-stack) are shadow
+ * DOM as well and are left native by decision -- they are transient, and
+ * reaching them would mean ::part() plumbing for a surface that is usually
+ * not on screen.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:addons") {
+
+  :root {
+    /* Cards. The toolkit derives --card-border-color from currentColor, which
+     * lands at #373737 over the card -- close to ours by luck, not by rule.
+     * Pin it so light mode does not inherit a text-derived stroke. */
+    --card-border-color: var(--fluent-card-stroke) !important;
+
+    /* Elevation. The stock --box-shadow-level-2 reads as a wide dark halo on
+     * all four sides (4px of it sampled to the LEFT of a card at #1D1D1D);
+     * Fluent's card shadow is a short drop. */
+    --card-box-shadow: var(--fluent-shadow-card) !important;
+    --card-box-shadow-hover: var(--fluent-shadow-flyout) !important;
+
+    /* aboutExtra.css's recommended-card hover reads --card-shadow-hover, a name
+     * that exists nowhere in omni.ja -- an upstream typo for the token above,
+     * so that hover currently resolves to nothing. Defining it costs one line
+     * and makes the hover work; if the typo is ever fixed the line simply
+     * stops being read. */
+    --card-shadow-hover: var(--fluent-shadow-flyout) !important;
+
+    /* Hyperlinks. tokens-platform.css gives dark mode --color-cyan-30, the one
+     * interactive colour on these pages that ignores the accent.
+     *
+     * NOT --fluent-accent. That token is the raw Windows AccentColor, which is
+     * a FILL colour: it is chosen to sit behind AccentColorText, and nothing
+     * guarantees it reads as text on our own surfaces. Measured here with the
+     * live accent at #4A5459 it gave roughly 1.6:1 against the #2B2B2B card --
+     * the links were there and could not be read.
+     *
+     * Windows has the same problem and solves it with a tint ladder: accent
+     * text on a dark surface is AccentLight2, on a light surface AccentDark2,
+     * never the base. The palette is in the registry, not in CSS, but mixing
+     * toward white/black reproduces it closely -- against this machine's
+     * accent, 55% + white gives #9CA1A4 where Windows' own Light2 is #9EABAE.
+     * The mix also degrades correctly for a saturated accent, which is exactly
+     * what the pale-blue link colour in a stock Windows dark theme is. */
+    --fluent-accent-link: light-dark(
+      color-mix(in srgb, AccentColor 60%, #000000),
+      color-mix(in srgb, AccentColor 55%, #FFFFFF));
+
+    --link-color: var(--fluent-accent-link) !important;
+    --link-color-hover: color-mix(in srgb, var(--fluent-accent-link) 85%, light-dark(#000000, #FFFFFF)) !important;
+    --link-color-active: color-mix(in srgb, var(--fluent-accent-link) 70%, light-dark(#000000, #FFFFFF)) !important;
+  }
+
+  /* aboutExtra.css sets .card's radius to --button-border-radius, i.e. the 4px
+   * control radius. Cards take the 8px overlay radius everywhere else in this
+   * theme. This has to be a rule rather than a token: the value it overrides
+   * is a direct declaration, not a custom property. */
+  .card {
+    border-radius: var(--fluent-radius-card) !important;
+  }
+
+  /* No transition rule here on purpose. common-shared.css already animates
+   * box-shadow at 150ms, the same as --fluent-duration-fast, and .addon.card
+   * adds `opacity` to that shorthand -- which is what fades the dimmed
+   * inactive add-ons. An !important transition here would win the shorthand
+   * and silently kill that fade for no gain. */
 }

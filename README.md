@@ -129,6 +129,16 @@ cost a restart. Don't re-derive them:
   reaches none of these pages; each document restates the palette. That is why
   `userContent.css` carries its own `color-scheme`, which must be kept equal to
   the switch in `userChrome.css`.
+- **`about:config` and `about:addons` get a fourth sheet: Thunderbird's own.**
+  `aboutAddonsExtra.js` injects `chrome://messenger/skin/aboutExtra.css` into
+  both, despite the name. It is not a token file — it restates things as direct
+  declarations, so a token override cannot reach them. It sets `about:config`'s
+  row striping to `--layout-background-1` (which is why the toolkit's
+  `--table-row-background-color-alternate` never gets read on that page, and
+  mapping it would be a rule that fires on nothing) and `.card`'s radius to
+  `--button-border-radius` (which is why cards rendered at the 4px control
+  radius even with `--border-radius-large` mapped). Check this file before
+  concluding a token override failed.
 
 Three token vocabularies meet on these pages, and all three need mapping or
 half the surface stays stock: messenger's `--layout-*` ladder, messenger's
@@ -138,6 +148,14 @@ The chrome modules only ever needed the first. `userContent.css`'s shared block
 maps all three; Settings, Advanced Preferences and Add-ons Manager are built on
 the Acorn layer almost entirely, so adding their `about:` URIs to that block's
 selector list is most of what they need.
+
+That held when it was tested. Adding the two URIs and writing nothing else
+already gave `about:config` and `about:addons` the full palette — canvas,
+striping, hover, borders, fields, buttons, sidebar and the Add-ons category
+rail's selection all sampled as theme values on the first capture. What was
+left was four things the palette cannot express, and they are the whole of the
+per-page work: two card radii that `aboutExtra.css` declares directly, the
+toolkit's 700 bold on modified prefs, card elevation, and hyperlinks.
 
 Add-ons Manager has one known gap: `addon-updates-message` and
 `message-bar-stack` are shadow DOM. Its core UI (`addon-card`, `categories-box`,
