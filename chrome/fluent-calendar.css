@@ -214,41 +214,66 @@ calendar-editable-item[selected="true"].calendar-color-box {
   box-sizing: border-box !important;
 }
 
-/* ...except on the inline-end edge, which is the one place the gutter has two
- * possible sources and must not take both.
- *
- * With the today pane open, #today-splitter sits between the events card and
- * the today pane and is already widened to --fluent-gutter below; the padding
- * would stack on top of it for a 16px gap where every other gutter is 8px.
- * With the today pane closed, TodayPane.updateSplitterState() sets hidden on
- * the splitter, it stops occupying space, and the padding is the only thing
- * left to keep the card off the window edge.
- *
- * So: pad by default, stand down when the splitter is actually there. The
- * :not([calendar-deactivated]) guard is a third state -- with every calendar
- * disabled, .hide-when-calendar-deactivated display:none's the splitter
- * without setting hidden on it, and the attribute test alone would conclude a
- * gutter was being supplied by an element that is not rendering. */
-:root:not([calendar-deactivated]):has(#today-splitter:not([hidden])) #calendarContent {
-  padding-inline-end: 0 !important;
-}
-
 /* The today pane is a sibling of <tabmail>, outside #calendarContent, so that
  * padding cannot reach it and it carries its own gutter. Inline-start is 0
- * because #today-splitter supplies that side. */
+ * because the container's own inline-end padding already supplies that side --
+ * see the #today-splitter note below for why nothing else may. */
 #today-pane-panel {
   margin: var(--fluent-gutter) var(--fluent-gutter) var(--fluent-gutter) 0 !important;
 }
 
-/* Splitters become the gutters, exactly as the 3pane splitters do. Stock
- * pulls #calsidebar_splitter back with margin-inline-end: -5px so that only
- * its border shows; that has to go, or the card would sit on top of the gap. */
+/* Splitters become the gutters, exactly as the 3pane splitters do. */
 #calsidebar_splitter,
 #today-splitter {
   inline-size: var(--fluent-gutter) !important;
   min-inline-size: var(--fluent-gutter) !important;
-  margin: 0 !important;
   background-color: transparent !important;
+}
+
+/* #calsidebar_splitter sits BETWEEN two cards inside #calendarContent, where
+ * no container padding reaches, so it is the sole source of that gutter and
+ * has to occupy a real track. Stock pulls it back with margin-inline-end: -5px
+ * so that only its border shows; that has to go, or the card would sit on top
+ * of the gap. */
+#calsidebar_splitter {
+  margin: 0 !important;
+}
+
+/* #today-splitter is the opposite case and the distinction matters, because
+ * getting it wrong is what produced a 16px gutter next to the today pane where
+ * every other gutter is 8px.
+ *
+ * It is not inside any pane container: it is a sibling of <tabmail>, sitting at
+ * the container's inline-end EDGE, where the container's own padding is already
+ * a gutter. Two sources, and it must not take both. Stock's answer is the
+ * negative margin (margin-inline-start: -5px) -- the splitter overlays the
+ * neighbour rather than claiming a track, so only its 1px border shows. This
+ * theme zeroed that margin and so grew a second gutter, and the first fix
+ * stood the padding down instead, on #calendarContent, with a
+ * :has(#today-splitter:not([hidden])) test.
+ *
+ * That fix could only ever cover the Calendar tab. In the 3pane the same
+ * inline-end padding lives on body#paneLayout, inside the about:3pane
+ * document, and :has() cannot see a splitter that is in the parent chrome
+ * document -- so the mail tab kept the 16px gutter. Restoring stock's overlap
+ * fixes both at once and needs no cross-document knowledge: the splitter
+ * occupies no track anywhere, and whichever container is in front supplies its
+ * own padding as the gutter. It also drops the [hidden] and
+ * [calendar-deactivated] tests, which existed only to tell whether the
+ * splitter was contributing width. Now it never does.
+ *
+ * Widths are border-box on XUL elements, so inline-size: 8px includes the 1px
+ * border and a -8px margin cancels it exactly.
+ *
+ * The border-inline-end is stock's 1px divider between the splitter and the
+ * today pane. In this theme the pane's own card stroke is that edge, so the
+ * divider is a second line 1px outside it -- the stray vertical line along the
+ * today pane's leading edge. Unlike the inline-start border below it carries no
+ * hover affordance, so it can go unconditionally. */
+#today-splitter {
+  margin-block: 0 !important;
+  margin-inline: calc(-1 * var(--fluent-gutter)) 0 !important;
+  border-inline-end-color: transparent !important;
 }
 
 /* Hover is deliberately excluded. Stock draws a 4px accent border on a

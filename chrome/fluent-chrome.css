@@ -159,14 +159,70 @@
 
 /* ---------------------------------------------------------------------------
  * SEARCH BAR
- * The Fluent text input: neutral stroke all round, a stronger bottom edge at
- * rest, and on focus that bottom edge alone becomes 2px accent. It is an
- * underline, not a ring -- this is the most recognisable Fluent input tell.
+ * The Fluent text input: neutral stroke all round and a stronger bottom edge,
+ * which is the recognisable Fluent input tell. The control does not change on
+ * focus -- see FOCUS, below, before adding anything back.
+ *
+ * <search-bar> is a shadow-DOM widget and only the host is selectable from
+ * here, so the stroke lives on the host and the field inside is made to
+ * disappear underneath it. Three things follow from that:
+ *
+ *   1. The shadow <form> that wraps the field is `block-size: 100%` and never
+ *      resolves it. Every child of the form is absolutely positioned, so the
+ *      form's own content height is zero and it falls back to its intrinsic
+ *      minimum, 1.2em + 2 * --search-padding (26px at this font). Giving the
+ *      host a definite block-size does NOT fix that -- measured: a 32px
+ *      border-box host still left a 26px field top-aligned in its 30px content
+ *      box, 4px of dead space under it. Whatever the reason the percentage
+ *      stays unresolved, the host cannot make the form fill, so it centres it
+ *      instead: column flex, justify-content centre. The cross axis still
+ *      stretches, so the form keeps its full width. Font-size independent,
+ *      unlike padding the difference away.
+ *   2. The field paints its own 1px stroke and fill from --search-bar-*.
+ *      Custom properties inherit through the shadow boundary even though
+ *      selectors do not, so handing it transparent is how you reach it. Left
+ *      alone, --search-bar-border-color is stock --color-gray-40 (#a1a1aa) --
+ *      far too bright for a resting Fluent input, and the reason the doubled
+ *      border was so visible.
+ *   3. The field draws a stock 2px focus ring at --search-outline-offset: -1px,
+ *      which put its lower edge directly on top of a bottom-border underline
+ *      for a 4px slab of accent along the bottom against 2px along the top.
+ *      --focus-outline-color, inherited, is what removes it.
+ *
+ * FOCUS
+ * There is deliberately no focus treatment on this control. Both candidates
+ * were removed on the user's explicit instruction, in that order: first the
+ * stock ring, then the 2px accent underline that had replaced it.
+ *
+ * The consequence is stated here so nobody has to rediscover it: the search bar
+ * gives NO visual feedback when it takes focus, and neither does the search
+ * button inside its shadow root, which shares --focus-outline-color (widgets.css
+ * draws it as `outline: var(--focus-outline)`) and cannot be separated from the
+ * field -- :has() does not cross a shadow boundary and the widget exposes no
+ * ::part. Keyboard users get nothing here. That is a decision, not an oversight.
+ *
+ * To restore it, add back the underline; it needs no other change:
+ *
+ *   .search-bar:focus-within,
+ *   #unifiedToolbar .search-bar:focus-within {
+ *     border-bottom-width: 2px !important;
+ *     border-bottom-color: var(--fluent-accent) !important;
+ *   }
+ *
+ * Both selectors are required. !important does not settle a conflict between
+ * two !important declarations -- specificity still decides, and
+ * #unifiedToolbar .search-bar (1,1,0) outranks .search-bar:focus-within
+ * (0,2,0), so the single-class form alone is silently dead in the unified
+ * toolbar, which is the only place this widget appears.
  * ------------------------------------------------------------------------- */
 
 .search-bar,
 #unifiedToolbar .search-bar {
+  box-sizing: border-box !important;
   min-block-size: var(--fluent-control-height) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
   border-radius: var(--fluent-radius-control) !important;
   background-color: var(--fluent-card) !important;
   border-width: 1px !important;
@@ -174,14 +230,11 @@
   border-top-color: var(--fluent-control-stroke-top) !important;
   border-inline-color: var(--fluent-control-stroke) !important;
   border-bottom-color: var(--fluent-control-stroke-bottom) !important;
-  transition: border-bottom-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
-}
-
-.search-bar:focus-within {
-  border-bottom-width: 2px !important;
-  border-bottom-color: var(--fluent-accent) !important;
-  /* Keep the control from growing 1px when the underline thickens. */
-  padding-bottom: 0 !important;
+  /* Inherited into the shadow tree; see (2) and (3) above. */
+  --search-bar-border-color: transparent !important;
+  --search-bar-background: transparent !important;
+  --search-bar-focus-background: transparent !important;
+  --focus-outline-color: transparent !important;
 }
 
 /* ---------------------------------------------------------------------------
