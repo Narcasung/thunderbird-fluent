@@ -1,8 +1,9 @@
 /* ============================================================================
  * Fluent 2 for Thunderbird -- CONTENT TABS
  *
- * Account Settings and Address Book. Both are content-type docshells, so
- * userChrome.css cannot reach them and none of the theme's chrome modules
+ * Account Settings, Address Book, Settings and its sub-dialogs, Advanced
+ * Preferences and the Add-ons Manager. All of them are content-type docshells,
+ * so userChrome.css cannot reach them and none of the theme's chrome modules
  * apply here. This file is the whole theme for these pages.
  *
  * WHY THIS FILE EXISTS SEPARATELY FROM THE CHROME MODULES
@@ -43,14 +44,11 @@
  * bare rule to this file.
  *
  * NOT DONE HERE, ON PURPOSE
- *   - Settings, Advanced Preferences, Add-ons Manager. The shared block below
- *     is written to extend to them: add their about: URIs to its selector list
- *     and most of the palette lands. They are excluded today only because they
- *     have not been verified.
- *   - Fluent's card-per-settings-group treatment of the am-* panes. Upstream
- *     uses borderless fieldsets; turning those into cards is a layout redesign,
- *     not a retokenizing, and it belongs in its own pass after this one is
- *     confirmed. This pass does palette, geometry, controls, rows and focus.
+ *   - Fluent's card-per-settings-group treatment of the am-* panes and of the
+ *     Settings panes. Upstream uses borderless fieldsets on both; turning those
+ *     into cards is a layout redesign, not a retokenizing, and it belongs in
+ *     its own pass. Every pass in this file so far does palette, geometry,
+ *     controls, rows and focus, and leaves the group structure alone.
  * ========================================================================== */
 
 
@@ -70,7 +68,11 @@
                url-prefix("chrome://messenger/content/am-"),
                url-prefix("about:addressbook"),
                url-prefix("about:config"),
-               url-prefix("about:addons") {
+               url-prefix("about:addons"),
+               url-prefix("about:preferences"),
+               url-prefix("chrome://messenger/content/preferences/"),
+               url-prefix("chrome://calendar/content/preferences/"),
+               url-prefix("chrome://mozapps/content/preferences/") {
 
   /* --- 1. Fluent tokens. Values mirror fluent-tokens.css section 1. Mica is
    * deliberately absent: these pages sit inside a tab, on the card surface,
@@ -946,4 +948,233 @@
   #content .card {
     background-color: var(--fluent-solid-tertiary) !important;
   }
+}
+
+
+/* ============================================================================
+ * SETTINGS (about:preferences)
+ *
+ * One document: a category sidebar (#pref-category-box) and a scrolling pane
+ * (#preferencesContainer), both inside #prefBox.main-content. The sub-dialogs
+ * it opens are separate documents and are themed by the block after this one;
+ * the overlay and the box AROUND them are markup in THIS document
+ * (#dialogTemplate at the end of preferences.xhtml), so they are styled here.
+ *
+ * Vocabulary is hybrid and both halves are already mapped in the shared block:
+ * messenger's --layout-* from variables.css, plus toolkit's Acorn tokens from
+ * in-content/common.css. Only the structure below is page-specific.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:preferences") {
+
+  :root,
+  body {
+    background-color: var(--fluent-base) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* TWO CARDS ON THE WINDOW BASE, GUTTER AS MARGIN -- NOT AS BODY PADDING.
+   *
+   * preferences.css pins .main-content to 100vh. Padding on the body would
+   * therefore overflow the viewport by exactly that padding, which is the trap
+   * the Account Settings shell hit from the other direction. #prefBox is an
+   * hbox and stretches its children, so a margin on the panes shortens the card
+   * instead of pushing it out -- the same reasoning as Address Book, where the
+   * gutter also had to live on the panes. */
+  #pref-category-box,
+  #preferencesContainer {
+    box-sizing: border-box !important;
+    margin: var(--fluent-gutter) !important;
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* Both panes carry the gutter on every side; between them it would double. */
+  #preferencesContainer {
+    margin-inline-start: 0 !important;
+  }
+
+  /* The search row is sticky and paints --layout-background-0 to hide content
+   * scrolling under it. That token is the window base, which is now OUTSIDE the
+   * card -- left alone the strip reads as a hole at the top of the pane. */
+  .sticky-container {
+    background-color: var(--fluent-card) !important;
+  }
+
+  /* --- Category list: a nav pane, so it takes the folder-pane model ---
+   * Upstream (in-content/common-shared.css) draws selection as accent-coloured
+   * text on a transparent row, and indents the whole list by --space-xxlarge
+   * (2rem) because there is no sidebar surface to sit on. There is one now, so
+   * the rows come back to the pane inset and take the theme's row treatment:
+   * neutral subtle fill, 4px corners, accent carried by a 3x16 pill.
+   *
+   * Row height is deliberately left at upstream's --size-item-xlarge (48px).
+   * This is page-level navigation with 24px icons (--icon-size-large), not a
+   * dense list, and Fluent's own Settings nav is taller than its list rows. */
+  #categories > .category {
+    position: relative !important;
+    margin-inline: var(--fluent-row-inset) !important;
+    border-radius: var(--fluent-radius-row) !important;
+    border-color: transparent !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  #categories > .category:hover {
+    background-color: var(--fluent-subtle-hover) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  #categories > .category:hover:active {
+    background-color: var(--fluent-subtle-pressed) !important;
+  }
+
+  /* Upstream tints the label instead of filling the row, and explicitly forces
+   * the background back to transparent when selected-and-not-hovered. Both are
+   * overridden: Fluent reads selection as a filled row plus the pill, with the
+   * label at full contrast and semibold. */
+  #categories > .category[selected],
+  #categories > .category.selected {
+    background-color: var(--fluent-subtle-hover) !important;
+    color: var(--fluent-text-primary) !important;
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  /* fluent-pill-in is declared in the shared block above, which this document
+   * also matches, so the animation resolves here. */
+  #categories > .category[selected]::before,
+  #categories > .category.selected::before {
+    content: "" !important;
+    position: absolute !important;
+    inset-inline-start: 0 !important;
+    top: 50% !important;
+    width: var(--fluent-indicator-width) !important;
+    height: var(--fluent-indicator-height) !important;
+    border-radius: calc(var(--fluent-indicator-width) / 2) !important;
+    background-color: var(--fluent-accent) !important;
+    transform: translateY(-50%) !important;
+    animation: fluent-pill-in var(--fluent-duration-normal) var(--fluent-ease-decelerate) !important;
+  }
+
+  /* Pane titles. Upstream asks for weight 300; Fluent's ramp has no light
+   * weight and titles are semibold. Size is left alone. */
+  h1 {
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  /* Controls. The token block carries the rest; these are the properties
+   * preferences.css sets directly. Narrower than the am-* pane list on
+   * purpose: this document has 52 buttons and 42 menulists but no <select>
+   * and no <textarea> at all, so neither is listed. */
+  button,
+  menulist {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  /* Includes #searchInput, which is input[type="search"]. */
+  input:not([type="checkbox"], [type="radio"]) {
+    border-radius: var(--fluent-radius-control) !important;
+    border-color: var(--fluent-control-stroke) !important;
+    background-color: var(--fluent-solid-tertiary) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]):focus-visible {
+    outline: var(--focus-outline) !important;
+    outline-offset: var(--focus-outline-offset) !important;
+  }
+
+  /* Blocks of content inside the pane -- #tagList, #cloudFileView. Tertiary on
+   * card, like the am-* panes. #categories is excluded: it is the nav pane
+   * above, and upstream excludes it from its own richlistbox rule for the same
+   * reason. The pane's info boxes need nothing here -- .info-box-container is
+   * built on --background-color-box-info, mapped in the shared block. */
+  richlistbox:not(#categories) {
+    background-color: var(--fluent-solid-tertiary) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-control) !important;
+  }
+
+  /* The one surface on the page upstream hardcodes: rgba(12, 12, 13, .2),
+   * applied in both colour schemes. */
+  #telemetry-container {
+    background-color: var(--fluent-subtle-hover) !important;
+    border-radius: var(--fluent-radius-control) !important;
+  }
+
+  /* The sub-dialog frame. --panel-border-radius resolves to
+   * --border-radius-medium, which the shared block maps to the 4px CONTROL
+   * radius -- correct for controls, wrong for an overlay, so the dialog takes
+   * the card radius and the flyout shadow explicitly. The fill is left alone:
+   * .dialogBox is --color-surface-base, already mapped to the card, and the
+   * dialog's own document paints the same value through dialog.css. */
+  .dialogBox {
+    border-radius: var(--fluent-radius-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    box-shadow: var(--fluent-shadow-flyout) !important;
+  }
+
+  /* NO MICA HERE EITHER. Same ceiling as Address Book -- see the note at the
+   * end of that block before trying. This is a content docshell. */
+}
+
+
+/* ============================================================================
+ * SETTINGS SUB-DIALOGS
+ * Connection, Offline, Passwords, Cookies, Fonts, Languages, Permissions, the
+ * calendar's Edit Category, and toolkit's primary-password dialogs. Each is its
+ * own document loaded into <browser class="dialogFrame"> inside
+ * about:preferences, and each matched its chrome path during the canary round
+ * (16.2% coverage) while the page itself stayed on about:preferences -- so
+ * these prefixes hit the dialogs only, never the page.
+ * ========================================================================== */
+
+@-moz-document url-prefix("chrome://messenger/content/preferences/"),
+               url-prefix("chrome://calendar/content/preferences/"),
+               url-prefix("chrome://mozapps/content/preferences/") {
+
+  /* No background rule: dialog.css paints dialog/window from
+   * --color-surface-base, mapped to the card in the shared block, which is
+   * what .dialogBox around it already uses. */
+
+  /* No <select> in any of these documents either; textarea IS listed because
+   * connection.xhtml has one. */
+  button,
+  menulist {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]),
+  textarea {
+    border-radius: var(--fluent-radius-control) !important;
+    border-color: var(--fluent-control-stroke) !important;
+    background-color: var(--fluent-solid-tertiary) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]):focus-visible,
+  textarea:focus-visible {
+    outline: var(--focus-outline) !important;
+    outline-offset: var(--focus-outline-offset) !important;
+  }
+
+  /* Every list surface in these dialogs. Verified in this build's markup:
+   * tree is #permissionsTree, #signonsTree and #cookiesList; richlistbox is
+   * #selectedLocales plus the application-manager and attachment-reminder
+   * lists. Tertiary on card, the same block treatment the am-* panes give
+   * richlistbox and tree. Row
+   * selection is not touched: treechildren::-moz-tree-row(selected) reads
+   * --selected-item-color, mapped to the accent in the shared block. */
+  richlistbox,
+  tree {
+    background-color: var(--fluent-solid-tertiary) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-control) !important;
+  }
+
 }
