@@ -664,19 +664,98 @@
 
 @-moz-document url-prefix("about:config") {
 
-  /* The prefs table is a card, not a control: aboutconfig.css gives it
-   * --border-radius-small, which section 3 maps to Fluent's 4px control
-   * radius. Everything else card-shaped in this theme uses the 8px overlay
-   * radius, and this table is the only surface on the page. */
-  #prefs {
-    border-radius: var(--fluent-radius-card) !important;
-  }
-
   /* Modified prefs. aboutconfig.css marks them with --font-weight-bold, which
    * the toolkit defines as 700. Fluent's strong weight is 600 -- 700 on Segoe
    * UI Variable is heavier than anything else the theme uses. */
   #prefs > tr.has-user-value {
     font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  /* --- PANE GEOMETRY ---
+   * The base-vs-card split from fluent-layout.css, applied to this page.
+   * #toolbar is BASE: it is the page's chrome, it stays flush and keeps the
+   * window colour, which is what aboutExtra.css already gives it. #prefs is
+   * the only CONTENT surface here, so it becomes the card -- inset by one
+   * gutter, 8px radius, stroke, elevation. Same treatment the folder and
+   * thread panes get in the 3-pane window. */
+
+  /* --- THE CARD IS body, NOT #prefs ---
+   * First attempt made body a viewport-height flex column and asked #prefs to
+   * be the scroller. It did nothing, and the reason is structural: #prefs is a
+   * <table>. A table box cannot be sized below its own content, so `flex: 1`
+   * and `min-block-size: 0` could not shrink it, and Gecko ignores `overflow`
+   * on a table box, so it never became a scroller either. Measured: the whole
+   * page rendered pixel-identical to the previous build.
+   *
+   * There is no wrapper around the table to scroll instead -- but body is one.
+   * So body becomes the card and the scroller, and #prefs goes back to being a
+   * plain table drawn on it. The search toolbar ends up inside the card rather
+   * than on the base beside it, which is the one visible difference from the
+   * original plan, and it matches how #content works on about:addons: one card
+   * per page, its own header bands included.
+   *
+   * The overflow propagation is load-bearing and worth stating. The first of
+   * html/body with a non-visible overflow hands it to the VIEWPORT and is then
+   * treated as visible itself. html: hidden stops the document scrolling and
+   * leaves html unclipped; body: auto is therefore still honoured on body, and
+   * body becomes the scroll container. Reverse the two and the page scrolls as
+   * a document again and the card stops closing. */
+  :root {
+    block-size: 100vh !important;
+    padding: var(--fluent-gutter) !important;
+    box-sizing: border-box !important;
+    background-color: var(--fluent-base) !important;
+    overflow: hidden !important;
+  }
+
+  body {
+    block-size: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow: auto !important;
+
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* Sticky within the card now rather than within the document. It needs the
+   * card colour under it or rows scroll through it. */
+  #toolbar {
+    padding: var(--fluent-gutter) !important;
+    padding-bottom: 0 !important;
+    background-color: var(--fluent-card) !important;
+  }
+
+  /* Stripped back to a plain table: body carries the surface, the border, the
+   * radius and the elevation, and body's radius clips these square corners. */
+  #prefs {
+    margin: var(--fluent-gutter) !important;
+    width: calc(100% - 2 * var(--fluent-gutter)) !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* The striping has to move up a step. aboutExtra.css sets it to
+   * --layout-background-1, which section 2 maps to --fluent-card -- the colour
+   * the table itself just became. Left alone the stripes would be invisible.
+   * --fluent-solid-tertiary is the next surface in the Fluent ladder, and the
+   * .06 hover overlay still resolves clear of both (#37 over the card, #3B
+   * over a stripe). */
+  #prefs > tr:not(:hover).odd {
+    background-color: var(--fluent-solid-tertiary) !important;
+  }
+
+  /* aboutconfig.css draws the blank strip above the "add a pref" row with
+   * --background-color-canvas, on the assumption that the table sits on the
+   * page background. It sits on the card now, so that strip has to follow or
+   * it punches a window-coloured band through the card. */
+  #prefs[has-visible-prefs] > .add > th::before,
+  #prefs[has-visible-prefs] > .add > td::before {
+    background-color: var(--fluent-card) !important;
   }
 }
 
@@ -772,4 +851,99 @@
    * adds `opacity` to that shorthand -- which is what fades the dimmed
    * inactive add-ons. An !important transition here would win the shorthand
    * and silently kill that fade for no gain. */
+
+  /* --- PANE GEOMETRY ---
+   * Only the rail needs this one. #content is already right: aboutExtra.css
+   * puts .main-heading and the search row on --layout-background-0, and the
+   * add-on cards float on it at the theme's radius and elevation, which is
+   * exactly the BASE-with-cards-on-it arrangement fluent-layout.css describes.
+   * Carding #content as well would nest cards inside a card.
+   *
+   * #sidebar is the surface that is wrong: aboutExtra.css paints it
+   * --sidebar-background, i.e. --fluent-card, but it is flush to all four
+   * window edges with square corners, so it reads as a wall rather than a
+   * pane. The 3-pane window's folder pane is a card and this rail is the same
+   * kind of surface, so it gets the same treatment. */
+
+  /* The page becomes a viewport-height row, for the same reason about:config
+   * becomes a column: a card has to be able to close. #content is thousands
+   * of pixels of add-on list, so the document stops scrolling and #content
+   * scrolls inside its own border. */
+  body {
+    block-size: 100vh !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #full {
+    block-size: 100vh !important;
+  }
+
+  #sidebar {
+    margin: var(--fluent-gutter) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+
+    /* aboutaddons.css pins this to `top: 0; height: 100vh` so the rail stays
+     * put while #content scrolls. Both have to come in by a gutter or the
+     * card is cropped flush against the top and bottom of the window again --
+     * the sticky offset is what holds it off the top edge, the height is what
+     * holds it off the bottom. */
+    top: var(--fluent-gutter) !important;
+    height: calc(100vh - 2 * var(--fluent-gutter)) !important;
+  }
+
+  /* The rail's whole height chain has to be sized, not just its ends.
+   * categories-box renders into the light DOM (createRenderRoot returns
+   * `this`), so it sits between #sidebar and moz-page-nav as a plain
+   * auto-height block -- and a percentage block-size on the host resolves
+   * against it, finds `auto`, and falls back to the host's own :host rule of
+   * `100vh`. That is 100vh of nav plus the 70px/24px margins its shadow sheet
+   * puts around the <nav>, inside a card that is 100vh minus two gutters:
+   * about 110px of overflow, and a scrollbar down the inside of the rail with
+   * the footer links pushed out of sight below it. Sizing the intermediate
+   * fixes it. The <nav> itself is in the shadow root and carries no part=, so
+   * it can only ever be reached this way -- by giving its flex parent a real
+   * height to shrink into. */
+  #sidebar categories-box,
+  #sidebar moz-page-nav {
+    block-size: 100% !important;
+    min-block-size: 0 !important;
+  }
+
+  /* --- #content AS A CARD ---
+   * Earlier this block argued #content should stay BASE with the add-on cards
+   * floating on it, on the grounds that carding it would nest cards inside a
+   * card. Overruled by the user, and the nesting objection is answerable: the
+   * inner cards move up one step on the surface ladder instead of sitting at
+   * the same value as their container, which is how Fluent layers a card on a
+   * card anywhere else. */
+  #content {
+    margin-block: var(--fluent-gutter) !important;
+    margin-inline-end: var(--fluent-gutter) !important;
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+    overflow: auto !important;
+    min-block-size: 0 !important;
+  }
+
+  /* aboutExtra.css puts these three on --layout-background-0, the window
+   * colour, because they used to sit on the page background. They are inside
+   * the card now, so left alone they punch base-coloured bands across it --
+   * and .sticky-container is sticky, so the band would track the scroll. */
+  .sticky-container,
+  .main-search,
+  .main-heading {
+    background: var(--fluent-card) !important;
+  }
+
+  /* The add-on cards were --background-color-box, which is the colour #content
+   * just became; on their own they would disappear into it. One step up the
+   * ladder keeps them legible without a heavier border. */
+  #content .card {
+    background-color: var(--fluent-solid-tertiary) !important;
+  }
 }

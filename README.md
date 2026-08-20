@@ -129,6 +129,20 @@ cost a restart. Don't re-derive them:
   reaches none of these pages; each document restates the palette. That is why
   `userContent.css` carries its own `color-scheme`, which must be kept equal to
   the switch in `userChrome.css`.
+- **A card has to be able to close, and a `<table>` cannot be one.** Giving a
+  content surface a gutter, a radius and an elevation only reads as a card if
+  all four edges are visible, so a surface longer than the viewport has to
+  become its own scroll container rather than letting the document scroll. On
+  `about:config` the obvious target, `#prefs`, cannot do it: a table box cannot
+  be sized below its content, so `flex: 1` plus `min-block-size: 0` will not
+  shrink it, and Gecko ignores `overflow` on a table box, so it never becomes a
+  scroller either. The attempt rendered pixel-identical to the build before it.
+  `body` is the wrapper that was already there — it takes the card, the height
+  and the `overflow: auto`, and the table goes back to being a plain table
+  drawn on it. Note the propagation rule this depends on: the first of
+  html/body with a non-visible overflow hands it to the viewport and is itself
+  then treated as visible, so `html: hidden` + `body: auto` makes body the
+  scroller, and the reverse order does not.
 - **`about:config` and `about:addons` get a fourth sheet: Thunderbird's own.**
   `aboutAddonsExtra.js` injects `chrome://messenger/skin/aboutExtra.css` into
   both, despite the name. It is not a token file — it restates things as direct
