@@ -67,20 +67,23 @@ on, and sampling settled both immediately.
 |---|---|
 | Tier 1–2: 3-pane, chrome, tabs, lists, icons | Shipped, verified light + dark |
 | Tier 3: Calendar | Shipped, verified light + dark |
-| Tier 3: Settings, Address Book, Account Settings | Abandoned — see below |
+| Tier 3: Account Settings, Address Book | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
+| Tier 3: Settings, Advanced Preferences, Add-ons Manager | Reachable and measured, not themed — see below |
 | Mica backdrop: window, menus, 3-pane gutters | Shipped, verified by pixel-sampling |
 | Mica backdrop: Calendar tab | Shipped, verified by pixel-sampling |
-| Tier 4: message content (`userContent.css`) | Out of scope by decision |
+| Mica backdrop: content tabs | Not reachable — see below |
+| Tier 4: message content | Out of scope by decision — `userContent.css` is scoped away from it |
 
 Transparency is gated on the `-moz-windows-mica` and `-moz-windows-mica-popups`
 media features, so the theme degrades to opaque by itself when the backdrop is
 off, unsupported, or dropped by DWM. Install step 3 is what turns it on.
 
-## Why three pages could not be themed
+## The content tabs
 
-The blocker is the hosting `<browser>` element's `type`, not how the `about:`
-page is registered — all four are plain `ALLOW_SCRIPT` in
-`AboutRedirector.sys.mjs`.
+Five pages live in content-type docshells, so `userChrome.css` cannot reach
+them and `userContent.css` is the only sheet that can. The blocker was never
+how the `about:` page is registered — all of them are plain `ALLOW_SCRIPT` in
+`AboutRedirector.sys.mjs` — it is the hosting `<browser>` element's `type`.
 
 | Surface | Docshell | Sheet that reaches it |
 |---|---|---|
@@ -88,16 +91,57 @@ page is registered — all four are plain `ALLOW_SCRIPT` in
 | `about:preferences` | content (`#preferencesbrowser type="content"`) | `userContent.css` |
 | `about:accountsettings` | content (`openTab("contentTab", …)`) | `userContent.css` |
 | `about:addressbook` | content | `userContent.css` |
+| `about:config`, `about:addons` | content | `userContent.css` |
 
-Verified against `messenger.xhtml` and `specialTabs.js` in TB 153's `omni.ja`.
-This is exactly why the 3-pane work succeeded and those three failed.
+Verified against `messenger.xhtml`, `specialTabs.js` and `AboutRedirector.sys.mjs`
+in TB 153's `omni.ja`.
 
-Anyone resuming should know: `userContent.css` was already proven to load and
-reach `about:preferences`. The unresolved question is scoping. That sheet also
-hits message display, which is Tier 4 and deliberately out of scope, so rules
-there must be scoped — via `@-moz-document url-prefix(...)` (the at-rule and
-`url-prefix` are both still present in `xul.dll`) or via a page-unique
-selector.
+Everything below was settled by canary — loud-colour rules pushed to the
+profile and pixel-sampled — rather than by reading source, and each answer
+cost a restart. Don't re-derive them:
+
+- **Scope on `about:`, not on the chrome URL.** Every page matched its
+  `about:` URI. Blocks keyed on the `chrome://` URL the page is served from
+  fired on nothing, on all five.
+- **Per-page `@-moz-document url-prefix()` solves the Tier 4 problem.**
+  `userContent.css` also hits message display, which is out of scope; message
+  docshells never carry these `about:` URIs. Every rule in that file is scoped
+  and none may be added unscoped.
+- **Account Settings is two documents.** `AccountManager.xhtml` is a shell
+  around `<iframe id="contentFrame">` holding
+  `chrome://messenger/content/am-*.xhtml`, where every actual setting lives.
+  The `about:` scope reaches 10% of the surface; the `am-` prefix reaches 78%.
+- **Nested `chrome://` documents inside a content docshell are reachable.**
+  Proven on the `am-*` panes and on Settings' `dialogFrame`. Scope any further
+  sub-dialog by its chrome path — no restart needed to find out.
+- **Mica does NOT reach a content docshell, and `#1C1B22` is the trap.**
+  Transparency does not cross a content browser, so dropping a content page's
+  background exposes Gecko's default canvas — `#1C1B22` in dark, which is
+  `--color-gray-90` in `design-system/tokens-shared.css`, not a backdrop
+  colour. It has B > R,G, so beside our flat `#202020` it reads exactly like a
+  Mica sample. Two checks separate them: a real backdrop **varies** with what
+  is behind the window (this was identical at 16 points across 1500px and
+  100% of every row band over 300px of height), and the chrome that does get
+  the backdrop sampled `#1D1D1D` in the same capture. Do not use "is it
+  blue-tinted" as the test. No user sheet can change this — the canvas colour
+  comes from the docshell, not the cascade.
+- **Custom properties do not cross a document boundary.** `fluent-tokens.css`
+  reaches none of these pages; each document restates the palette. That is why
+  `userContent.css` carries its own `color-scheme`, which must be kept equal to
+  the switch in `userChrome.css`.
+
+Three token vocabularies meet on these pages, and all three need mapping or
+half the surface stays stock: messenger's `--layout-*` ladder, messenger's
+`--color-*-base` semantics, and toolkit's Acorn tokens
+(`--background-color-box`, `--border-color`, `--button-*`, `--border-radius-*`).
+The chrome modules only ever needed the first. `userContent.css`'s shared block
+maps all three; Settings, Advanced Preferences and Add-ons Manager are built on
+the Acorn layer almost entirely, so adding their `about:` URIs to that block's
+selector list is most of what they need.
+
+Add-ons Manager has one known gap: `addon-updates-message` and
+`message-bar-stack` are shadow DOM. Its core UI (`addon-card`, `categories-box`,
+`addon-page-header`) is light DOM and reachable.
 
 Fingerprint for "no override landed": TB 153 dark stock
 `--layout-background-0` is `#18181b` and `-1` is `#27272a`. Sampling those

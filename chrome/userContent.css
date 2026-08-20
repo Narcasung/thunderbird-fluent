@@ -1,0 +1,639 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- CONTENT TABS
+ *
+ * Account Settings and Address Book. Both are content-type docshells, so
+ * userChrome.css cannot reach them and none of the theme's chrome modules
+ * apply here. This file is the whole theme for these pages.
+ *
+ * WHY THIS FILE EXISTS SEPARATELY FROM THE CHROME MODULES
+ * Custom properties do not cross a document boundary. Every one of these pages
+ * is its own document, so fluent-tokens.css's :root block -- which lives in the
+ * messenger window -- resolves to nothing here. The palette has to be restated
+ * inside each document this sheet targets. That is the duplication below; it is
+ * not an oversight.
+ *
+ * CASCADE
+ * Like userChrome.css this is a USER sheet, and author-normal beats user-normal,
+ * so nearly everything Thunderbird also sets needs !important. Note the one
+ * place that rule does NOT apply: a custom property set directly on an element
+ * by Thunderbird beats an inherited value, !important or not. accountManage.css
+ * relies on that for #deleteAccount's red -- it stays red, correctly, despite
+ * the --button-* mapping below.
+ *
+ * REACHABILITY -- measured, not assumed
+ * Two canary rounds, pixel-sampled with System.Drawing:
+ *   - Every page matched its about: URI. Blocks keyed on the chrome:// URL the
+ *     page is served from never fired, so about: is the scope that works.
+ *   - Account Settings is two documents. AccountManager.xhtml is a shell around
+ *     <iframe id="contentFrame"> holding chrome://messenger/content/am-*.xhtml,
+ *     which is where every actual setting lives. The about: scope covers 10% of
+ *     the surface; the am- prefix covers the other 78%. Both are needed.
+ *   - Nested chrome:// documents inside these content docshells ARE reachable
+ *     (proven on the am-* panes and on Settings' dialogFrame). Scope any further
+ *     sub-dialog by its chrome path; no restart needed to find out.
+ *
+ * >>> THE SWITCH <<<  This file has its own color-scheme, below in the shared
+ * block, because these documents cannot see userChrome.css's. It MUST be kept
+ * equal to the one in userChrome.css. Change one, change the other, or the
+ * content tabs render light against dark chrome.
+ *
+ * SCOPE DISCIPLINE
+ * Every rule sits inside an @-moz-document. Nothing is unscoped, so message
+ * display -- Tier 4, out of scope by decision -- is untouched. Do not add a
+ * bare rule to this file.
+ *
+ * NOT DONE HERE, ON PURPOSE
+ *   - Settings, Advanced Preferences, Add-ons Manager. The shared block below
+ *     is written to extend to them: add their about: URIs to its selector list
+ *     and most of the palette lands. They are excluded today only because they
+ *     have not been verified.
+ *   - Fluent's card-per-settings-group treatment of the am-* panes. Upstream
+ *     uses borderless fieldsets; turning those into cards is a layout redesign,
+ *     not a retokenizing, and it belongs in its own pass after this one is
+ *     confirmed. This pass does palette, geometry, controls, rows and focus.
+ * ========================================================================== */
+
+
+/* ============================================================================
+ * SHARED -- palette and token mapping for every page in this file.
+ *
+ * Three vocabularies meet on these pages and all three have to be mapped or
+ * half the surface stays stock:
+ *   1. --layout-*        messenger's semantic ladder (messenger/layout.css)
+ *   2. Acorn/in-content  toolkit's design system (design-system/tokens-*.css)
+ *   3. --color-*-base    messenger's own semantic colours (colors.css)
+ * The chrome modules only ever needed the first. The Acorn layer is new work,
+ * and it is the layer Settings, about:config and Add-ons will also need.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:accountsettings"),
+               url-prefix("chrome://messenger/content/am-"),
+               url-prefix("about:addressbook") {
+
+  /* --- 1. Fluent tokens. Values mirror fluent-tokens.css section 1. Mica is
+   * deliberately absent: these pages sit inside a tab, on the card surface,
+   * with the window backdrop already resolved behind them. --- */
+  :root {
+    color-scheme: dark;  /* >>> THE SWITCH <<< keep equal to userChrome.css */
+
+    --fluent-base:              light-dark(#F3F3F3, #202020);
+    --fluent-base-alt:          light-dark(#EEEEEE, #1C1C1C);
+    --fluent-card:              light-dark(#FFFFFF, #2B2B2B);
+    --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);
+    --fluent-solid-quart:       light-dark(#EFEFEF, #383838);
+    --fluent-flyout:            light-dark(#F9F9F9, #2C2C2C);
+
+    --fluent-text-primary:      light-dark(#1A1A1A, #FFFFFF);
+    --fluent-text-secondary:    light-dark(#5D5D5D, #CFCFCF);
+    --fluent-text-tertiary:     light-dark(#A4A4A4, rgba(255, 255, 255, .54));
+    --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
+
+    --fluent-divider:           light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
+    --fluent-card-stroke:       light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
+    --fluent-control-stroke:    light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
+
+    --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));
+    --fluent-subtle-pressed:    light-dark(rgba(0, 0, 0, .024), rgba(255, 255, 255, .04));
+
+    /* Accent. The chrome reads --sidebar-highlight-background-color first, to
+     * honour Thunderbird's own Appearance accent -- that variable is set by the
+     * lightweight-theme machinery on the messenger window and does not exist in
+     * a content document, so there is nothing to prefer here and the live
+     * Windows accent is used directly. Taking --selected-item-color as the
+     * source instead would be circular: it is mapped FROM this token below. */
+    --fluent-accent:             AccentColor;
+    --fluent-accent-text:        AccentColorText;
+    --fluent-accent-hover:       color-mix(in srgb, AccentColor 90%, light-dark(#000000, #FFFFFF));
+    --fluent-accent-pressed:     color-mix(in srgb, AccentColor 80%, light-dark(#000000, #FFFFFF));
+    --fluent-accent-tint:        color-mix(in srgb, AccentColor 20%, transparent);
+    --fluent-accent-tint-strong: color-mix(in srgb, AccentColor 35%, transparent);
+
+    --fluent-gutter:            8px;
+    --fluent-radius-card:       8px;
+    --fluent-radius-control:    4px;
+    --fluent-radius-row:        4px;
+    --fluent-row-inset:         4px;
+    --fluent-control-height:    32px;
+    --fluent-indicator-width:   3px;
+    --fluent-indicator-height:  16px;
+
+    --fluent-shadow-card:       0 2px 4px light-dark(rgba(0, 0, 0, .04), rgba(0, 0, 0, .26));
+
+    --fluent-duration-fast:     150ms;
+    --fluent-duration-normal:   250ms;
+    --fluent-ease-decelerate:   cubic-bezier(0, 0, 0, 1);
+    --fluent-ease-standard:     cubic-bezier(.33, 0, .67, 1);
+
+    --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    --fluent-size-body:         14px;
+    --fluent-weight-strong:     600;
+  }
+
+  /* --- 2. messenger's --layout-* ladder ---
+   * Same mapping as fluent-tokens.css section 2, with one deliberate
+   * difference: background-0 is the PAGE canvas on these pages, not a pane, so
+   * it takes the window base rather than card white. The panes are promoted to
+   * cards by the per-page blocks further down, which is what gives these tabs
+   * the same floating-pane reading as the 3-pane window. */
+  :root {
+    --layout-background-0: var(--fluent-base) !important;
+    --layout-background-1: var(--fluent-card) !important;
+    --layout-background-2: var(--fluent-card) !important;
+    --layout-background-3: var(--fluent-solid-tertiary) !important;
+    --layout-background-4: var(--fluent-solid-quart) !important;
+
+    --layout-color-0: var(--fluent-text-primary) !important;
+    --layout-color-1: var(--fluent-text-primary) !important;
+    --layout-color-2: var(--fluent-text-secondary) !important;
+    --layout-color-3: var(--fluent-text-tertiary) !important;
+
+    --layout-border-0: var(--fluent-divider) !important;
+    --layout-border-1: var(--fluent-card-stroke) !important;
+    --layout-border-2: var(--fluent-control-stroke) !important;
+
+    --sidebar-background: var(--fluent-card) !important;
+    --sidebar-color: var(--fluent-text-primary) !important;
+    --sidebar-border-color: var(--fluent-divider) !important;
+    --sidebar-border: var(--fluent-divider) !important;
+  }
+
+  /* --- 3. Toolkit Acorn tokens ---
+   * The layer the chrome modules never needed. accountManage.css and
+   * aboutAddressBook.css both read these directly, and they are what
+   * about:config and the Add-ons Manager are built on almost exclusively --
+   * this block is the reusable part of today's work. */
+  :root {
+    --background-color-canvas: var(--fluent-base) !important;
+    --background-color-box: var(--fluent-card) !important;
+    --background-color-box-info: var(--fluent-solid-tertiary) !important;
+    --background-color-dimmed: var(--fluent-subtle-hover) !important;
+    --background-color-dimmed-further: var(--fluent-subtle-pressed) !important;
+    --background-color-list-item-hover: var(--fluent-subtle-hover) !important;
+
+    --text-color: var(--fluent-text-primary) !important;
+    --text-color-deemphasized: var(--fluent-text-secondary) !important;
+    --text-color-disabled: var(--fluent-text-disabled) !important;
+
+    --border-color: var(--fluent-control-stroke) !important;
+    --border-color-deemphasized: var(--fluent-divider) !important;
+    --border-color-interactive: var(--fluent-control-stroke) !important;
+    --border-color-interactive-hover: var(--fluent-control-stroke) !important;
+    --border-color-selected: var(--fluent-accent) !important;
+
+    --color-accent-primary: var(--fluent-accent) !important;
+    --color-accent-primary-hover: var(--fluent-accent-hover) !important;
+    --color-accent-primary-active: var(--fluent-accent-pressed) !important;
+
+    /* Fluent's radius ladder. controlCornerRadius for controls,
+     * overlayCornerRadius for anything card- or flyout-shaped. */
+    --border-radius-xsmall: 2px !important;
+    --border-radius-small: var(--fluent-radius-control) !important;
+    --border-radius-medium: var(--fluent-radius-control) !important;
+    --border-radius-large: var(--fluent-radius-card) !important;
+
+    /* Legacy in-content names. Still referenced by accountManage.css and
+     * aboutAddressBook.css but no longer defined by the toolkit in TB 153 --
+     * mapped anyway because the cost is a line each and a stale reference that
+     * silently resolves to nothing is exactly the sort of gap that reads as
+     * "the theme missed a spot". */
+    --border-color-box-info: var(--fluent-divider) !important;
+    --in-content-box-border-color: var(--fluent-control-stroke) !important;
+    --in-content-box-info-border: var(--fluent-divider) !important;
+    --in-content-deemphasized-text: var(--fluent-text-secondary) !important;
+  }
+
+  /* --- 4. messenger's colors.css semantics + selection --- */
+  :root {
+    --color-surface-base: var(--fluent-card) !important;
+    --color-surface-subtle: var(--fluent-solid-tertiary) !important;
+    --color-surface-raised: var(--fluent-flyout) !important;
+    --color-surface-border: var(--fluent-card-stroke) !important;
+    --color-text-base: var(--fluent-text-primary) !important;
+    --color-text-secondary: var(--fluent-text-secondary) !important;
+    --color-text-muted: var(--fluent-text-tertiary) !important;
+
+    --selected-item-color: var(--fluent-accent) !important;
+    --selected-item-text-color: var(--fluent-accent-text) !important;
+    --panel-background-color-dimmed: var(--fluent-subtle-hover) !important;
+  }
+
+  /* --- 5. Controls ---
+   * Fluent's neutral control: a quiet solid fill, a hairline stroke, 4px
+   * corners, 32px tall. The hover step is a subtle overlay, not a colour swap. */
+  :root {
+    --button-background-color: var(--fluent-solid-quart) !important;
+    --button-background-color-hover: var(--fluent-subtle-hover) !important;
+    --button-background-color-active: var(--fluent-subtle-pressed) !important;
+    --button-hover-background-color: var(--fluent-subtle-hover) !important;
+    --button-active-background-color: var(--fluent-subtle-pressed) !important;
+    --button-border-color: var(--fluent-control-stroke) !important;
+    --button-text-color: var(--fluent-text-primary) !important;
+    --button-border-radius: var(--fluent-radius-control) !important;
+    --button-min-height: var(--fluent-control-height) !important;
+    --button-height: var(--fluent-control-height) !important;
+
+    --button-background-color-primary: var(--fluent-accent) !important;
+    --button-background-color-primary-hover: var(--fluent-accent-hover) !important;
+    --button-background-color-primary-active: var(--fluent-accent-pressed) !important;
+    --button-text-color-primary: var(--fluent-accent-text) !important;
+
+    --button-primary-background-color: var(--fluent-accent) !important;
+    --button-primary-hover-background-color: var(--fluent-accent-hover) !important;
+    --button-primary-active-background-color: var(--fluent-accent-pressed) !important;
+    --button-primary-text-color: var(--fluent-accent-text) !important;
+
+    --input-text-border-radius: var(--fluent-radius-control) !important;
+    --input-border-color: var(--fluent-control-stroke) !important;
+  }
+
+  /* --- 6. Lists. Same tokens fluent-lists.css retokenizes for the chrome; the
+   * component CSS (list-container.css, tree-listbox.css) is shared, so the
+   * values carry over unchanged. --- */
+  :root {
+    --listbox-border-radius: var(--fluent-radius-row) !important;
+    --list-item-min-height: var(--fluent-control-height) !important;
+
+    --list-container-border: transparent !important;
+    --list-container-border-hover: transparent !important;
+    --list-container-border-selected: transparent !important;
+    --list-container-border-selected-focused: transparent !important;
+    --list-container-border-selected-current: transparent !important;
+    --list-container-border-selected-current-focused: transparent !important;
+    --list-container-background-hover: var(--fluent-subtle-hover) !important;
+    --list-container-background-selected: var(--fluent-subtle-hover) !important;
+    --list-container-background-selected-focused: var(--fluent-subtle-hover) !important;
+    --list-container-background-selected-current: var(--fluent-subtle-hover) !important;
+    --list-container-background-selected-current-focused: var(--fluent-subtle-hover) !important;
+  }
+
+  /* --- 7. Motion, focus, scrollbars --- */
+  :root {
+    --transition-duration: var(--fluent-duration-fast) !important;
+    --transition-timing: var(--fluent-ease-standard) !important;
+
+    --focus-outline-color: var(--fluent-accent) !important;
+    --focus-outline: 2px solid var(--fluent-accent) !important;
+    --focus-outline-offset: 2px !important;
+
+    scrollbar-width: thin !important;
+    scrollbar-color: light-dark(rgba(0, 0, 0, .35), rgba(255, 255, 255, .35)) transparent !important;
+  }
+
+  /* --- 8. Typography --- */
+  :root,
+  body {
+    font-family: var(--fluent-font) !important;
+    font-optical-sizing: auto !important;
+  }
+
+  /* --- 9. Nav-pane rows.
+   * Both trees on these pages are nav panes, so both get the folder-pane
+   * treatment from fluent-lists.css rather than the message-list one: a neutral
+   * subtle fill, and the accent carried only by a 3x16 pill on the leading
+   * edge. list-container.css draws selection as a border, which Fluent does not
+   * do -- section 6 zeroes those borders, and the pill replaces them. --- */
+  :is(ul, ol)[role="tree"] .container {
+    min-height: var(--fluent-control-height) !important;
+    margin-inline: var(--fluent-row-inset) !important;
+    border-radius: var(--fluent-radius-row) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  :is(ul, ol)[role="tree"] li.selected > .container::before {
+    content: "" !important;
+    position: absolute !important;
+    inset-inline-start: 0 !important;
+    top: 50% !important;
+    width: var(--fluent-indicator-width) !important;
+    height: var(--fluent-indicator-height) !important;
+    border-radius: calc(var(--fluent-indicator-width) / 2) !important;
+    background-color: var(--fluent-accent) !important;
+    transform: translateY(-50%) !important;
+    animation: fluent-pill-in var(--fluent-duration-normal) var(--fluent-ease-decelerate) !important;
+  }
+
+  @keyframes fluent-pill-in {
+    from { transform: translateY(-50%) scaleY(0); }
+    to   { transform: translateY(-50%) scaleY(1); }
+  }
+}
+
+
+/* ============================================================================
+ * ACCOUNT SETTINGS -- the shell (AccountManager.xhtml)
+ * Account tree on the left, iframe on the right. 10% of the visible surface.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:accountsettings") {
+
+  /* THE GUTTER GOES ON THE GRID, NOT ON THE PANES.
+   *
+   * The first attempt gave each pane its own margin and set the iframe to
+   * inline-size/block-size: auto so the margin would not overflow. That
+   * collapsed the pane to a 300x150 box in the corner of an empty tab, and the
+   * reason is worth keeping: an iframe is replaced content. It has no intrinsic
+   * size to shrink-wrap to, so `auto` is not "fill the cell" -- it is the CSS
+   * default width/height for a replaced element, literally 300x150. Measured
+   * off the capture, the collapsed card was exactly that.
+   *
+   * So the frame keeps upstream's 100%/100% and the spacing moves up to body,
+   * which is already the grid container. */
+  html,
+  body {
+    block-size: 100% !important;
+  }
+
+  body {
+    box-sizing: border-box !important;
+    background-color: var(--fluent-base) !important;
+    padding: var(--fluent-gutter) !important;
+    gap: var(--fluent-gutter) !important;
+  }
+
+  /* Upstream pins the sidebar to 100vh, which with the body padding overflows
+   * the viewport by exactly that padding. Height goes back to the grid's own
+   * stretch instead of the viewport's. */
+  #accountTreeBox {
+    block-size: auto !important;
+    box-sizing: border-box !important;
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* The pane iframe is the second card. Its own document paints the fill (see
+   * the am- block below) -- a background set here would sit behind an opaque
+   * child document and never be seen, so the shell supplies only geometry. */
+  #contentFrame {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    block-size: 100% !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  #accountTreeHeaderBar {
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  /* Semibold, never bold -- Fluent uses semibold throughout chrome. Upstream
+   * asks for 500 here, which reads as regular against Segoe UI Variable. */
+  #accounttree > li > div > .name {
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  .sidebar-footer-link {
+    border-radius: var(--fluent-radius-control) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  .sidebar-footer-link:hover {
+    background-color: var(--fluent-subtle-hover) !important;
+  }
+
+  /* The Account Actions flyout. Upstream hardcodes a 2px radius and its own
+   * panel colours; Fluent wants overlayCornerRadius and the flyout surface. */
+  #accountActionsDropdown {
+    --panel-border-radius: var(--fluent-radius-card) !important;
+    --panel-background-color: var(--fluent-flyout) !important;
+    --panel-border-color: var(--fluent-card-stroke) !important;
+    --panel-text-color: var(--fluent-text-primary) !important;
+  }
+
+  #accountActionsDropdown > menuitem {
+    border-radius: var(--fluent-radius-control) !important;
+    margin-inline: var(--fluent-row-inset) !important;
+  }
+
+}
+
+
+/* ============================================================================
+ * ACCOUNT SETTINGS -- the panes (chrome://messenger/content/am-*.xhtml)
+ * All 16 of them: am-main, am-server, am-copies, am-addressing, am-junk,
+ * am-e2e, am-offline, am-mdn, am-im, am-smtp, am-identities-list and the
+ * -advanced / -edit / -retention / -serverwithnoidentities variants.
+ * This is 78% of the visible surface of Account Settings.
+ * ========================================================================== */
+
+@-moz-document url-prefix("chrome://messenger/content/am-") {
+
+  /* The pane fills the iframe, so it paints the card fill the shell cannot. */
+  html,
+  body {
+    background-color: var(--fluent-card) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* Section headings. Upstream fieldsets are borderless with a legend doing the
+   * work of a heading -- kept flat here on purpose (see NOT DONE HERE at the
+   * top); only the type is brought onto Fluent's scale. */
+  legend,
+  .heading {
+    font-weight: var(--fluent-weight-strong) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* Controls. Radii and height come from the shared token block; these are the
+   * cases where upstream sets the property directly and a token cannot reach. */
+  button,
+  menulist,
+  select {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]),
+  textarea {
+    border-radius: var(--fluent-radius-control) !important;
+    border-color: var(--fluent-control-stroke) !important;
+    background-color: var(--fluent-solid-tertiary) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]):focus-visible,
+  textarea:focus-visible {
+    outline: var(--focus-outline) !important;
+    outline-offset: var(--focus-outline-offset) !important;
+  }
+
+  /* Blocks of content inside the pane -- the identity list, the archive tree.
+   * These are the one place the pane is not flat, so they take the tertiary
+   * surface and card corners rather than a border.
+   *
+   * The pane's own info boxes (.content-blocking-category, .openpgp-status and
+   * friends) are NOT listed here and do not need to be: they are already built
+   * on --background-color-box-info and --border-color-box-info, both mapped in
+   * the shared block, so they follow the palette without a selector. */
+  richlistbox,
+  tree {
+    background-color: var(--fluent-solid-tertiary) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-control) !important;
+  }
+
+}
+
+
+/* ============================================================================
+ * ADDRESS BOOK (about:addressbook)
+ * Three panes: books, cards, details. Structurally the closest of the five to
+ * the 3-pane window, so it gets the same floating-card reading.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:addressbook") {
+
+  :root,
+  body {
+    background-color: var(--fluent-base) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* The three panes as cards on the window base. Upstream lays these out with
+   * grid + splitters that set track sizes, so the gutter is taken as margin on
+   * the pane rather than gap on the grid -- a gap would fight the splitter's
+   * computed widths. */
+  #booksPane,
+  #cardsPane,
+  #detailsPane {
+    box-sizing: border-box !important;
+    margin: var(--fluent-gutter) !important;
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* Panes already carry the gutter on both sides; a second one between them
+   * would double it. Collapse the inner edges. */
+  #cardsPane,
+  #detailsPane {
+    margin-inline-start: 0 !important;
+  }
+
+  /* Splitters sit in the gutter and must not paint -- the gap between cards is
+   * the window base showing through, not a line. */
+  #booksSplitter,
+  #sharedSplitter {
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+
+  #booksPaneHeaderBar,
+  #cardsPaneHeader {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--fluent-divider) !important;
+  }
+
+  /* The cards list is a message list, not a nav pane, so it takes the thread
+   * pane's model from fluent-lists.css: an accent-tinted fill plus a 3px accent
+   * bar on the leading edge. A neutral-only fill is too quiet to track a
+   * selection across a long contact list -- the same reasoning that split the
+   * two selection models in the chrome. */
+  #cards {
+    --listbox-selected-bg: var(--fluent-subtle-hover) !important;
+    --listbox-focused-selected-bg: var(--fluent-accent-tint) !important;
+    --listbox-selected-color: var(--fluent-text-primary) !important;
+    --tree-card-background: transparent !important;
+    --tree-card-background-selected: var(--fluent-accent-tint) !important;
+    --tree-card-background-selected-current: var(--fluent-accent-tint-strong) !important;
+    --tree-card-background-current: var(--fluent-subtle-hover) !important;
+    --tree-card-border: transparent !important;
+    --tree-card-border-selected: transparent !important;
+    --tree-card-border-hover: transparent !important;
+    --tree-card-border-focus: var(--fluent-accent) !important;
+    background-color: transparent !important;
+  }
+
+  /* Rows are tr[is="ab-card-row"] -- NOT the .table-layout / .card-layout
+   * classes the thread pane uses. Both lists are <tree-view>, but the row
+   * custom element differs, and the thread pane's class names appear nowhere in
+   * this document. Verified in aboutAddressBook.css against this build.
+   *
+   * No height is set on the row. --list-item-min-height in the shared block is
+   * what tree-listbox.css actually reads, and it already carries Fluent's 32px.
+   * (--ab-card-table-row-height looks like the obvious lever and is not one: it
+   * is declared in aboutAddressBook.css and read by nothing in this build.) */
+  #cards tr[is="ab-card-row"] {
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  #cards tr[is="ab-card-row"]:hover:not(.selected) {
+    background-color: var(--fluent-subtle-hover) !important;
+  }
+
+  #cards tr[is="ab-card-row"].selected {
+    background-color: var(--fluent-accent-tint) !important;
+    color: var(--fluent-text-primary) !important;
+    background-image: linear-gradient(to right,
+                        var(--fluent-accent) 0 var(--fluent-indicator-width),
+                        transparent var(--fluent-indicator-width)) !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* Focused selection is the stronger tint; unfocused stays quiet so the pane
+   * plainly reads as inactive -- same split as the thread pane. */
+  #cards:focus-within tr[is="ab-card-row"].selected {
+    background-color: var(--fluent-accent-tint-strong) !important;
+  }
+
+  /* Column headers sit on the card and must not paint their own surface. */
+  #cards thead th {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--fluent-divider) !important;
+    font-weight: var(--fluent-weight-strong) !important;
+  }
+
+  /* Detail pane sections need no rule here. Upstream already builds
+   * "#detailsBody section" from --background-color-box-info,
+   * --in-content-box-info-border and --button-border-radius, all three mapped
+   * in the shared block, so they come out as tertiary blocks with 4px corners
+   * on their own. Tertiary is also the right answer: a card inside a card
+   * flattens the elevation ladder Fluent uses to separate the two. */
+
+  #detailsActions button,
+  #editButton {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  #searchInput {
+    border-radius: var(--fluent-radius-control) !important;
+    border-color: var(--fluent-control-stroke) !important;
+    background-color: var(--fluent-solid-tertiary) !important;
+  }
+
+  /* ---- NO MICA HERE, AND IT IS NOT REACHABLE ----------------------------
+   *
+   * Do not try again without reading this. Three restarts went into it.
+   *
+   * The goal was the 3-pane's look: cards floating on the DWM backdrop, with
+   * the gutters showing it through. fluent-layout.css's note on that chain
+   * already flagged why it might not carry over -- "the browser is a chrome
+   * browser in the same process with no type='content', so it composites into
+   * the parent's layer tree and transparency propagates -- a remote content
+   * browser would not." These pages are content browsers.
+   *
+   * Transparency does not cross a content docshell. Dropping the background
+   * does not expose the backdrop, it exposes Gecko's DEFAULT CANVAS, which in
+   * dark mode is #1C1B22 -- and that is not a backdrop colour, it is literally
+   * --color-gray-90 in this build's design-system/tokens-shared.css.
+   *
+   * The trap: #1C1B22 has B > R,G, so it reads as "violet-tinted" and looks
+   * exactly like a Mica sample next to our flat #202020. It is not. Two things
+   * tell them apart, and both are cheap to check:
+   *   - it is perfectly flat. 16 samples across 1500px, all #1C1B22; every row
+   *     band from y=880 to y=1180, 100% #1C1B22. A real backdrop varies with
+   *     whatever is behind the window.
+   *   - the chrome that DOES get the backdrop samples #1D1D1D in the same
+   *     capture. Same backdrop would mean the same colour.
+   *
+   * No user sheet can fix this: the canvas colour comes from the docshell, not
+   * the cascade. So these pages stay opaque on --fluent-base, and the cards on
+   * --fluent-card, which is also what they looked like when they read best.
+   * ---------------------------------------------------------------------- */
+}

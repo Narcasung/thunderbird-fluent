@@ -183,6 +183,18 @@ body#paneLayout {
   #tabpanelcontainer stack:has(> browser[src="about:3pane"]) {
     background-color: transparent !important;
   }
+
+  /* Content tabs (Account Settings, Address Book) deliberately get NO rule
+   * here. Making this chain transparent --
+   *
+   *   .tabmail-tab-panel -> .contentTabInstance -> stack -> browser -> document
+   *
+   * -- was tried and does not work, because the last link is a content
+   * docshell and transparency does not cross one. The page ends up on Gecko's
+   * default canvas (#1C1B22 = --color-gray-90), not on the backdrop, which
+   * looks like a Mica sample and is not one. The full finding, with the two
+   * checks that tell those apart, is at the end of the about:addressbook block
+   * in userContent.css. Read it before retrying. */
 }
 
 /* Content side: the canvas of the about:3pane document itself. The root
