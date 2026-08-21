@@ -121,6 +121,32 @@
     --fluent-accent-tint:        color-mix(in srgb, AccentColor 20%, transparent);
     --fluent-accent-tint-strong: color-mix(in srgb, AccentColor 35%, transparent);
 
+    /* Accent as TEXT, which is a different colour from accent as a fill.
+     *
+     * --fluent-accent is the raw Windows AccentColor, chosen to sit BEHIND
+     * AccentColorText; nothing guarantees it reads as text on our own
+     * surfaces. Measured with this machine's accent at #4A5459 it gave roughly
+     * 1.6:1 against the #2B2B2B card -- links were there and could not be read.
+     *
+     * Windows has the same problem and solves it with a tint ladder: accent
+     * text on a dark surface is AccentLight2, on a light surface AccentDark2,
+     * never the base. That palette lives in the registry, not in CSS, but
+     * mixing toward white/black reproduces it closely -- against this accent,
+     * 55% + white renders #9BA1A5 where Windows' own Light2 is #9EABAE, 5.35:1
+     * against the card. The mix also degrades correctly for a saturated
+     * accent, which is what a stock Windows dark theme's pale-blue link is.
+     *
+     * Measured on tools\remote.png, on Settings' "Learn more about the privacy
+     * issues of remote content". The sub-dialog overlay was up, so the page
+     * behind it is dimmed by a ~50% black scrim -- white text sampled #7F7F7F,
+     * which pins the factor at 0.498; the link's underline, a solid run with no
+     * antialiasing, sampled #4D5052, i.e. #9BA1A5 undimmed. Stock would have
+     * been --color-cyan-30 #4CC4E1 or --color-blue-40 #5A87FD, both of which
+     * dim to something obviously blue (#266270 / #2D437E). */
+    --fluent-accent-link: light-dark(
+      color-mix(in srgb, AccentColor 60%, #000000),
+      color-mix(in srgb, AccentColor 55%, #FFFFFF));
+
     --fluent-gutter:            8px;
     --fluent-radius-card:       8px;
     --fluent-radius-control:    4px;
@@ -229,6 +255,27 @@
     --selected-item-color: var(--fluent-accent) !important;
     --selected-item-text-color: var(--fluent-accent-text) !important;
     --panel-background-color-dimmed: var(--fluent-subtle-hover) !important;
+
+    /* Links. Stock is blue-40 (messenger variables.css) or cyan-30 (toolkit
+     * tokens-platform.css) depending on which sheet a page imports -- either
+     * way the one interactive colour on these pages that ignores the accent.
+     *
+     * This has to live in the SHARED block, not on one page: two rules read
+     * these tokens and between them they cover every document this file
+     * touches -- common-shared.css's `html|a, .text-link, ::part(support-link)`
+     * for the in-content pages, and global-shared.css's `.text-link, a,
+     * ::part(support-link)` for the XUL ones (the am-* panes and every
+     * sub-dialog). Scoping them to about:addons, as the first pass did, left
+     * Settings and the account panes on stock blue beside an accent-tinted
+     * neighbouring tab.
+     *
+     * --link-color-visited is deliberately absent: both vocabularies declare
+     * it as `var(--link-color)` on the same :root (tokens-shared.css:409,
+     * variables.css:228), so it resolves against the value below on its own.
+     * Under forced-colors it stays VisitedText, which is correct. */
+    --link-color: var(--fluent-accent-link) !important;
+    --link-color-hover: color-mix(in srgb, var(--fluent-accent-link) 85%, light-dark(#000000, #FFFFFF)) !important;
+    --link-color-active: color-mix(in srgb, var(--fluent-accent-link) 70%, light-dark(#000000, #FFFFFF)) !important;
   }
 
   /* --- 5. Controls ---
@@ -839,29 +886,10 @@
      * stops being read. */
     --card-shadow-hover: var(--fluent-shadow-flyout) !important;
 
-    /* Hyperlinks. tokens-platform.css gives dark mode --color-cyan-30, the one
-     * interactive colour on these pages that ignores the accent.
-     *
-     * NOT --fluent-accent. That token is the raw Windows AccentColor, which is
-     * a FILL colour: it is chosen to sit behind AccentColorText, and nothing
-     * guarantees it reads as text on our own surfaces. Measured here with the
-     * live accent at #4A5459 it gave roughly 1.6:1 against the #2B2B2B card --
-     * the links were there and could not be read.
-     *
-     * Windows has the same problem and solves it with a tint ladder: accent
-     * text on a dark surface is AccentLight2, on a light surface AccentDark2,
-     * never the base. The palette is in the registry, not in CSS, but mixing
-     * toward white/black reproduces it closely -- against this machine's
-     * accent, 55% + white gives #9CA1A4 where Windows' own Light2 is #9EABAE.
-     * The mix also degrades correctly for a saturated accent, which is exactly
-     * what the pale-blue link colour in a stock Windows dark theme is. */
-    --fluent-accent-link: light-dark(
-      color-mix(in srgb, AccentColor 60%, #000000),
-      color-mix(in srgb, AccentColor 55%, #FFFFFF));
-
-    --link-color: var(--fluent-accent-link) !important;
-    --link-color-hover: color-mix(in srgb, var(--fluent-accent-link) 85%, light-dark(#000000, #FFFFFF)) !important;
-    --link-color-active: color-mix(in srgb, var(--fluent-accent-link) 70%, light-dark(#000000, #FFFFFF)) !important;
+    /* Links were mapped in this block first -- this is the page the contrast
+     * measurement was taken on. They now live in the shared block, section 4:
+     * the same tokens are read on every document in this file, so a per-page
+     * mapping left the other pages on stock blue. */
   }
 
   /* aboutExtra.css sets .card's radius to --button-border-radius, i.e. the 4px
