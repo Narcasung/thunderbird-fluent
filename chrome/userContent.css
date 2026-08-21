@@ -90,7 +90,6 @@
     color-scheme: dark;  /* >>> THE SWITCH <<< keep equal to userChrome.css */
 
     --fluent-base:              light-dark(#F3F3F3, #202020);
-    --fluent-base-alt:          light-dark(#EEEEEE, #1C1C1C);
     --fluent-card:              light-dark(#FFFFFF, #2B2B2B);
     --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);
     --fluent-solid-quart:       light-dark(#EFEFEF, #383838);
@@ -164,8 +163,9 @@
     --fluent-ease-decelerate:   cubic-bezier(0, 0, 0, 1);
     --fluent-ease-standard:     cubic-bezier(.33, 0, .67, 1);
 
+    /* Family and weight only, no size -- see the typography note in
+     * fluent-tokens.css section 1 for why the ramp is not restated. */
     --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-    --fluent-size-body:         14px;
     --fluent-weight-strong:     600;
   }
 

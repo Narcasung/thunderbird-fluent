@@ -19,7 +19,12 @@
 :root {
   /* --- Surfaces --- */
   --fluent-base:              light-dark(#F3F3F3, #202020);  /* window, behind cards */
-  --fluent-base-alt:          light-dark(#EEEEEE, #1C1C1C);  /* solid secondary */
+
+  /* Fluent's solid ladder has a BaseAlt step between base and card
+   * (#EEEEEE / #1C1C1C). It was declared here and never read: the surfaces
+   * this theme actually needs are base for the window, card for a pane, and
+   * tertiary/quart for blocks and controls inside one. Nothing sits between
+   * the window and a pane. Restate it if a surface ever does. */
 
   /* Mica. DWM paints the window backdrop itself (widget.windows.mica in
    * user.js). CSS cannot fake it, but it CAN detect it: see the
@@ -104,11 +109,16 @@
   --fluent-ease-decelerate:   cubic-bezier(0, 0, 0, 1);
   --fluent-ease-standard:     cubic-bezier(.33, 0, .67, 1);
 
-  /* --- Typography --- */
+  /* --- Typography ---
+   * No size token, on purpose. Fluent's ramp is caption 12 / body 14 /
+   * subtitle 20, and all three were declared here and read by nothing: this
+   * theme sets the family and the weight and leaves every text SIZE to
+   * Thunderbird, which already scales them off the user's font-size pref and
+   * the uidensity setting. Overriding sizes would break both. The one literal
+   * font-size in the theme is fluent-icons.css:118, and that is a glyph size
+   * for the spaces toolbar, not body type -- its matching 20px is a
+   * coincidence, not this ramp. */
   --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --fluent-size-caption:      12px;
-  --fluent-size-body:         14px;
-  --fluent-size-subtitle:     20px;
   --fluent-weight-strong:     600;  /* Fluent uses semibold, never bold, in chrome */
 }
 
