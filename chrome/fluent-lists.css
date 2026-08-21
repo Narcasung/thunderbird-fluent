@@ -26,6 +26,26 @@
  * the states, so most of this is retokenizing rather than selector surgery.
  * ------------------------------------------------------------------------- */
 
+/* Match the Account Settings sidebar's text size.
+ *
+ * Both panes are the same widget, the same family and the same 32px row, but
+ * their documents disagree on body size. Every in-content page starts from
+ * `:root:not(.system-font-size) { font: message-box }`
+ * (shared/common.css:41) and then bumps its own body a tenth --
+ * aboutExtra.css:11, aboutAddressBook.css:96. about:3pane is a chrome
+ * document and never gets that bump, so the folder pane renders one step
+ * below every content tab: cap height measured 8px against Account Settings'
+ * 9px on a single capture, row pitch identical at 34px in both.
+ *
+ * 1.1rem, not a px value: rem here is about:3pane's own root, which is still
+ * message-box, so the user's system font size and font-size pref keep
+ * scaling this the way they scale everything else. --fluent-font-* stays
+ * absent from fluent-tokens.css for that reason -- see the typography note
+ * there. */
+#folderPane {
+  font-size: 1.1rem !important;
+}
+
 #folderPane,
 #folderTree {
   --treeitem-background-hover: var(--fluent-subtle-hover) !important;
@@ -73,6 +93,31 @@
 @keyframes fluent-pill-in {
   from { transform: translateY(-50%) scaleY(0); }
   to   { transform: translateY(-50%) scaleY(1); }
+}
+
+/* Same tenth-of-a-step bump as #folderPane above, same reason: about:3pane is
+ * a chrome document and never gets the body size every content tab gets.
+ *
+ * One difference. The folder pane's labels inherit freely, so the bump on the
+ * pane was enough. The thread pane pins three descendants to `rem`, which is
+ * still the un-bumped root, so they would have stayed behind at the old size
+ * while the rows around them grew:
+ *   tree-listbox.css:324  table[is="tree-view-table"]      the rows themselves
+ *   tree-listbox.css:492  .tree-table-cell-container button  column headers
+ *   threadPane.css:619    .thread-pane-count-info          "395 Messages"
+ * `inherit` hands each of them the pane's size instead.
+ *
+ * Deliberately left pinned: .list-header-title (threadPane.css:608, 1.2rem) is
+ * a heading and should stay above body size, and the empty-folder placeholder
+ * (tree-listbox.css:676, 1.5rem) is display type, not body type. */
+#threadPane {
+  font-size: 1.1rem !important;
+}
+
+#threadPane table[is="tree-view-table"],
+#threadPane .tree-table-cell-container button,
+#threadPane .thread-pane-count-info {
+  font-size: inherit !important;
 }
 
 /* ---------------------------------------------------------------------------

@@ -117,7 +117,14 @@
    * the uidensity setting. Overriding sizes would break both. The one literal
    * font-size in the theme is fluent-icons.css:118, and that is a glyph size
    * for the spaces toolbar, not body type -- its matching 20px is a
-   * coincidence, not this ramp. */
+   * coincidence, not this ramp.
+   *
+   * fluent-lists.css carries the only exceptions, on #folderPane and
+   * #threadPane. Both are 1.1rem, relative to the same message-box root, and
+   * both exist only to close a size step Thunderbird itself opens between
+   * about:3pane and its content tabs. A shared token would not help: the two
+   * sides need the SAME computed size, not the same declared one, and they
+   * compute from different roots. */
   --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   --fluent-weight-strong:     600;  /* Fluent uses semibold, never bold, in chrome */
 }
