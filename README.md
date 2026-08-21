@@ -70,6 +70,7 @@ on, and sampling settled both immediately.
 | Tier 3: Account Settings, Address Book | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
 | Tier 3: Settings and its sub-dialogs | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
 | Tier 3: Advanced Preferences, Add-ons Manager | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
+| Tier 3: Account Central | Shipped (`fluent-account-central.css`), verified dark by pixel-sampling; light not yet checked |
 | Mica backdrop: window, menus, 3-pane gutters | Shipped, verified by pixel-sampling |
 | Mica backdrop: Calendar tab | Shipped, verified by pixel-sampling |
 | Mica backdrop: content tabs | Not reachable — see below |
@@ -89,6 +90,7 @@ how the `about:` page is registered — all of them are plain `ALLOW_SCRIPT` in
 | Surface | Docshell | Sheet that reaches it |
 |---|---|---|
 | `about:3pane`, `about:message` | chrome (no `type` attribute → default) | `userChrome.css` |
+| `msgAccountCentral.xhtml` | chrome (`#accountCentralBrowser`, no `type`) | `userChrome.css` |
 | `about:preferences` | content (`#preferencesbrowser type="content"`) | `userContent.css` |
 | `about:accountsettings` | content (`openTab("contentTab", …)`) | `userContent.css` |
 | `about:addressbook` | content | `userContent.css` |

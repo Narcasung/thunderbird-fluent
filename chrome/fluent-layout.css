@@ -5,7 +5,7 @@
  *   BASE (flush, no radius, no shadow, window colour)
  *     titlebar, unified toolbar, menubar, tab strip, spaces rail, status bar
  *   CARD (inset by one gutter, 8px radius, elevation shadow, card colour)
- *     folder pane, thread pane, message pane
+ *     folder pane, thread pane, message pane, Account Central
  *
  * This is the Windows 11 convention: chrome and nav rails are base, only
  * content is card. Same pattern as Settings and the new Outlook.
@@ -123,6 +123,31 @@ body#paneLayout {
 #threadTree,
 #folderTree {
   background-color: transparent !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * ACCOUNT CENTRAL -- the fourth card
+ *
+ * #accountCentralBrowser is a SIBLING of the three panes in body#paneLayout,
+ * not a child of #messagePane (about3Pane.xhtml:513). When the selected row is
+ * an account root, about3Pane.css:105 swaps the grid to
+ * "folders folderPaneSplitter account-central" and hides #threadPane,
+ * #messagePaneSplitter and #messagePane -- so this browser IS the whole
+ * right-hand side and needs a card of its own, or it renders as a bare slab
+ * beside the folder pane's.
+ *
+ * It carries no type attribute, so the page inside is a CHROME docshell and
+ * userChrome.css reaches it; its interior is fluent-account-central.css.
+ * That file makes the page's own html and body transparent, which is what
+ * lets the fill and radius below be the ones that show -- a browser does not
+ * reliably clip its document to a border-radius, so nothing inside may paint.
+ * ------------------------------------------------------------------------- */
+
+#accountCentralBrowser {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
 }
 
 /* ---------------------------------------------------------------------------
