@@ -74,7 +74,14 @@
                url-prefix("about:preferences"),
                url-prefix("chrome://messenger/content/preferences/"),
                url-prefix("chrome://calendar/content/preferences/"),
-               url-prefix("chrome://mozapps/content/preferences/") {
+               url-prefix("chrome://mozapps/content/preferences/"),
+               url("chrome://messenger/content/newTagDialog.xhtml"),
+               url("chrome://messenger/content/systemIntegrationDialog.xhtml"),
+               url("chrome://messenger/content/addressbook/pref-editdirectories.xhtml"),
+               url("chrome://mozapps/content/update/history.xhtml"),
+               url("chrome://global/content/appPicker.xhtml"),
+               url("chrome://pippki/content/certManager.xhtml"),
+               url("chrome://pippki/content/device_manager.xhtml") {
 
   /* --- 1. Fluent tokens. Values mirror fluent-tokens.css section 1. Mica is
    * deliberately absent: these pages sit inside a tab, on the card surface,
@@ -1141,17 +1148,57 @@
 
 /* ============================================================================
  * SETTINGS SUB-DIALOGS
+ * Every document that opens into <browser class="dialogFrame"> inside
+ * about:preferences. Three prefixes plus seven exact URLs, because these are
+ * two different populations.
+ *
+ * THE THREE PREFIXES are the dialogs Settings ships next to its own panes --
  * Connection, Offline, Passwords, Cookies, Fonts, Languages, Permissions, the
- * calendar's Edit Category, and toolkit's primary-password dialogs. Each is its
- * own document loaded into <browser class="dialogFrame"> inside
- * about:preferences, and each matched its chrome path during the canary round
- * (16.2% coverage) while the page itself stayed on about:preferences -- so
- * these prefixes hit the dialogs only, never the page.
+ * calendar's Edit Category and toolkit's primary-password dialogs. Each matched
+ * its chrome path during the canary round (16.2% coverage) while the page
+ * itself stayed on about:preferences, so the prefixes hit the dialogs only,
+ * never the page.
+ *
+ * THE SEVEN URLS are the ones that live outside those three trees and so
+ * rendered stock inside a themed page. Verified against this build's omni.ja:
+ *   newTagDialog                general.js:1418,1428  General > Tags > New/Edit
+ *   systemIntegrationDialog     general.js:836        General > System Integration
+ *   pref-editdirectories        compose.js:158        Composition > Edit Directories
+ *   update/history              general.js:1850       General > Show Update History
+ *   appPicker                   general.js:2573       General > Files, app chooser
+ *   certManager                 privacy.js:477        Privacy > Manage Certificates
+ *   device_manager              privacy.js:505        Privacy > Security Devices
+ *
+ * WHY url() AND NOT url-prefix(). Four of the seven are toolkit, global or
+ * pippki documents. url-prefix("chrome://global/content/") and
+ * url-prefix("chrome://pippki/content/") would drag in every other document in
+ * those trees and break this file's scope discipline. @-moz-document has no
+ * url-suffix, but url() matches one document exactly, and every call site above
+ * passes a bare URL -- no query string -- so the exact form is safe here.
+ *
+ * WHY THE SHARED BLOCK REACHES THEM. Measured, not assumed: all seven load
+ * chrome://global/skin/global.css (pref-editdirectories reaches it through
+ * messenger.css), which imports global-shared.css and from there
+ * design-system/tokens-platform.css. That is the same Acorn token layer the
+ * three prefixes already ride, so the shared block's --color-*, --layout-* and
+ * --background-color-canvas mappings land on all seven. Three documents need
+ * more than the shared vocabulary; they get their own blocks below.
+ *
+ * NOT ADDED HERE: junkLog.xhtml (privacy.js:297). It opens through
+ * window.browsingContext.topChromeWindow.openDialog, so it is a separate chrome
+ * window and userChrome.css already reaches it.
  * ========================================================================== */
 
 @-moz-document url-prefix("chrome://messenger/content/preferences/"),
                url-prefix("chrome://calendar/content/preferences/"),
-               url-prefix("chrome://mozapps/content/preferences/") {
+               url-prefix("chrome://mozapps/content/preferences/"),
+               url("chrome://messenger/content/newTagDialog.xhtml"),
+               url("chrome://messenger/content/systemIntegrationDialog.xhtml"),
+               url("chrome://messenger/content/addressbook/pref-editdirectories.xhtml"),
+               url("chrome://mozapps/content/update/history.xhtml"),
+               url("chrome://global/content/appPicker.xhtml"),
+               url("chrome://pippki/content/certManager.xhtml"),
+               url("chrome://pippki/content/device_manager.xhtml") {
 
   /* The dialog box itself needs no fill rule: dialog.css paints dialog/window
    * from --color-surface-base, mapped to the card in the shared block, which is
@@ -1213,6 +1260,96 @@
     border-radius: var(--fluent-radius-control) !important;
   }
 
+}
+
+
+/* ============================================================================
+ * SUB-DIALOG DOCUMENTS WITH THEIR OWN VOCABULARY
+ * Two of the seven above load a stylesheet the shared block does not speak.
+ * Each is named exactly, because in each case the fix belongs to that document
+ * and to no other.
+ *
+ * A THIRD WAS EXPECTED AND IS NOT HERE. update/history.xhtml loads updates.css,
+ * which predates the token layer and hardcodes two colours: a 1px dotted
+ * #c0c0c0 row divider and a #990000 .update-type label -- the latter about
+ * 1.3:1 on the card, which would have been unreadable. Both are dead in this
+ * build. history.js:34 builds each row as richlistitem.update, so updates.css's
+ * bare `update` element selector never matches, and nothing in that file sets
+ * an .update-type class at all. The one interactive colour the document really
+ * does draw is its details link (history.js:47, label is="text-link"), and the
+ * shared block's --link-color mapping already covers it. Left alone on purpose;
+ * do not add a rule here on the strength of grepping updates.css.
+ * ========================================================================== */
+
+/* newTagDialog is the only one of the seven that loads themeableDialog.css, and
+ * that sheet carries a FOURTH vocabulary -- --box-*, --field-*, --tab-* --
+ * beside the three the shared block maps. Its dark values do exist, but they
+ * are keyed on :host and on :root[lwtheme]. A document in a sub-dialog frame is
+ * a plain :root with no lwtheme attribute, so it falls through to the
+ * system-colour defaults at the top of that sheet: Menu, Field, FieldText,
+ * ThreeDShadow. Those follow the color-scheme the shared block sets, so text
+ * and fills land close on their own. The greys do not -- --field-border-color
+ * is a flat rgba(128, 128, 128, .6), and the tab washes are
+ * hsla(0, 0%, 50%, .15) and .25.
+ *
+ * Two of that sheet's tokens are deliberately absent. --richlist-button-background
+ * has nothing to colour: this document is one input, one colour picker and two
+ * labels, with no richlistbox. And themeableDialog.css:499's hardcoded #0aa5ff
+ * link is dropped for the same reason db96547 dropped its selectors -- it keys
+ * on :root[lwt-tree-brighttext], and this document has neither that attribute
+ * nor a link.
+ *
+ * #tagColorPicker needs no exception to the block's input rule above. Firefox
+ * paints an <input type="color"> as a button with ::-moz-color-swatch inside
+ * it, so background-color reaches the button and never the swatch. The calendar
+ * Edit Category dialog already proved this: it has a type="color" too, and has
+ * been inside the three prefixes since db96547. */
+@-moz-document url("chrome://messenger/content/newTagDialog.xhtml") {
+  :root {
+    --box-text-color: var(--fluent-text-primary) !important;
+    --box-background-color: var(--fluent-card) !important;
+    --box-border-color: var(--fluent-card-stroke) !important;
+
+    --field-text-color: var(--fluent-text-primary) !important;
+    --field-background-color: var(--fluent-solid-tertiary) !important;
+    --field-border-color: var(--fluent-control-stroke) !important;
+    --field-border-hover-color: var(--fluent-control-stroke) !important;
+
+    --tab-hover-background: var(--fluent-subtle-hover) !important;
+    --tab-selected-background: var(--fluent-subtle-pressed) !important;
+  }
+}
+
+
+/* certManager is the only one of the seven with a tab strip, and the only
+ * document in this file that reaches toolkit's tabbox.css.
+ *
+ * The selected-tab indicator needs nothing: tabbox.css already draws
+ * tab[visuallyselected] with AccentColor, which is the same Windows accent this
+ * theme is built on. What is stock is the strip's ThreeDShadow underline and
+ * the two currentColor washes it uses for hover and press --
+ * color-mix(currentColor 15%) and 30%, neither of them a theme colour.
+ *
+ * The indicator's 3px bottom border keeps its toolkit shape on purpose.
+ * --fluent-indicator-width and -height exist, but they describe the tabmail
+ * pill; reshaping a dialog's tab strip to match it is the group-structure work
+ * the file header rules out of these passes.
+ *
+ * tabbox.css writes its hover and active rules inside :where(), so they carry
+ * no specificity at all; the !important here is for the user-sheet origin, not
+ * for the selector. */
+@-moz-document url("chrome://pippki/content/certManager.xhtml") {
+  tabs {
+    border-bottom-color: var(--fluent-divider) !important;
+  }
+
+  tab:hover {
+    background-color: var(--fluent-subtle-hover) !important;
+  }
+
+  tab:hover:active {
+    background-color: var(--fluent-subtle-pressed) !important;
+  }
 }
 
 
