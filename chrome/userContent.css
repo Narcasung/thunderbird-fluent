@@ -66,6 +66,8 @@
 
 @-moz-document url-prefix("about:accountsettings"),
                url-prefix("chrome://messenger/content/am-"),
+               url-prefix("chrome://messenger/content/SmtpServerEdit.xhtml"),
+               url-prefix("chrome://messenger/content/removeAccount.xhtml"),
                url-prefix("about:addressbook"),
                url-prefix("about:config"),
                url-prefix("about:addons"),
@@ -377,6 +379,21 @@
     border: 1px solid var(--fluent-card-stroke) !important;
     border-radius: var(--fluent-radius-card) !important;
     box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* The sub-dialog frame. Same intent as the .dialogBox rule at the end of the
+   * SETTINGS block, with one addition. AccountManager.xhtml loads
+   * inContentDialog.css, NOT preferences/subdialog.css, and grepping this
+   * build's omni.ja for `.dialogBox` finds it only in subdialog.css and
+   * shared/messenger.css -- neither of which this document loads. So unlike
+   * Settings' dialog box this one has no fill, no radius and no shadow of its
+   * own, and the fill has to be stated here or the .dialogTitleBar strip above
+   * the frame shows the dimmed page through it. */
+  .dialogBox {
+    background-color: var(--fluent-card) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    box-shadow: var(--fluent-shadow-flyout) !important;
   }
 
   #accountTreeHeaderBar {
@@ -1194,6 +1211,77 @@
     background-color: var(--fluent-solid-tertiary) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
     border-radius: var(--fluent-radius-control) !important;
+  }
+
+}
+
+
+/* ============================================================================
+ * ACCOUNT SETTINGS SUB-DIALOGS
+ * SmtpServerEdit.xhtml (Outgoing Server (SMTP) -> Edit, also reached from Edit
+ * Identity) and removeAccount.xhtml (Account Actions -> Remove Account). Both
+ * load into AccountManager.xhtml's own <browser class="dialogFrame"> at line
+ * 145, a second dialog frame independent of the one in preferences.xhtml, so
+ * neither the am- prefix nor the Settings sub-dialog prefixes above reach
+ * them. Named exactly rather than by a chrome://messenger/content/ prefix:
+ * that prefix would also swallow the am-* panes and every other messenger
+ * chrome document, which this file's scope discipline rules out.
+ *
+ * They take the same rule set as the Settings sub-dialogs for a concrete
+ * reason, not by copying: AccountManager.js:78 hands SubDialogManager the same
+ * three injected stylesheets preferences.js does -- preferences/dialog.css,
+ * preferences/preferences.css and variables.css -- so these two documents
+ * carry the same token vocabulary and the same toolkit :host padding as the
+ * Settings dialogs.
+ *
+ * Read out of this build's markup, not assumed:
+ *   - SmtpServerEdit has two html:fieldset/html:legend groups, three
+ *     html:input (text, text, number) and two menulist. No button of its own.
+ *   - removeAccount has two XUL checkbox, description text and one button
+ *     (#showLocalDirectory), plus an html:progress on the confirmation step.
+ *   - Neither has a select, a textarea, a richlistbox or a tree, so those
+ *     selectors are deliberately absent.
+ * ========================================================================== */
+
+@-moz-document url-prefix("chrome://messenger/content/SmtpServerEdit.xhtml"),
+               url-prefix("chrome://messenger/content/removeAccount.xhtml") {
+
+  /* The canvas hairline. Same cause and same fix as the SETTINGS SUB-DIALOGS
+   * block above -- toolkit dialog.css gives :host an asymmetric padding-block
+   * of 8px/10px, so the root canvas shows under the dialog unless it is moved
+   * off the window base and onto the card. See that block for the measurement
+   * that produced the rule. */
+  :root {
+    --background-color-canvas: var(--fluent-card) !important;
+    background-color: var(--fluent-card) !important;
+  }
+
+  /* SmtpServerEdit's two group headings. The same flat semibold treatment the
+   * am-* panes give their fieldsets -- this dialog is built from the same
+   * accountManage.css markup as the pane it is opened from, and it links that
+   * stylesheet directly. */
+  legend {
+    font-weight: var(--fluent-weight-strong) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  button,
+  menulist {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]) {
+    border-radius: var(--fluent-radius-control) !important;
+    border-color: var(--fluent-control-stroke) !important;
+    background-color: var(--fluent-solid-tertiary) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  input:not([type="checkbox"], [type="radio"]):focus-visible {
+    outline: var(--focus-outline) !important;
+    outline-offset: var(--focus-outline-offset) !important;
   }
 
 }
