@@ -568,32 +568,61 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* The three panes as cards on the window base. Upstream lays these out with
-   * grid + splitters that set track sizes, so the gutter is taken as margin on
-   * the pane rather than gap on the grid -- a gap would fight the splitter's
-   * computed widths. */
+  /* The outer gutter, and the only one the panes themselves contribute to.
+   * This page is laid out the same way as the 3-pane window, so it gets the
+   * same construction (fluent-layout.css): the window base is the body, the
+   * gutter around the cards is the body's padding, and the gutter *between*
+   * the cards is the splitter. Pane margins are deliberately not used, and an
+   * earlier pass that did use them measured wrong twice:
+   *
+   *   - A splitter still occupies a grid track between two panes, so 8px of
+   *     margin on each pane with the inner edge collapsed measured 9px
+   *     (8 + the stock 1px --splitter-occupy-size), against a true 8px on
+   *     Settings, which has no splitter.
+   *   - margin-inline-start only reaches the inline seams. Under
+   *     body.layout-table the details pane moves below the cards pane
+   *     (aboutAddressBook.css grid-template), so that seam is on the block
+   *     axis and kept both margins: 8 + 1 + 8 = 17px. Both measured on this
+   *     build, in both layouts.
+   *
+   * Padding plus splitter is axis-agnostic, so one pair of rules covers both
+   * layouts. It also survives the collapsed states, which a zeroed inner
+   * margin would not: with no card selected in Table layout,
+   * aboutAddressBook.js sets #sharedSplitter.isCollapsed, and
+   * aboutAddressBook.css takes the splitter out of the grid with display:none.
+   * A cards pane whose inner margin had been zeroed would then sit flush
+   * against the window edge. Body padding cannot collapse.
+   *
+   * box-sizing because shared/messenger.css gives body block-size/inline-size
+   * 100% and overflow: clip -- content-box padding would push 16px of the grid
+   * out of the window and clip it. */
+  body {
+    padding: var(--fluent-gutter) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* The three panes as cards on the window base. No margin: see above. */
   #booksPane,
   #cardsPane,
   #detailsPane {
     box-sizing: border-box !important;
-    margin: var(--fluent-gutter) !important;
     background-color: var(--fluent-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
     border-radius: var(--fluent-radius-card) !important;
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* Panes already carry the gutter on both sides; a second one between them
-   * would double it. Collapse the inner edges. */
-  #cardsPane,
-  #detailsPane {
-    margin-inline-start: 0 !important;
-  }
-
-  /* Splitters sit in the gutter and must not paint -- the gap between cards is
-   * the window base showing through, not a line. */
+  /* The inter-card gutters, as in fluent-layout.css:
+   *   --splitter-occupy-size  = space taken in the grid  (the visual gap)
+   *   --splitter-content-size = the clickable/draggable band
+   * Both at the gutter makes the whole gap draggable. Stock's 5px band with a
+   * 1px track put 4px of that band on top of the next card instead. Neither
+   * splitter may paint -- the gap between cards is the window base showing
+   * through, not a line. */
   #booksSplitter,
   #sharedSplitter {
+    --splitter-occupy-size: var(--fluent-gutter) !important;
+    --splitter-content-size: var(--fluent-gutter) !important;
     background-color: transparent !important;
     border-color: transparent !important;
   }
