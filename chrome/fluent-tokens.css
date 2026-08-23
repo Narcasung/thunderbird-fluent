@@ -54,14 +54,35 @@
   --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
 
   /* --- Strokes ---
-   * Fluent's control stroke is asymmetric: in light mode the bottom edge is
-   * darker (a grounding shadow baked into the border); in dark mode the TOP
-   * edge is lighter instead. Consumed in fluent-chrome.css. */
+   * Every box outline in this theme is transparent, on the user's explicit
+   * instruction: no hairline around a pane, a card, a button, an input or a
+   * popup. Surfaces are told apart by fill and shadow alone.
+   *
+   * This is the single point that does it. Every border the theme draws routes
+   * through one of these five -- grep `border` across chrome/ and there is no
+   * literal colour anywhere -- so nothing else needs editing, and restoring the
+   * strokes is a matter of putting the values below back.
+   *
+   * The values, for whenever that happens. Fluent's control stroke is
+   * asymmetric: in light mode the bottom edge is darker, a grounding shadow
+   * baked into the border; in dark mode the TOP edge is lighter instead.
+   *   divider               light-dark(rgba(0,0,0,.08), rgba(255,255,255,.08))
+   *   card-stroke           light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
+   *   control-stroke        light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
+   *   control-stroke-top    light-dark(rgba(0,0,0,.06), rgba(255,255,255,.09))
+   *   control-stroke-bottom light-dark(rgba(0,0,0,.16), rgba(255,255,255,.07))
+   *
+   * --fluent-divider is kept SEPARATE and still painted. It is not a box
+   * outline: it draws the rule under the thread pane's column headers
+   * (fluent-lists.css) and the sidebar/section separators mapped below. Those
+   * are structure, not decoration, and blanking them merges the column headers
+   * into the first row. If those should go too, this is the one line to
+   * change -- but check that header first. */
   --fluent-divider:               light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
-  --fluent-card-stroke:           light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
-  --fluent-control-stroke:        light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
-  --fluent-control-stroke-top:    light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .09));
-  --fluent-control-stroke-bottom: light-dark(rgba(0, 0, 0, .16), rgba(255, 255, 255, .07));
+  --fluent-card-stroke:           transparent;
+  --fluent-control-stroke:        transparent;
+  --fluent-control-stroke-top:    transparent;
+  --fluent-control-stroke-bottom: transparent;
 
   /* --- Subtle fills: the Fluent list/nav state ladder --- */
   --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));

@@ -100,9 +100,14 @@
     --fluent-text-tertiary:     light-dark(#A4A4A4, rgba(255, 255, 255, .54));
     --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
 
+    /* Transparent, matching the chrome sheet -- no box outline anywhere in the
+     * theme. The full reasoning and the original values are in the Strokes
+     * block of fluent-tokens.css; keep the two sheets in step. --fluent-divider
+     * stays painted for the same reason it does there: it draws separators, not
+     * outlines. */
     --fluent-divider:           light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
-    --fluent-card-stroke:       light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
-    --fluent-control-stroke:    light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
+    --fluent-card-stroke:       transparent;
+    --fluent-control-stroke:    transparent;
 
     --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));
     --fluent-subtle-pressed:    light-dark(rgba(0, 0, 0, .024), rgba(255, 255, 255, .04));
