@@ -84,6 +84,29 @@
   color: var(--fluent-text-primary) !important;
 }
 
+/* No outline on a row, in any state. Stock draws a 1px accent line on the
+ * container's border box -- measured #4A5459, this machine's accent, sitting
+ * exactly on the fill's top and bottom edges. Against the accent pill that is
+ * two accent marks for one state, and the pill is the Fluent one.
+ *
+ * Removed on the container rather than through --focus-outline-color so it
+ * cannot also reach the twisty, the unread badge or anything else nested in
+ * the row -- the search bar took the token route and that is why its button
+ * lost its ring too (fluent-chrome.css:192-202).
+ *
+ * The consequence, stated so nobody has to rediscover it: keyboard focus in
+ * the folder tree is now shown only by the fill and the pill, which are the
+ * same marks used for selection. Moving focus without changing selection --
+ * ctrl+arrow -- is no longer visible. To restore it, drop this rule; nothing
+ * else depends on it. */
+#folderTree li > .container,
+#folderTree li > .container:focus,
+#folderTree li > .container:focus-visible,
+#folderTree li.selected > .container,
+#folderTree li.current > .container {
+  outline: none !important;
+}
+
 /* Account roots stay ordinary rows -- same hover, same selection, same pill as
  * any folder, because that is what they are: clicking one opens Account
  * Central. Only the weight changes. Stock pins them to full `bold`

@@ -152,13 +152,20 @@ body#paneLayout {
  * margin-inline is --fluent-row-inset and padding is zero, against stock's 9px
  * --sidebar-header-spacing (variables.css:72), so the buttons' edges land on
  * the same inset the row fills use (fluent-lists.css:62) rather than missing
- * them by 5px. gap drops from stock's 9px to the same 4px. */
+ * them by 5px. gap drops from stock's 9px to the same 4px.
+ *
+ * justify-content overrides stock's space-between (containers.css:9). With
+ * three separate boxes, space-between pinned the outer two to the pane edges
+ * and left a hole in the middle; centred, they group as one cluster of
+ * commands and the gap between them stays the 4px set above whatever the pane
+ * is resized to. */
 #folderPaneHeaderBar {
   background-color: transparent !important;
   margin-inline: var(--fluent-row-inset) !important;
   margin-block-end: var(--fluent-gutter) !important;
   padding: 0 !important;
   gap: var(--fluent-row-inset) !important;
+  justify-content: center !important;
 }
 
 /* Each button is its own small card. Write Message loses its primary
