@@ -45,6 +45,9 @@
   --fluent-card:              light-dark(#FFFFFF, #2B2B2B);  /* the three panes */
   --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);  /* blocks inside a pane */
   --fluent-solid-quart:       light-dark(#EFEFEF, #383838);  /* controls in content */
+  /* Opaque, and it stays opaque. Popups in this theme do not participate in
+   * Mica -- see the note where the (-moz-windows-mica-popups) block used to
+   * be, further down this file. */
   --fluent-flyout:            light-dark(#F9F9F9, #2C2C2C);  /* menus, panels */
 
   /* --- Text --- */
@@ -172,19 +175,24 @@
   }
 }
 
-/* Popups get their own backdrop, and their own feature query -- the two prefs
- * are independent, so a popup must never be made transparent on the strength
- * of the window backdrop working. Under mica-popups, toolkit switches the
- * menupopup to native appearance and the DWM backdrop supplies the shadow,
- * border and corner radius; all our tokens have to do is stop painting over
- * it. Menu ITEM fills stay -- they are translucent state layers and composite
- * onto the backdrop correctly. */
-@media (-moz-windows-mica-popups) {
-  :root {
-    --fluent-flyout: transparent;
-    --arrowpanel-background: transparent !important;
-  }
-}
+/* There is NO (-moz-windows-mica-popups) block here, and that is deliberate.
+ *
+ * There used to be one, blanking --fluent-flyout to transparent so the DWM
+ * backdrop could show through. It was removed once popups were taken off Mica
+ * (profile/user.js sets widget.windows.mica.popups to false, because the
+ * border that backdrop draws is outside the CSS box and this theme draws no
+ * box outlines). What the removal fixed is subtler than a dead rule: the pref
+ * and the media feature do NOT move together. Turning the pref off stops the
+ * widget applying a backdrop to popup windows -- the border goes -- but
+ * (-moz-windows-mica-popups) keeps matching, so menu.css:48 keeps handing the
+ * popup `appearance: auto`. Native paint with no backdrop beneath it paints
+ * nothing at all, and a blanked --fluent-flyout leaves nothing else to paint
+ * either, so menus came up SEE-THROUGH over the main window's Mica: measured
+ * as a 69-to-73 gradient in both axes where a flat #2C2C2C was expected.
+ * fluent-chrome.css closes the other half by forcing appearance: none.
+ *
+ * So: do not gate popup surfaces on this feature. Menu ITEM fills are fine as
+ * translucent state layers -- they composite onto whatever the popup paints. */
 
 /* ---------------------------------------------------------------------------
  * 2. MAPPING ONTO THUNDERBIRD'S TOKENS

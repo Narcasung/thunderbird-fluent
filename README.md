@@ -39,8 +39,9 @@ what runs.
 3. Copy `profile/user.js` into the profile root — beside `prefs.js`, not in
    `chrome/`. It carries the three Mica prefs; without them the theme still
    renders, but every transparent surface degrades to its opaque fallback and
-   there is no backdrop. `prefs.js` is rewritten on quit, which is why these
-   live in `user.js`.
+   there is no backdrop. Note that one of the three, `widget.windows.mica.popups`,
+   is set to `false` on purpose — the file says why. `prefs.js` is rewritten on
+   quit, which is why these live in `user.js`.
 4. Restart Thunderbird. There is no hot reload — every CSS change needs a full
    restart.
 

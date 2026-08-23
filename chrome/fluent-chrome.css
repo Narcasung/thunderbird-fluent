@@ -307,21 +307,81 @@
  * 8px radius, 4px inner padding, and menu items inset 4px so hover fills a
  * floating pill inside the menu rather than spanning edge to edge.
  *
- * NOTE: no box-shadow is set here on purpose. Gecko draws a native OS shadow
- * around popup windows; adding our own on top produces a muddy double halo.
- * Verify against the native shadow before introducing --fluent-shadow-flyout
- * here, and only then with -moz-window-shadow: none.
+ * The shadow IS ours, and it has to be. This block used to carry a note saying
+ * the opposite -- leave it to Gecko's native popup shadow, adding one produces
+ * a double halo -- and that was true right up until the popup lost
+ * `appearance: auto`. Taking the native path away takes the native shadow with
+ * it: measured straight down past the popup's bottom edge, the fill steps 44
+ * to 43 and stops, with no falloff anywhere. Without elevation a #2C2C2C menu
+ * sits on a #2B2B2B pane, one level apart out of 255, and disappears.
  * ------------------------------------------------------------------------- */
 
 menupopup,
 panel {
+  /* The popup paints itself, not the OS. menu.css:48-55 hands every menupopup
+   * `appearance: auto` whenever (-moz-windows-mica-popups) matches, and that
+   * feature keeps matching after widget.windows.mica.popups is turned off --
+   * the pref moves the widget, not the media query. A natively-appearing popup
+   * with no backdrop under it paints nothing, which is how menus ended up
+   * see-through. Ours is an opaque surface, so it has no use for the native
+   * path either way. */
+  appearance: none !important;
+
   --panel-border-radius: var(--fluent-radius-card) !important;
   --arrowpanel-padding: 4px !important;
-  --panel-padding: 4px !important;
-  --panel-background: var(--fluent-flyout) !important;   /* transparent under mica-popups, see fluent-tokens.css */
   --panel-color: var(--fluent-text-primary) !important;
   --panel-border-color: var(--fluent-card-stroke) !important;
+
+  /* Block only. An inline value here is paid TWICE, because every menu item
+   * already carries its own margin-inline: the pill ends up inset by the sum,
+   * and 4 + 4 reads as a menu that cannot decide where its edge is. Stock
+   * lands on the same split for the same reason (contextMenu.css:27). */
+  --panel-padding: 4px 0 !important;
+
+  /* Both names, and they are not interchangeable. --panel-background is the
+   * arrowpanel-era token; what a popup paints is --panel-background-color,
+   * read by popup.css:76 on ::part(content). userContent.css has carried the
+   * -color form since it was written; the chrome side only ever got away
+   * without it because mica-popups was making popups transparent. */
+  --panel-background: var(--fluent-flyout) !important;
+  --panel-background-color: var(--fluent-flyout) !important;
+
+  /* Stock draws its separator on menuseparator::before (menu.css:130-136), not
+   * on the element. Recolouring the token gets that line; painting our own
+   * border on the element gets a SECOND line 4px above it, which is what the
+   * theme used to do. */
+  --panel-separator-color: var(--fluent-divider) !important;
+
+  /* Elevation. The margin is not decoration -- popup.css:44-45 sizes the popup
+   * WINDOW by it and pulls the content back with a negative margin, so it is
+   * the room the shadow has to render into. Stock's 4px is cut for a 0-offset
+   * 4px blur; --fluent-shadow-flyout is offset 8 and blurred 16, so it needs
+   * 24 or it renders clipped square at the bottom. */
+  --panel-box-shadow: var(--fluent-shadow-flyout) !important;
+  --panel-box-shadow-margin: 24px !important;
 }
+
+/* The fill, painted rather than delegated. Belt and braces with the token
+ * above: --panel-background-color reaches this same surface through
+ * popup.css:76, but only as a variable, and a variable is one more thing that
+ * can be blanked out from under the theme -- which is exactly what happened
+ * while the mica-popups block was still live. This declaration is the paint
+ * itself. */
+menupopup::part(content),
+panel::part(content) {
+  background-color: var(--fluent-flyout) !important;
+  background-image: none !important;
+  box-shadow: var(--fluent-shadow-flyout) !important;
+}
+
+/* Tooltips are deliberately NOT themed. The default tooltip is native
+ * anonymous content, so no user or author sheet can reach it -- xul.css:380
+ * says as much in a comment, and its Windows branch (xul.css:396-407) paints
+ * background #2b2a33 and border #f9f9fb outright, which is exactly what the
+ * shipped build renders. A `tooltip { ... !important }` rule here was tried
+ * and changed nothing, measured pixel for pixel. Do not add it back: it cannot
+ * work for the tooltips users actually see, and it WOULD take the handful of
+ * tooltips declared in markup, leaving the two kinds looking different. */
 
 menupopup > menuitem,
 menupopup > menu {
@@ -340,8 +400,11 @@ menupopup > menu[_moz-menuactive="true"] {
   color: var(--fluent-text-primary) !important;
 }
 
+/* Colour comes from --panel-separator-color above. All that is left here is
+ * the inset: stock pads 1em inline on Windows to line the rule up with the
+ * start of the item text, which lands 20px in while the item pills sit at 4px.
+ * Match the pills instead -- the menu reads as one column that way. */
 menuseparator {
-  border-top: 1px solid var(--fluent-divider) !important;
-  border-bottom: none !important;
-  margin-inline: 8px !important;
+  padding-inline: 0 !important;
+  margin-inline: 4px !important;
 }
