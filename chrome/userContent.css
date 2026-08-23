@@ -573,6 +573,26 @@
     color: var(--fluent-text-primary) !important;
   }
 
+  /* MICA. The chrome half of this and the whole reasoning are in the CONTENT
+   * TABS note inside fluent-layout.css's MICA block; the ceiling it clears is
+   * the NO MICA note at the end of this block. Short version: a content tab
+   * cannot reach the backdrop by CSS alone, so the Fluent Transparency Bridge
+   * add-on sets one attribute, and this is gated on a marker only that add-on
+   * sets. No add-on, no match, page stays --fluent-base.
+   *
+   * (-moz-windows-mica) is kept as well, and it does match in here: measured
+   * on this document, with the backdrop showing through the gutters and the
+   * chrome's own samples in the same capture to compare against.
+   *
+   * Only the gutters move. The three panes are --fluent-card and stay opaque,
+   * which is the same reading the 3-pane window already has. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency],
+    :root[fluent-transparency] body {
+      background-color: transparent !important;
+    }
+  }
+
   /* The outer gutter, and the only one the panes themselves contribute to.
    * This page is laid out the same way as the 3-pane window, so it gets the
    * same construction (fluent-layout.css): the window base is the body, the
@@ -774,8 +794,29 @@
    *     capture. Same backdrop would mean the same colour.
    *
    * No user sheet can fix this: the canvas colour comes from the docshell, not
-   * the cascade. So these pages stay opaque on --fluent-base, and the cards on
-   * --fluent-card, which is also what they looked like when they read best.
+   * the cascade.
+   *
+   * --- REOPENED. There is an escape hatch, and it is not CSS. ---
+   * Gecko composes that backstop in PresShell::UpdateCanvasBackground and
+   * skips it when the embedder element carries a `transparent` attribute.
+   * Stock TB 153 uses it on three type="content" browsers for this exact
+   * purpose -- calendar-creation.js:601 ("Allow keeping dialog background
+   * color without jumping through hoops"), preferences/compose.js:604,
+   * inline-options-browser.mjs:100.
+   *
+   * So the ceiling is not "impossible", it is "no attribute, no transparency,
+   * and CSS sets no attributes". Clearing it takes privileged JS. Of the three
+   * ways to deliver that -- autoconfig, a userChrome.js loader, a MailExtension
+   * experiment -- this repo took the last: extension/, packaged by
+   * tools/pack-extension.ps1, profile-only, nothing written to the install
+   * directory. It is unsigned, which this build permits
+   * (xpinstall.signatures.required defaults false in greprefs.js:1154, and
+   * MOZ_REQUIRE_SIGNING is false, which is also what lets an unsigned add-on
+   * hold an Experiment API at all).
+   *
+   * The rules above are the CSS half and are gated on a marker only that
+   * add-on sets, so they are genuinely inert without it rather than merely
+   * useless: no add-on and the page is exactly what it was before any of this.
    * ---------------------------------------------------------------------- */
 }
 
@@ -1234,8 +1275,10 @@
     box-shadow: var(--fluent-shadow-flyout) !important;
   }
 
-  /* NO MICA HERE EITHER. Same ceiling as Address Book -- see the note at the
-   * end of that block before trying. This is a content docshell. */
+  /* NO MICA HERE EITHER. Same ceiling as Address Book, and the same escape
+   * hatch -- see the note at the end of that block before trying. This is a
+   * content docshell. Settings is deliberately left out of the probe: one page
+   * answers the question, and this one is two documents. */
 }
 
 

@@ -569,17 +569,45 @@ body#paneLayout {
     background-color: transparent !important;
   }
 
-  /* Content tabs (Account Settings, Address Book) deliberately get NO rule
-   * here. Making this chain transparent --
+  /* --- CONTENT TABS: THE CHROME SIDE ------------------------------------
+   * Gated twice: on Mica, like everything in this block, and on a marker
+   * attribute that only the Fluent Transparency Bridge add-on sets. Without
+   * the add-on installed and enabled these rules match nothing and the pages
+   * stay on --fluent-base, which is the whole point of gating them -- see
+   * below.
    *
-   *   .tabmail-tab-panel -> .contentTabInstance -> stack -> browser -> document
+   * WHY AN ADD-ON IS IN THE LOOP AT ALL
+   * These tabs' browsers are type="content" (messenger.xhtml:6951-6958,
+   * specialTabs.js:810). Under a root content document Gecko composes an
+   * opaque backstop beneath the root element's background, in
+   * PresShell::UpdateCanvasBackground -- below the cascade, where no user
+   * sheet reaches. Dropping the paint in CSS alone does not expose the DWM
+   * backdrop, it exposes that backstop (#1C1B22 in dark, = --color-gray-90).
+   * Three earlier attempts stopped there and concluded it was impossible.
    *
-   * -- was tried and does not work, because the last link is a content
-   * docshell and transparency does not cross one. The page ends up on Gecko's
-   * default canvas (#1C1B22 = --color-gray-90), not on the backdrop, which
-   * looks like a Mica sample and is not one. The full finding, with the two
-   * checks that tell those apart, is at the end of the about:addressbook block
-   * in userContent.css. Read it before retrying. */
+   * It is not. Gecko skips the compose when the embedder element carries a
+   * `transparent` attribute; stock uses it on three browsers of exactly this
+   * kind (calendar-creation.js:601, preferences/compose.js:604,
+   * inline-options-browser.mjs:100). CSS sets no attributes, so an add-on
+   * does it. extension/api.js, and its header carries the full reasoning.
+   *
+   * WHY THE MARKER RATHER THAN A LIST OF TAB IDS
+   * Two reasons, and the second is the important one. First, it keeps this
+   * generic: :has() walks whatever wrapper chain a tab type happens to use,
+   * and the five pages use three different ones -- Address Book and Settings
+   * each clone their own vbox/hbox, contentTab uses a toolbox plus a stack.
+   * Second, CSS and add-on are useless apart, and the CSS half ALONE is worse
+   * than stock: it lands the page on the backstop. Keying on something only
+   * the add-on can set means removing or disabling the add-on restores
+   * --fluent-base with no CSS change. The content-side half of this gate is
+   * in userContent.css, on the same marker.
+   *
+   * The :has() is bounded to #tabpanelcontainer's subtree, which is a handful
+   * of boxes per open tab. */
+  #tabpanelcontainer browser[fluent-transparency],
+  #tabpanelcontainer :has(browser[fluent-transparency]) {
+    background-color: transparent !important;
+  }
 }
 
 /* Content side: the canvas of the about:3pane document itself. The root

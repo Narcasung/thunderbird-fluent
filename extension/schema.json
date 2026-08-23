@@ -1,0 +1,6 @@
+[
+  {
+    "namespace": "fluentTransparency",
+    "description": "No callable surface. The namespace exists only so the parent script below it is loaded at startup; all of the work happens in api.js's onStartup."
+  }
+]
