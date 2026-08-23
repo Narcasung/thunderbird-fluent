@@ -336,22 +336,96 @@
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
-  border-radius: var(--fluent-radius-control) !important;
+  /* Card, not control: the 8px step is the one the rest of the mail window
+   * settled on -- folder rows, thread cards, the thread header and the folder
+   * pane buttons all moved there, and the search bar was the odd 4px left. */
+  border-radius: var(--fluent-radius-card) !important;
   background-color: var(--fluent-card) !important;
   border-width: 1px !important;
   border-style: solid !important;
   border-top-color: var(--fluent-control-stroke-top) !important;
   border-inline-color: var(--fluent-control-stroke) !important;
   border-bottom-color: var(--fluent-control-stroke-bottom) !important;
-  /* Inherited into the shadow tree; see (2) and (3) above. */
+  /* Inherited into the shadow tree; see (2) and (3) above. --button-border-radius
+   * is the shadow input's own radius (shared/search-bar.css:30) and is pinned
+   * globally to the 4px control step in fluent-tokens.css. Re-declaring it here
+   * keeps the field from disagreeing with the host it hides under, should its
+   * fill or stroke ever stop being transparent. */
+  --button-border-radius: var(--fluent-radius-card) !important;
   --search-bar-border-color: transparent !important;
   --search-bar-background: transparent !important;
   --search-bar-focus-background: transparent !important;
   --focus-outline-color: transparent !important;
 }
 
-/* The one thing the quick filter's field cannot share: its fill. The rule above
- * paints a search bar --fluent-card, which reads in the unified toolbar because
+/* WIDTH -- toolbar bar only, which is why this is a second rule rather than
+ * three more declarations above: the quick filter's field sits in a bar of its
+ * own and must keep its stock sizing.
+ *
+ * Stock is `.unified-toolbar .search-bar { flex: 1 1 33% }`
+ * (shared/unifiedToolbarShared.css:67). The 33% basis is not what makes the bar
+ * span the window -- flex-GROW is. Measured off a 1033px window: the field ran
+ * x=51 to x=1001, ~950px, ~92% of the frame. Dropping grow to 0 is the whole
+ * fix; the inline-size then decides, and 320px is the "about a third" the user
+ * asked for (~317px measured target).
+ *
+ * min() rather than a flat 320px so the bar yields on a narrow window instead
+ * of crowding the toolbar buttons off the end. Stock's min-inline-size: 5em
+ * still floors it.
+ *
+ * Specificity: #unifiedToolbar .search-bar (1,1,0) outranks stock's
+ * .unified-toolbar .search-bar (0,2,0). */
+#unifiedToolbar .search-bar {
+  flex: 0 1 auto !important;
+  inline-size: min(320px, 40%) !important;
+}
+
+/* POSITION -- right, on request.
+ *
+ * The rule above only sets a size; where the bar lands is decided by the
+ * spacers around it. The default layout is ["spacer", "search-bar", "spacer"]
+ * (CustomizableItems.sys.mjs:20) and a spacer is flex: 1 1 auto, so the ~630px
+ * the bar gives up splits evenly between the two and it centres itself.
+ * Collapsing the trailing spacer piles all of that slack on the leading one
+ * instead, and the bar is pushed to the end of the toolbar.
+ *
+ * A spacer is an <li> that gets its class the same way the search bar does
+ * (customizable-element.mjs:112), so a sibling combinator reaches it. General
+ * sibling, not adjacent: this must still hold if a second trailing spacer is
+ * added in Customize.
+ *
+ * Consequence: the bar now sits flush against whatever ends the toolbar. In the
+ * default layout nothing follows it, so that is the right edge. Add buttons
+ * AFTER the search bar in Customize and they will butt straight up against it,
+ * and a spacer between them will NOT open a gap -- every spacer trailing the
+ * bar is collapsed, that one included. Anything added should go before the bar,
+ * or this rule needs narrowing to :last-child.
+ *
+ * Specificity: (1,2,0) over stock's .unified-toolbar .spacer (0,2,0). */
+#unifiedToolbar .search-bar ~ .spacer {
+  flex: 0 0 auto !important;
+}
+
+/* TEXT SIZE -- asked for, deliberately not done. Recorded so it is not
+ * re-opened blind.
+ *
+ * The shadow field hard-codes `input { font-size: 1rem }`
+ * (shared/search-bar.css:27). That is a literal, not a custom property, so the
+ * inheritance trick that reaches everything else in this widget does not reach
+ * it, and the widget exposes no ::part to select through. The reachable
+ * options were all wrong in some way: a font-size on the host enlarges only the
+ * slotted placeholder, so "Search..." would be big and snap back to 1rem the
+ * instant anything is typed; `zoom` on the host does scale placeholder and
+ * typed text together, but scales the box with them, putting it back in
+ * conflict with both the width above and the 32px --fluent-control-height.
+ *
+ * Behind that sits the standing rule in fluent-tokens.css: this theme ships no
+ * font-size token and leaves every text SIZE to Thunderbird, which scales it
+ * off the user's font-size pref and the uidensity setting. Raising that pref is
+ * the real fix if the chrome reads small; patching one widget is not. */
+
+/* The one thing the quick filter's field cannot share: its fill. The shared
+ * rule paints a search bar --fluent-card, which reads in the unified toolbar because
  * that toolbar sits on the window base. This field sits ON a card
  * (fluent-layout.css gives #quick-filter-bar one), and card on card is
  * invisible -- every control stroke in this theme is transparent, so there is
