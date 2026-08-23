@@ -93,6 +93,10 @@
   --fluent-radius-control:    4px;   /* controlCornerRadius */
   --fluent-radius-row:        4px;
   --fluent-row-inset:         4px;
+  /* Breathing room above and below a row's FILL, inside its 32px slot -- not
+   * extra pitch. Two adjacent filled rows would otherwise share an edge and
+   * merge into one block. 2px each side puts 4px of backdrop between them. */
+  --fluent-row-gap:           2px;
   --fluent-control-height:    32px;
   --fluent-row-height-table:  32px;  /* table view stays dense */
   --fluent-row-height-card:   40px;  /* cards view gets full Fluent height */

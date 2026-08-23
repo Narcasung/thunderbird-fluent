@@ -145,25 +145,56 @@ body#paneLayout {
 }
 
 /* The folder pane's toolbar -- Get Messages / Write Message / More
- * (about3Pane.xhtml:66-84) -- takes the card the pane just gave up, so the
- * controls read as a floating command bar over the backdrop rather than three
- * buttons loose on the desktop.
+ * (about3Pane.xhtml:66-84). The bar itself stays bare; each button gets its
+ * own box. One card around all three would read as a single segmented control,
+ * which these are not -- they are three unrelated commands.
  *
- * margin-inline is --fluent-row-inset, not zero: that is the same inset the
- * row fills use (fluent-lists.css:62), so the card's edges line up with the
- * selected row's edges instead of missing them by 4px.
- *
- * padding overrides stock's --sidebar-header-spacing, 9px (variables.css:72).
- * 9px around a 32px button makes a 50px slab; --fluent-row-inset makes it 40px,
- * which is Fluent's card-button height and reads as a toolbar. */
+ * margin-inline is --fluent-row-inset and padding is zero, against stock's 9px
+ * --sidebar-header-spacing (variables.css:72), so the buttons' edges land on
+ * the same inset the row fills use (fluent-lists.css:62) rather than missing
+ * them by 5px. gap drops from stock's 9px to the same 4px. */
 #folderPaneHeaderBar {
-  background-color: var(--fluent-card) !important;
-  border: 1px solid var(--fluent-card-stroke) !important;
-  border-radius: var(--fluent-radius-card) !important;
-  box-shadow: var(--fluent-shadow-card) !important;
+  background-color: transparent !important;
   margin-inline: var(--fluent-row-inset) !important;
   margin-block-end: var(--fluent-gutter) !important;
-  padding: var(--fluent-row-inset) !important;
+  padding: 0 !important;
+  gap: var(--fluent-row-inset) !important;
+}
+
+/* Each button is its own small card. Write Message loses its primary
+ * treatment -- stock gives it .button-primary, a solid accent fill and
+ * weight 600 (widgets.css:137-142). Fluent does not put a filled accent button
+ * in a nav pane; the accent belongs to the selection pill, and two accent
+ * surfaces in one pane compete. Neutral card, same as its two neighbours.
+ *
+ * The subtle-fill ladder used everywhere else in this theme cannot be used
+ * here. Those fills are translucent and assume a transparent-rest control on
+ * an opaque surface (fluent-chrome.css:144-158); these buttons rest on a fill
+ * of their own over a transparent pane, so a translucent hover would composite
+ * against the backdrop and come out DARKER than the rest state. The solid
+ * ladder gives an opaque step instead. Note it runs the same direction in both
+ * schemes -- in dark, pressed lifts rather than dips, which is not what Fluent
+ * does; correcting that needs a token below --fluent-card that does not exist
+ * yet, and the ladder reads correctly as-is. */
+#folderPaneHeaderBar > .button {
+  background-color: var(--fluent-card) !important;
+  color: var(--fluent-text-primary) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-control) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  font-weight: inherit !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+#folderPaneHeaderBar > .button:enabled:hover {
+  background-color: var(--fluent-solid-tertiary) !important;
+  border-color: var(--fluent-card-stroke) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+}
+
+#folderPaneHeaderBar > .button:enabled:hover:active {
+  background-color: var(--fluent-solid-quart) !important;
+  box-shadow: none !important;
 }
 
 /* Both scroll affordances on the folder tree assume an opaque pane behind
