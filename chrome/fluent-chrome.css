@@ -139,9 +139,22 @@
 /* ---------------------------------------------------------------------------
  * UNIFIED TOOLBAR BUTTONS
  * 32px tall, 4px radius, Fluent subtle-fill state ladder.
+ *
+ * #threadPaneHeaderBar is in the selector because the toolbar is not the only
+ * place a .unified-toolbar-button appears: Quick Filter and the display button
+ * in the thread pane's header carry the same class (about3Pane.xhtml:79-88)
+ * and were left on stock styling by an id-scoped selector. Stock's rest state
+ * already has border-color: transparent (widgets.css:95-100), which is why
+ * they looked right until they were hovered or switched on -- the state rules
+ * at :104 and :126 put --toolbar-button-hover-border-color back, and Quick
+ * Filter is a check-button that STAYS in that state while the filter bar is
+ * open. That is the border that would not go away. The transparent border in
+ * the base rule below is !important, so it holds in every state.
  * ------------------------------------------------------------------------- */
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button) {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button),
+#threadPaneHeaderBar .button,
+#quick-filter-bar .button {
   min-height: var(--fluent-control-height) !important;
   border-radius: var(--fluent-radius-control) !important;
   border: 1px solid transparent !important;
@@ -149,11 +162,106 @@
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover,
+#threadPaneHeaderBar .button:hover,
+#quick-filter-bar .button:hover {
   background-color: var(--fluent-subtle-hover) !important;
 }
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover:active {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover:active,
+#threadPaneHeaderBar .button:hover:active,
+#quick-filter-bar .button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* Switched on. Killing the border above also took away stock's only other
+ * marker for it on these buttons -- a border plus a fill that the transparent
+ * background here overrides -- so "on" needs saying again, and the accent tint
+ * says it the way selection does everywhere else in this theme. Quick Filter
+ * is the button that made this necessary; the toggles in the unified toolbar
+ * get it too, and had nothing before. */
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button)[aria-pressed="true"],
+#threadPaneHeaderBar .button[aria-pressed="true"],
+#quick-filter-bar .button[aria-pressed="true"] {
+  background-color: var(--fluent-accent-tint) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * BUTTON GROUPS
+ * Segmented groups (widgets.css:321-357) draw an outline round the cluster and
+ * then a 1px rule between every pair of buttons inside it -- the group's own
+ * border, plus a border-inline-end on the first child and on each middle one.
+ * That is the vertical tick between the quick filter's five toggles, and it is
+ * the same idea as the outlines this theme has already removed everywhere
+ * else: a line drawn to say "these are separate", where Fluent separates by
+ * spacing and by the fill that appears under the pointer.
+ *
+ * border-COLOR only. The 1px keeps its place in the layout, so nothing shifts
+ * and the buttons stay on the pixel grid they were laid out on. */
+.button-group,
+.button-group > .button {
+  border-color: transparent !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * MESSAGE HEADER BUTTONS
+ * Reply / Forward / Archive / Spam / Delete / More, in the message header
+ * (about:message). #messageBrowser has no type="content" -- it is a chrome
+ * docshell, so userChrome.css reaches inside it and no @-moz-document scope is
+ * needed.
+ *
+ * These are XUL toolbarbuttons, not the HTML .button used elsewhere, so they
+ * take none of the rules above and were left entirely on stock styling: six
+ * outlined boxes with square corners in a row. The outline is already gone via
+ * --toolbarbutton-header-bordercolor in fluent-tokens.css; what is left here is
+ * the shape and the state fills, matched to the unified toolbar's.
+ *
+ * The menu-button variant (More) is three elements -- the button itself and the
+ * anonymous .toolbarbutton-menubutton-button / -dropmarker children -- and
+ * stock borders all three (messageHeader.css:184-189), so all three are listed.
+ * ------------------------------------------------------------------------- */
+
+#messageHeader .message-header-view-button,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker {
+  border: 1px solid transparent !important;
+  border-radius: var(--fluent-radius-control) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* Room inside them. Stock gives these 3px of inline padding
+ * (messageHeader.css:165) against a 16px icon and a label, which was fine while
+ * every button was fenced off by its own outline and is not once the outlines
+ * are gone -- the hover fill lands tight around the content and the labels of
+ * two neighbouring buttons sit closer to each other than each is to its own
+ * edge. 8px inline is the same room the menu items get.
+ *
+ * The menu-button variant is excluded from the first selector on purpose: stock
+ * zeroes ITS padding and pads the inner button instead (messageHeader.css:
+ * 170-176), so padding the host as well would count it twice. The dropmarker is
+ * an arrow with no label and takes half. */
+#messageHeader .message-header-view-button:not([is="toolbarbutton-menu-button"]),
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button {
+  padding-inline: 8px !important;
+  padding-block: 4px !important;
+}
+
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker {
+  padding-inline: 4px !important;
+  padding-block: 4px !important;
+}
+
+#messageHeader .message-header-view-button:not([disabled]):hover,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button:not([disabled]):hover,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker:not([disabled]):hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#messageHeader .message-header-view-button:not([disabled]):is(:hover:active, [open="true"]),
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button:not([disabled]):hover:active,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker:not([disabled]):hover:active {
   background-color: var(--fluent-subtle-pressed) !important;
 }
 
@@ -216,8 +324,13 @@
  * toolbar, which is the only place this widget appears.
  * ------------------------------------------------------------------------- */
 
+/* #qfb-qs-textbox is the quick filter's field. It is a <search-bar> like the
+ * toolbar's, but the element carries no `search-bar` CLASS (about3Pane.xhtml:
+ * 173), so the class selector above never matched it and it sat on stock
+ * styling inside an otherwise themed bar. */
 .search-bar,
-#unifiedToolbar .search-bar {
+#unifiedToolbar .search-bar,
+#qfb-qs-textbox {
   box-sizing: border-box !important;
   min-block-size: var(--fluent-control-height) !important;
   display: flex !important;
@@ -235,6 +348,17 @@
   --search-bar-background: transparent !important;
   --search-bar-focus-background: transparent !important;
   --focus-outline-color: transparent !important;
+}
+
+/* The one thing the quick filter's field cannot share: its fill. The rule above
+ * paints a search bar --fluent-card, which reads in the unified toolbar because
+ * that toolbar sits on the window base. This field sits ON a card
+ * (fluent-layout.css gives #quick-filter-bar one), and card on card is
+ * invisible -- every control stroke in this theme is transparent, so there is
+ * no outline left to define the box either. One step up the solid ladder is
+ * what makes it a field again. */
+#qfb-qs-textbox {
+  background-color: var(--fluent-solid-tertiary) !important;
 }
 
 /* ---------------------------------------------------------------------------
@@ -400,11 +524,19 @@ menupopup > menu[_moz-menuactive="true"] {
   color: var(--fluent-text-primary) !important;
 }
 
-/* Colour comes from --panel-separator-color above. All that is left here is
- * the inset: stock pads 1em inline on Windows to line the rule up with the
- * start of the item text, which lands 20px in while the item pills sit at 4px.
- * Match the pills instead -- the menu reads as one column that way. */
+/* Menu separators are removed outright, on the same instruction that took the
+ * box outlines and the button-group ticks: this theme separates by spacing and
+ * by the fill under the pointer, not by drawn rules.
+ *
+ * display: none rather than a transparent line, because the rule was the whole
+ * element -- stock's menuseparator is a 0-height box whose ::before paints the
+ * line (menu.css:130-136), so hiding the line and keeping the box would leave
+ * a few pixels of dead space that nothing explains. The groups a menu used to
+ * separate now run together; that is the trade, and it is deliberate.
+ *
+ * --panel-separator-color is still mapped above and is now unread here. It is
+ * left in place because it is a stock token other popup furniture can pick up,
+ * and mapping it costs nothing. */
 menuseparator {
-  padding-inline: 0 !important;
-  margin-inline: 4px !important;
+  display: none !important;
 }

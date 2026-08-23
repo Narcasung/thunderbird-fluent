@@ -200,45 +200,103 @@
 
 /* ---------------------------------------------------------------------------
  * THREAD PANE -- CARDS VIEW
- * Already card-shaped, so this mostly retokenizes and adds the leading bar.
+ * Every message is a card. The pane holding them is not -- fluent-layout.css
+ * takes the card off #threadPane so these can have it instead.
+ *
+ * .card-container is the only box in a row that can carry one. The <tr> cannot:
+ * a table-row takes no margin, and the table is in the separate border model
+ * (border-spacing: 0, tree-listbox.css:322) where a border on a row is not
+ * drawn at all.
+ *
+ * Row PITCH is not ours either. ROW_HEIGHT is computed in JS from font size
+ * and density (about3Pane.js:5708-5744), written to every row as an inline
+ * height (tree-view.mjs:1075), and the two scroll spacers are sized
+ * index * ROW_HEIGHT. A row that renders taller than that number does not push
+ * the next one down -- it desynchronises the list from its own scrollbar, and
+ * the error grows with every row scrolled. So the gap between cards is carved
+ * OUT of the row box, never added to it.
+ *
+ * The --tree-card-* tokens this block used to set are gone. Every one of them
+ * fed either background-color or border on .card-container
+ * (tree-listbox.css:306-307), and both of those are declared outright below,
+ * so the tokens had no reader left. Their state variants (-selected, -current,
+ * -hover) went with them: stock switches states by reassigning
+ * --tree-card-background, which cannot reach past an !important fill.
  * ------------------------------------------------------------------------- */
-
-#threadTree {
-  --tree-card-background: transparent !important;
-  --tree-card-background-selected: var(--fluent-accent-tint) !important;
-  --tree-card-background-selected-current: var(--fluent-accent-tint-strong) !important;
-  --tree-card-background-current: var(--fluent-subtle-hover) !important;
-  --tree-card-border-selected: transparent !important;
-  --tree-card-border-hover: transparent !important;
-  --tree-card-border-focus: var(--fluent-accent) !important;
-}
 
 #threadTree tr.card-layout {
   min-height: var(--fluent-row-height-card) !important;
-  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
+/* The gap between cards, taken out of the row rather than added to it. Stock
+ * is 2px block / 3px inline (tree-listbox.css:302); the inline inset moves to
+ * the container below so it can be --fluent-card-inset, shared with the header
+ * card above the list, and the block padding stays near stock at 3px.
+ *
+ * It is deliberately NOT larger. This is the only vertical spacing control
+ * cards have and it works the wrong way round from a normal one: every pixel
+ * added here separates the cards and takes that same pixel off the card's own
+ * height, because the row cannot grow to repay it -- see the header above.
+ * 5px was tried and the cards lost more than the gap gained. Padding INSIDE a
+ * card cannot buy the height back either, for the same reason: genuinely
+ * taller cards are a pref, not CSS -- uidensity=touch or a larger UI font,
+ * both of which feed the JS formula. Horizontal room has no such ceiling,
+ * which is why the two axes are not tuned together here. */
+#threadTree tr.card-layout > td {
+  padding-block: 3px !important;
+  padding-inline: 0 !important;
+}
+
+/* The card itself, and the one structural change in this rework: the fill is
+ * background-COLOR and never moves, while hover and selection are a tint on
+ * background-IMAGE layered over it.
+ *
+ * They used to be background-color, replacing the fill outright. That worked
+ * while a row was a bare fill on top of the pane's card -- a state colour
+ * could take over from a transparent one and the pane still showed through
+ * underneath. There is no pane fill under a row any more, so a translucent
+ * tint that replaces the card would be a tint painted onto Mica.
+ *
+ * The tint layer is flat and full-bleed. It used to start --fluent-indicator-
+ * width in, leaving the leading 3px of the card at the untinted fill so a
+ * selection accent bar could sit there. Both states read as a notch cut out of
+ * the highlight: on hover the strip stayed card-coloured and darker than the
+ * rest of the card, on selection it was a bar of accent doing the same. A card
+ * this size does not need a leading indicator -- it has a whole surface to
+ * change colour. The bar survives in TABLE view, where a 32px row does need
+ * one; that block is further up this file and is untouched by this.
+ *
+ * Still a gradient rather than a plain colour, because the fill below it is
+ * already background-color and a background-image is the only layer left that
+ * paints on top of one. Keeping the same one-layer, one-colour structure in
+ * every state is also what lets the hover fade interpolate; going from `none`
+ * to an image would snap. */
 #threadTree tr.card-layout > td > .card-container {
-  margin-inline: var(--fluent-row-inset) !important;
-  border-radius: var(--fluent-radius-row) !important;
+  --fluent-row-tint: transparent;
+
+  margin-inline: var(--fluent-card-inset) !important;
+  background-color: var(--fluent-card) !important;
+  background-image: linear-gradient(var(--fluent-row-tint) 0 0) !important;
+  background-repeat: no-repeat !important;
   border-color: transparent !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  transition: background-image var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
 #threadTree tr.card-layout:hover:not(.selected) > td > .card-container {
-  background-color: var(--fluent-subtle-hover) !important;
+  --fluent-row-tint: var(--fluent-subtle-hover);
 }
 
 #threadTree tr.card-layout.selected > td > .card-container {
-  background-color: var(--fluent-accent-tint) !important;
-  background-image: linear-gradient(to right,
-                      var(--fluent-accent) 0 var(--fluent-indicator-width),
-                      transparent var(--fluent-indicator-width)) !important;
-  background-repeat: no-repeat !important;
+  --fluent-row-tint: var(--fluent-accent-tint);
 }
 
 /* ---------------------------------------------------------------------------
  * THREAD PANE HEADER
- * Column headers sit on the card, so they must not paint their own surface.
+ * Column headers must not paint a surface of their own. They used to sit on
+ * the pane's card; the pane has none now, so painting one here would put a
+ * strip of fill on the backdrop above a list of separate cards.
  * ------------------------------------------------------------------------- */
 
 #threadTree thead[is="tree-view-table-header"] th {

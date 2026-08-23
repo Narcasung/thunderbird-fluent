@@ -117,6 +117,13 @@
   --fluent-radius-control:    4px;   /* controlCornerRadius */
   --fluent-radius-row:        4px;
   --fluent-row-inset:         4px;
+  /* The thread pane's own inset, measured from the pane edge, shared by the
+   * message cards and the header card above them (fluent-lists.css,
+   * fluent-layout.css). Deliberately a step wider than --fluent-gutter: that
+   * one is the gap BETWEEN panes, and a card wants more air than a splitter.
+   * One name for both consumers is what stops the header card and the list
+   * under it drifting apart. */
+  --fluent-card-inset:        12px;
   /* A folder-pane row is a 28px fill floating in a taller slot, not a fill
    * that IS the slot -- two adjacent fills would otherwise share an edge and
    * merge into one block. The gap is per side, so the slot works out at
@@ -127,6 +134,14 @@
   --fluent-row-fill-height:   28px;
   --fluent-row-gap:           4px;
   --fluent-control-height:    32px;
+  /* The height of the strip across the top of the window's two left panes:
+   * the thread pane's header card and each of the folder pane's three button
+   * cards. They sit side by side at the same y, so an odd pixel between them
+   * reads as a mistake -- one token, both consumers, in fluent-layout.css.
+   * Taller than --fluent-control-height because these are cards, not controls;
+   * the number is what the header card measured at with its content driving
+   * it, rounded up. */
+  --fluent-header-height:     40px;
   --fluent-row-height-table:  32px;  /* table view stays dense */
   --fluent-row-height-card:   40px;  /* cards view gets full Fluent height */
   --fluent-indicator-width:   3px;
@@ -222,6 +237,14 @@
   --layout-border-0: var(--fluent-divider) !important;
   --layout-border-1: var(--fluent-card-stroke) !important;
   --layout-border-2: var(--fluent-control-stroke) !important;
+
+  /* XUL toolbarbutton strokes. Only ever used as border-color, and the message
+   * header's Reply/Forward/Archive row is the most visible consumer -- six
+   * outlined boxes in a row, which is what a Fluent command bar specifically
+   * is not. Both go transparent, same as every other box outline in this
+   * theme. The buttons keep their hover fill, which comes from elsewhere. */
+  --toolbarbutton-header-bordercolor: transparent !important;
+  --toolbarbutton-active-bordercolor: transparent !important;
 
   /* Sidebar tokens -- the folder pane reads these rather than --layout-* */
   --sidebar-background: var(--fluent-card) !important;

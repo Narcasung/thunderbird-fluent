@@ -104,7 +104,6 @@ body#paneLayout {
   background-color: transparent !important;
 }
 
-#threadPane,
 #messagePane {
   background-color: var(--fluent-card) !important;
   border: 1px solid var(--fluent-card-stroke) !important;
@@ -134,14 +133,99 @@ body#paneLayout {
   box-shadow: none !important;
 }
 
+/* The thread pane is the second exception, and for a different reason. The
+ * folder pane has no card because a nav pane never gets one. This pane has
+ * none because the card MOVED: every message is a card of its own now, see
+ * THREAD PANE -- CARDS VIEW in fluent-lists.css. A card of cards is one
+ * surface too many -- the row cards would sit on a fill one step away from
+ * their own, which is the same thing that made menus disappear into the pane
+ * behind them, and the shadow that separates them would land on nothing.
+ *
+ * radius and `clip` are not restated here because they were never this pane's
+ * to give up: about3Pane.css:140-151 already sets overflow: hidden and
+ * contain: strict on it. Card shadows still stop at the pane's edges. Keeping
+ * the sides clear is the row margin's job, not this element's. */
+#threadPane {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Inner regions must not paint their own background over the card, or the
- * rounded corners get squared off from the inside.
- * #folderPaneHeaderBar is deliberately absent -- it is a card of its own now,
- * see below. */
-#threadPaneHeaderBar,
+ * rounded corners get squared off from the inside. #threadTree carries a fill
+ * of its own to clear on top of that -- threadPane.css:31-40 paints it
+ * --tree-view-bg, and --layout-background-0 again whenever the rows are
+ * thread-rows.
+ *
+ * Neither header bar is in this list. Both are surfaces in their own right
+ * further down: #threadPaneHeaderBar is a card, and #folderPaneHeaderBar is a
+ * bare strip carrying three separate button cards. */
 #threadTree,
 #folderTree {
   background-color: transparent !important;
+}
+
+/* The thread pane's header -- folder name, message count, display options
+ * (about3Pane.xhtml:125, .list-header-bar). It gets a card, where the folder
+ * pane's toolbar below does not, and the difference is what is in them: that
+ * one is three unrelated commands with nothing to group, this one is a single
+ * contiguous strip titling the list under it. On a pane with no card left, a
+ * bare strip would read as floating.
+ *
+ * `border` rather than `border: none` is deliberate. Stock draws a
+ * border-block-end in --layout-border-0 (threadPane.css:582), which this
+ * theme maps to --fluent-divider -- a visible line. Restating all four sides
+ * in --fluent-card-stroke, transparent like every other card here, replaces it
+ * rather than leaving it to be found again later.
+ *
+ * The inline margin is --fluent-card-inset, the same one the message cards
+ * below use, so the header and the list share one edge down both sides. The
+ * block margin below is the gutter, and there is none above.
+ *
+ * Height is pinned rather than left to the content. Left to itself this bar
+ * measured 39px against the folder pane's 30px buttons sitting at the same y,
+ * which read as two strips that missed each other. Both now take
+ * --fluent-header-height. */
+#threadPaneHeaderBar {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  margin-inline: var(--fluent-card-inset) !important;
+  margin-block-end: var(--fluent-gutter) !important;
+  /* border-box on both this and the buttons, so --fluent-header-height is the
+   * number a ruler would read on each of them rather than one plus its border
+   * and the other plus its own. */
+  box-sizing: border-box !important;
+  block-size: var(--fluent-header-height) !important;
+}
+
+/* The quick filter bar, which slides in between that header card and the list
+ * when Quick Filter is switched on (about3Pane.xhtml:167). It is a third band
+ * in the same stack, so it takes the same card: same inset, same radius, same
+ * fill, and the gutter below it that the header card has.
+ *
+ * `border` replaces stock's border-block-end in --sidebar-border
+ * (quickFilterBar.css:17), which this theme maps to --fluent-divider -- a
+ * visible rule running the full width of the pane, under a card and above a
+ * list of cards.
+ *
+ * Padding is the theme's own rather than stock's --qfb-padding (3px, 0 3px
+ * when compact), and the two axes are not the same number. Inline needs the
+ * gutter: the contents sit inside an 8px radius and a 3px inset does not clear
+ * the corner. Block needs almost nothing, because stock already puts
+ * --button-margin: 3px on everything in this bar (quickFilterBar.css:14) and
+ * the field carries margin: 3px of its own (:71) -- 8px here stacked on top of
+ * that and the bar came out half again as tall as it needed to be. 2px plus
+ * the 3px that is already there is the clearance. */
+#quick-filter-bar {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  margin-inline: var(--fluent-card-inset) !important;
+  margin-block-end: var(--fluent-gutter) !important;
+  padding: 2px var(--fluent-gutter) !important;
 }
 
 /* The folder pane's toolbar -- Get Messages / Write Message / More
@@ -188,11 +272,27 @@ body#paneLayout {
  * schemes -- in dark, pressed lifts rather than dips, which is not what Fluent
  * does; correcting that needs a token below --fluent-card that does not exist
  * yet, and the ladder reads correctly as-is. */
+/* Radius and height are the thread pane header card's, not a control's. These
+ * three buttons and that card are one row of surfaces across the top of the
+ * window, and they were 4px/30px against its 8px/39px -- close enough to look
+ * like a miss rather than a distinction. A card next to a card matches it.
+ *
+ * The height is spelled out the long way -- padding to zero, border subtracted
+ * from the total -- because box-sizing must stay content-box here. Setting it
+ * to border-box makes the total 40px in one line, and truncates "New Message"
+ * to "New Mess...": stock floors these buttons at min-inline-size: 6em
+ * (widgets.css:18), the pane is narrow enough that the floor is what the
+ * button actually gets, and under border-box that 6em has to pay for the
+ * inline padding too. The block axis is the only one being pinned; the inline
+ * axis must be left exactly as stock computes it. */
 #folderPaneHeaderBar > .button {
   background-color: var(--fluent-card) !important;
   color: var(--fluent-text-primary) !important;
   border: 1px solid var(--fluent-card-stroke) !important;
-  border-radius: var(--fluent-radius-control) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-sizing: content-box !important;
+  padding-block: 0 !important;
+  block-size: calc(var(--fluent-header-height) - 2px) !important;
   box-shadow: var(--fluent-shadow-card) !important;
   font-weight: inherit !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
