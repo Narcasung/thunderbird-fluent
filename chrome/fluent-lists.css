@@ -71,16 +71,27 @@
  * neighbour reads as unfinished. See --fluent-row-gap for why the two cannot
  * share one token.
  *
- * margin-inline is a literal 16px, four times the 4px above and below and
- * twice --fluent-gutter. Matching the gutter looked mean here: a row is a
- * wide, short shape, so equal margins on all four sides read as tighter at
- * the ends than at the top. Settled by eye at 16px after 8 and 12 both still
- * read tight. The scrollbar is handled separately, by the scrollbar-gutter
- * rule below, so this margin never has to carry a lane for it. */
+ * margin-inline is a literal 8px, matching --fluent-gutter. It was 16px for
+ * a while, arrived at in two steps and for a reason that still holds inside
+ * the pane: a row is a wide, short shape, so equal margins on all four sides
+ * read as tighter at the ends than at the top, and 8 and 12 both looked mean
+ * next to the 4px above and below.
+ *
+ * What overruled it is what the same number does at the OTHER edge. This is
+ * the leftmost paintable thing in the window, so its inset stacks on top of
+ * body#paneLayout's 8px padding (fluent-layout.css) and the pair of them was
+ * 24px of empty Mica between the window border and the first folder name --
+ * measured, not guessed. Inside the pane 16px was right; against the window
+ * edge it read as slack. The window edge wins, and the row now breathes the
+ * same 8px the panes do.
+ *
+ * This is symmetric, so the rows' trailing edge comes in by 8px too. That
+ * side is fine: the scrollbar is handled separately, by the scrollbar-gutter
+ * rule below, so this margin never had to carry a lane for it. */
 #folderTree li > .container {
   position: relative !important;
   min-height: var(--fluent-row-fill-height) !important;
-  margin-inline: 16px !important;
+  margin-inline: var(--fluent-gutter) !important;
   margin-block: var(--fluent-row-gap) !important;
   /* The card radius, not the row radius. These fills sit next to the folder
    * pane's three button cards above them and the thread pane's message cards
