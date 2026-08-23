@@ -127,12 +127,20 @@
   /* A folder-pane row is a 28px fill floating in a taller slot, not a fill
    * that IS the slot -- two adjacent fills would otherwise share an edge and
    * merge into one block. The gap is per side, so the slot works out at
-   * 28 + 2*4 = 36px and there is 8px of backdrop between one fill and the
+   * 28 + 2*3 = 34px and there is 6px of backdrop between one fill and the
    * next. That deliberately breaks the 32px pitch 0add3a5 matched to the
-   * Account Settings sidebar; the folder pane now runs one step looser than
-   * that sidebar, on purpose. */
+   * Account Settings sidebar; the folder pane runs one step looser than that
+   * sidebar, on purpose.
+   *
+   * 6px is not a free choice: it is what the thread pane's message cards get
+   * (3px of td padding either side of a row, fluent-lists.css), and the two
+   * lists sit side by side. It cannot be expressed as one shared token,
+   * because the thread pane pays for its gap out of a JS-fixed row height and
+   * the folder pane adds its own -- the number matches, the mechanism cannot.
+   * The address book's contact list is the third list held to it. Change one
+   * of the three and change all three. */
   --fluent-row-fill-height:   28px;
-  --fluent-row-gap:           4px;
+  --fluent-row-gap:           3px;
   --fluent-control-height:    32px;
   /* The height of the strip across the top of the window's two left panes:
    * the thread pane's header card and each of the folder pane's three button

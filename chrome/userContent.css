@@ -647,47 +647,78 @@
     --listbox-selected-bg: var(--fluent-subtle-hover) !important;
     --listbox-focused-selected-bg: var(--fluent-accent-tint) !important;
     --listbox-selected-color: var(--fluent-text-primary) !important;
-    --tree-card-background: transparent !important;
-    --tree-card-background-selected: var(--fluent-accent-tint) !important;
-    --tree-card-background-selected-current: var(--fluent-accent-tint-strong) !important;
-    --tree-card-background-current: var(--fluent-subtle-hover) !important;
-    --tree-card-border: transparent !important;
-    --tree-card-border-selected: transparent !important;
-    --tree-card-border-hover: transparent !important;
-    --tree-card-border-focus: var(--fluent-accent) !important;
     background-color: transparent !important;
   }
+  /* The --tree-card-* family is deliberately absent. Every one of those tokens
+   * feeds background-color or border on .card-container (tree-listbox.css:
+   * 306-307), and both are declared outright below, so none of them had a
+   * reader left. Stock switches state by reassigning --tree-card-background,
+   * which cannot reach past an !important fill. Same removal as the thread
+   * pane's, for the same reason. */
 
-  /* Rows are tr[is="ab-card-row"] -- NOT the .table-layout / .card-layout
-   * classes the thread pane uses. Both lists are <tree-view>, but the row
-   * custom element differs, and the thread pane's class names appear nowhere in
-   * this document. Verified in aboutAddressBook.css against this build.
+  /* Rows are tr[is="ab-card-row"], and they ARE .card-layout: the custom
+   * element adds that class and builds td > div.card-container inside itself
+   * (aboutAddressBook.js:1217-1250), the same shape the thread pane's cards
+   * have. A comment here used to say the opposite -- that the thread pane's
+   * class names appear nowhere in this document -- and every fill below was
+   * painted on the <tr> because of it.
+   *
+   * That is why this list had no gap between rows while the thread pane did.
+   * A <tr> cannot be separated from the next one: it takes no margin, and the
+   * row height is fixed in JS (aboutAddressBook.js:1471-1474) exactly as it is
+   * for messages, so the space has to be carved out of the row with td padding
+   * and the fill moved onto the container inside it. 3px per side is 6px
+   * between rows, which is the number the thread pane and the folder pane both
+   * use -- see --fluent-row-gap.
    *
    * No height is set on the row. --list-item-min-height in the shared block is
    * what tree-listbox.css actually reads, and it already carries Fluent's 32px.
    * (--ab-card-table-row-height looks like the obvious lever and is not one: it
    * is declared in aboutAddressBook.css and read by nothing in this build.) */
-  #cards tr[is="ab-card-row"] {
-    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  #cards tr[is="ab-card-row"] > td {
+    padding-block: 3px !important;
   }
 
-  #cards tr[is="ab-card-row"]:hover:not(.selected) {
-    background-color: var(--fluent-subtle-hover) !important;
+  /* The fill, on the container so it stops at the gap and can be rounded.
+   * Rest is transparent: this list sits on #cardsPane's card, so a row is a
+   * pill on a surface, not a card of its own -- unlike the thread pane, whose
+   * pane gave its card up to its rows.
+   *
+   * The tint is one flat background-image layer over that transparent base,
+   * with the colour swapped per state. It used to be a background-color plus,
+   * on selection, a gradient that painted an accent bar over the leading
+   * --fluent-indicator-width -- the same leading notch that came off the
+   * message cards, and removed here for the same reason. Keeping one layer
+   * with one stop in every state is also what lets the hover fade
+   * interpolate. */
+  #cards tr[is="ab-card-row"] > td > .card-container {
+    --fluent-row-tint: transparent;
+
+    margin-inline: var(--fluent-row-inset) !important;
+    background-color: transparent !important;
+    background-image: linear-gradient(var(--fluent-row-tint) 0 0) !important;
+    background-repeat: no-repeat !important;
+    border-color: transparent !important;
+    border-radius: var(--fluent-radius-row) !important;
+    transition: background-image var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  #cards tr[is="ab-card-row"]:hover:not(.selected) > td > .card-container {
+    --fluent-row-tint: var(--fluent-subtle-hover);
   }
 
   #cards tr[is="ab-card-row"].selected {
-    background-color: var(--fluent-accent-tint) !important;
     color: var(--fluent-text-primary) !important;
-    background-image: linear-gradient(to right,
-                        var(--fluent-accent) 0 var(--fluent-indicator-width),
-                        transparent var(--fluent-indicator-width)) !important;
-    background-repeat: no-repeat !important;
+  }
+
+  #cards tr[is="ab-card-row"].selected > td > .card-container {
+    --fluent-row-tint: var(--fluent-accent-tint);
   }
 
   /* Focused selection is the stronger tint; unfocused stays quiet so the pane
    * plainly reads as inactive -- same split as the thread pane. */
-  #cards:focus-within tr[is="ab-card-row"].selected {
-    background-color: var(--fluent-accent-tint-strong) !important;
+  #cards:focus-within tr[is="ab-card-row"].selected > td > .card-container {
+    --fluent-row-tint: var(--fluent-accent-tint-strong);
   }
 
   /* Column headers sit on the card and must not paint their own surface. */

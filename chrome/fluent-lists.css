@@ -62,9 +62,14 @@
  * two rows.
  *
  * The slot grows to fit instead of the fill shrinking to fit: 28px of fill
- * plus 4px of margin per side makes a 36px slot with 8px of backdrop between
+ * plus 3px of margin per side makes a 34px slot with 6px of backdrop between
  * fills, and the label keeps the room it had. Shrinking would have driven the
  * fill to 24px, Fluent's compact height, and crowded 1.1rem text inside it.
+ *
+ * 6px is the thread pane's gap between message cards, deliberately: the two
+ * lists are side by side and a pane that breathes differently from its
+ * neighbour reads as unfinished. See --fluent-row-gap for why the two cannot
+ * share one token.
  *
  * margin-inline is a literal 16px, four times the 4px above and below and
  * twice --fluent-gutter. Matching the gutter looked mean here: a row is a
@@ -77,7 +82,13 @@
   min-height: var(--fluent-row-fill-height) !important;
   margin-inline: 16px !important;
   margin-block: var(--fluent-row-gap) !important;
-  border-radius: var(--fluent-radius-row) !important;
+  /* The card radius, not the row radius. These fills sit next to the folder
+   * pane's three button cards above them and the thread pane's message cards
+   * across the splitter, all of which are 8px; at 4px the folder rows read as
+   * a different, tighter kind of object in the middle of them. --fluent-radius-
+   * row still describes rows that sit INSIDE a card, where the smaller corner
+   * is right -- the address book's contact list is one. */
+  border-radius: var(--fluent-radius-card) !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
@@ -115,26 +126,20 @@
   font-weight: var(--fluent-weight-strong) !important;
 }
 
-/* The accent pill. Scales in on selection -- CSS cannot slide it between rows
- * the way WinUI does, so it grows in place on the newly selected row. */
-#folderTree li.selected > .container::before,
-#folderTree li.current > .container::before {
-  content: "" !important;
-  position: absolute !important;
-  inset-inline-start: 0 !important;
-  top: 50% !important;
-  width: var(--fluent-indicator-width) !important;
-  height: var(--fluent-indicator-height) !important;
-  border-radius: calc(var(--fluent-indicator-width) / 2) !important;
-  background-color: var(--fluent-accent) !important;
-  transform: translateY(-50%) !important;
-  animation: fluent-pill-in var(--fluent-duration-normal) var(--fluent-ease-decelerate) !important;
-}
-
-@keyframes fluent-pill-in {
-  from { transform: translateY(-50%) scaleY(0); }
-  to   { transform: translateY(-50%) scaleY(1); }
-}
+/* There is NO accent pill on a selected folder row, and there is no keyframe
+ * left for one either -- both were removed here on request, together with the
+ * leading accent bars on the message cards and the contact list. WinUI does
+ * put a pill on the selected item of a NavigationView, so this is a departure
+ * from the reference and a deliberate one: at this theme's row sizes the
+ * indicator reads as a notch bitten out of the fill rather than as a marker
+ * beside it. The subtle fill is what marks selection now, in all three lists.
+ *
+ * `position: relative` stays on the container above. It is what an indicator
+ * would need if one ever came back, and it costs nothing.
+ *
+ * The spaces rail keeps ITS pill (fluent-chrome.css) -- that is a rail of
+ * icons with no fill to change, so the pill is the only marker available. It
+ * runs on fluent-indicator-in, a separate keyframe, and is unaffected by this. */
 
 /* Same tenth-of-a-step bump as #folderPane above, same reason: about:3pane is
  * a chrome document and never gets the body size every content tab gets.
