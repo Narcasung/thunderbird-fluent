@@ -17,12 +17,27 @@
  * #titlebar is a vbox containing, in order: unified-toolbar, menubar,
  * tabs-toolbar. With "Hide system window titlebar" on, this whole block is
  * the draggable window region and Thunderbird draws its own caption buttons.
+ *
+ * `unified-toolbar` is the custom-element HOST, and it is listed separately
+ * from the two ids nested inside it because it carries something they do not:
+ *
+ *   unified-toolbar { border-block-end: 1px solid rgba(0, 0, 0, 0.15); }
+ *   -- unifiedToolbar.css:47-49
+ *
+ * That is the hairline between the toolbar and the tab strip. It went unseen
+ * for as long as the chrome behind it was dark, and only showed up once a
+ * white desktop came through Mica and lifted the surface: measured 43 where
+ * the chrome around it was 51, and 45 where it was 53 -- both exactly 85% of
+ * their surround, which is what a 15% black border over a translucent
+ * backdrop composites to. Fluent keeps the chrome one continuous surface, so
+ * it goes the same way as the hairline under the tab strip below.
  * ------------------------------------------------------------------------- */
 
 #navigation-toolbox,
 #titlebar,
 #toolbar-menubar,
 #tabs-toolbar,
+unified-toolbar,
 #unifiedToolbarContainer,
 #unifiedToolbar {
   background-color: var(--fluent-base-chrome) !important;
