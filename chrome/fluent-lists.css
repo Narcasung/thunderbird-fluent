@@ -100,28 +100,11 @@
   color: var(--fluent-text-primary) !important;
 }
 
-/* No outline on a row, in any state. Stock draws a 1px accent line on the
- * container's border box -- measured #4A5459, this machine's accent, sitting
- * exactly on the fill's top and bottom edges. Against the accent pill that is
- * two accent marks for one state, and the pill is the Fluent one.
- *
- * Removed on the container rather than through --focus-outline-color so it
- * cannot also reach the twisty, the unread badge or anything else nested in
- * the row -- the search bar took the token route and that is why its button
- * lost its ring too (fluent-chrome.css:192-202).
- *
- * The consequence, stated so nobody has to rediscover it: keyboard focus in
- * the folder tree is now shown only by the fill and the pill, which are the
- * same marks used for selection. Moving focus without changing selection --
- * ctrl+arrow -- is no longer visible. To restore it, drop this rule; nothing
- * else depends on it. */
-#folderTree li > .container,
-#folderTree li > .container:focus,
-#folderTree li > .container:focus-visible,
-#folderTree li.selected > .container,
-#folderTree li.current > .container {
-  outline: none !important;
-}
+/* The accent line that used to trace a selected row is NOT handled here. It
+ * was never an outline -- it is the --list-container-border-* family, killed
+ * in the GENERIC LIST CONTAINERS block at the end of this file. An earlier
+ * pass added `outline: none` on this selector to chase it and it did nothing,
+ * because list-container.css:46 already sets exactly that. Do not add it back. */
 
 /* Account roots stay ordinary rows -- same hover, same selection, same pill as
  * any folder, because that is what they are: clicking one opens Account
@@ -279,10 +262,35 @@
 
 /* ---------------------------------------------------------------------------
  * GENERIC LIST CONTAINERS
- * Used by Address Book and several dialogs -- comes along for free.
+ * Every tree row in the app, chrome side: the folder pane, and the several
+ * dialogs that build a list the same way. Address Book and the other
+ * in-content pages get the identical block in userContent.css -- see the
+ * matching list in the shared token section there.
+ *
+ * The BORDER half of this family matters as much as the background half.
+ * shared/list-container.css:42 puts `border: 1px solid` on every .container
+ * and then recolours it per state -- :50 selected, :55 selected+current, :60
+ * hover, :109 selected while the list has focus, :120 selected+current while
+ * it has focus, which is flat --selected-item-color. The border paints over
+ * the element's own background (background-clip defaults to border-box), so
+ * with a translucent fill the 1px band comes out at double density and reads
+ * as a hairline outline around every selected row.
+ *
+ * That is what the "slight border" on selection was, everywhere in the app.
+ * It is a border, not an outline -- list-container.css:46 already sets
+ * `outline: none` on the same rule, so no amount of outline work could touch
+ * it. Transparent rather than `border: 0`, so the 1px band stays in the box
+ * model and nothing shifts by 2px; the fill simply shows through it.
  * ------------------------------------------------------------------------- */
 
 :root {
+  --list-container-border: transparent !important;
+  --list-container-border-hover: transparent !important;
+  --list-container-border-selected: transparent !important;
+  --list-container-border-selected-current: transparent !important;
+  --list-container-border-selected-focused: transparent !important;
+  --list-container-border-selected-current-focused: transparent !important;
+
   --list-container-background-hover: var(--fluent-subtle-hover) !important;
   --list-container-background-selected: var(--fluent-subtle-hover) !important;
   --list-container-background-selected-current: var(--fluent-accent-tint) !important;
