@@ -93,10 +93,15 @@
   --fluent-radius-control:    4px;   /* controlCornerRadius */
   --fluent-radius-row:        4px;
   --fluent-row-inset:         4px;
-  /* Breathing room above and below a row's FILL, inside its 32px slot -- not
-   * extra pitch. Two adjacent filled rows would otherwise share an edge and
-   * merge into one block. 2px each side puts 4px of backdrop between them. */
-  --fluent-row-gap:           2px;
+  /* A folder-pane row is a 28px fill floating in a taller slot, not a fill
+   * that IS the slot -- two adjacent fills would otherwise share an edge and
+   * merge into one block. The gap is per side, so the slot works out at
+   * 28 + 2*4 = 36px and there is 8px of backdrop between one fill and the
+   * next. That deliberately breaks the 32px pitch 0add3a5 matched to the
+   * Account Settings sidebar; the folder pane now runs one step looser than
+   * that sidebar, on purpose. */
+  --fluent-row-fill-height:   28px;
+  --fluent-row-gap:           4px;
   --fluent-control-height:    32px;
   --fluent-row-height-table:  32px;  /* table view stays dense */
   --fluent-row-height-card:   40px;  /* cards view gets full Fluent height */

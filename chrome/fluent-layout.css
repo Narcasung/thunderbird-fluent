@@ -149,22 +149,26 @@ body#paneLayout {
  * own box. One card around all three would read as a single segmented control,
  * which these are not -- they are three unrelated commands.
  *
- * margin-inline is --fluent-row-inset and padding is zero, against stock's 9px
+ * margin-inline is --fluent-gutter and padding is zero, against stock's 9px
  * --sidebar-header-spacing (variables.css:72), so the buttons' edges land on
- * the same inset the row fills use (fluent-lists.css:62) rather than missing
- * them by 5px. gap drops from stock's 9px to the same 4px.
+ * the same inset the row fills use (fluent-lists.css) rather than missing them
+ * by 5px.
+ *
+ * gap is a literal 12px rather than a token. Stock's 9px packed the three
+ * boxes tightly enough to read as one strip; 12px is the gap-to-button ratio
+ * of the reference this was modelled on, at this theme's button size. No
+ * existing token is that value and one consumer does not earn a new one.
  *
  * justify-content overrides stock's space-between (containers.css:9). With
  * three separate boxes, space-between pinned the outer two to the pane edges
  * and left a hole in the middle; centred, they group as one cluster of
- * commands and the gap between them stays the 4px set above whatever the pane
- * is resized to. */
+ * commands and the gap between them holds at any pane width. */
 #folderPaneHeaderBar {
   background-color: transparent !important;
-  margin-inline: var(--fluent-row-inset) !important;
+  margin-inline: var(--fluent-gutter) !important;
   margin-block-end: var(--fluent-gutter) !important;
   padding: 0 !important;
-  gap: var(--fluent-row-inset) !important;
+  gap: 12px !important;
   justify-content: center !important;
 }
 

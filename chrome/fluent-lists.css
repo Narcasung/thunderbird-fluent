@@ -56,22 +56,36 @@
   --treeitem-text-active: var(--fluent-text-primary) !important;
 }
 
-/* The fill is inset inside the row slot, not equal to it. Stock sizes the
- * container to the full --list-item-min-height (tree-listbox.css:723-725),
- * which this theme has at 32px, so two adjacent filled rows share an edge and
- * read as one block rather than two rows.
+/* The fill floats in the row slot rather than being the slot. Stock sizes the
+ * container to the full --list-item-min-height (tree-listbox.css:723-725), so
+ * two adjacent filled rows share an edge and read as one block rather than as
+ * two rows.
  *
- * Shrinking the fill rather than adding pitch: the row slot stays 32px, which
- * is what 0add3a5 matched to the Account Settings sidebar, and the 4px of
- * backdrop between fills comes out of the fill instead of out of the layout.
- * 28px is still above Fluent's 24px compact control height. */
+ * The slot grows to fit instead of the fill shrinking to fit: 28px of fill
+ * plus 4px of margin per side makes a 36px slot with 8px of backdrop between
+ * fills, and the label keeps the room it had. Shrinking would have driven the
+ * fill to 24px, Fluent's compact height, and crowded 1.1rem text inside it.
+ *
+ * margin-inline is --fluent-gutter, the same inset the pane uses against the
+ * window, so the fill floats by the same amount on all four sides. The
+ * scrollbar is handled separately -- see the scrollbar-gutter rule below --
+ * so this margin never has to carry a lane for it. */
 #folderTree li > .container {
   position: relative !important;
-  min-height: calc(var(--fluent-control-height) - 2 * var(--fluent-row-gap)) !important;
-  margin-inline: var(--fluent-row-inset) !important;
+  min-height: var(--fluent-row-fill-height) !important;
+  margin-inline: var(--fluent-gutter) !important;
   margin-block: var(--fluent-row-gap) !important;
   border-radius: var(--fluent-radius-row) !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* Reserve the scrollbar's lane whether or not it is showing. Without this the
+ * bar overlays the tree's content box and the row fills run underneath it, so
+ * the fill's trailing edge collides with the bar exactly when the pane is
+ * scrollable -- which for a folder list is most of the time. `stable` also
+ * stops the whole list shifting sideways as the bar appears and disappears. */
+#folderTree {
+  scrollbar-gutter: stable !important;
 }
 
 #folderTree li > .container:hover {
