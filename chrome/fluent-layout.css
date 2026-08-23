@@ -54,10 +54,154 @@
   background-color: var(--fluent-base-chrome) !important;
 }
 
-/* Status bar reads as base too. */
+/* ---------------------------------------------------------------------------
+ * STATUS BAR
+ *
+ * Stock is a 22px strip ruled into cells: every .statusbarpanel carries
+ * `border-inline-end: 1px solid ThreeDLightShadow` (classic/messenger.css:383,
+ * a Windows-only file), and that border -- not any separator element -- is
+ * what reads as a vertical divider around each item.
+ *
+ * Fluent does not rule a status bar into cells. It sets the interactive items
+ * down as their own small surfaces and lets the gaps do the separating. So
+ * the rules go, the controls become cards, and the readouts stay bare:
+ * #statusText ("Done") is empty most of the time, and a pill that blinks in
+ * and out with a transient string is noise rather than structure.
+ *
+ * The spaces buttons' state ladder used to live in fluent-lists.css, written
+ * alongside the spaces rail. It is here now because it is the same ladder as
+ * the other two pills and, left behind, its subtle fills would have contra-
+ * dicted the solid ones below.
+ * ------------------------------------------------------------------------- */
+
+/* Base surface, and room for a 28px pill inside what stock floors at 22px.
+ * The floor rather than the content sets the height, so the bar cannot jump
+ * as the calendar panels collapse and uncollapse between tabs. No flex `gap`:
+ * the event-dialog panels sit on this bar permanently and merely collapsed,
+ * and a gap track for each of them would spread the visible items apart.
+ * Each pill carries its own margin instead.
+ *
+ * The height is 28px of pill plus 8px under it, and NOTHING above it. That
+ * looks lopsided written down and is the only thing that reads level on
+ * screen, because the gap above the pill is not the bar's to give: body
+ * #paneLayout already pads 8px all round (see THE THREE CARDS below), so the
+ * message card stops 8px short of the bar. Mica fills that padding and Mica
+ * fills the bar, and the eye cannot tell where one ends -- a 6px pad of our
+ * own on top of it read as 14px above against 6px below. Letting the pane's
+ * padding be the entire top gap puts 8px of backdrop on each side of the pill.
+ *
+ * That 8px is the bar's own padding rather than a margin on each item, so it
+ * applies once no matter how deep an item sits. Margins do not: #offline-status
+ * is nested two boxes down inside [role="status"], so biasing both the wrapper
+ * and the pill stacked two 8px offsets and left that one pill 4px above its
+ * neighbour. One padding on the container cannot double up that way.
+ *
+ * border-box so the 36px floor is the outer height and the content band is the
+ * 28px the pills want exactly. Everything on the bar then centres on the same
+ * line -- pills fill the band, the readouts centre inside it. */
 #status-bar {
   background-color: var(--fluent-base-chrome) !important;
   border-top: none !important;
+  box-sizing: border-box !important;
+  min-block-size: 36px !important;
+  align-items: center !important;
+  padding-block: 0 var(--fluent-gutter) !important;
+  padding-inline: var(--fluent-gutter) !important;
+}
+
+/* Colour, not `border: none` -- the 1px stays in the box model, so nothing on
+ * the bar shifts inline when the line stops being drawn. Same treatment as the
+ * .button-group dividers in fluent-chrome.css. */
+.statusbarpanel {
+  border-inline-end-color: transparent !important;
+}
+
+/* The readouts stay bare, but they still have to sit on the same line as the
+ * pills. They did not: #statusText's ink centred 7px above the pills' centre,
+ * because label.statusbarpanel is `display: inline-block` with `margin-block:
+ * 3px` (shared/messenger.css:948) inside boxes that stretch to the full bar
+ * height -- so the label was pinned to the top of a 40px box rather than
+ * centred in it. Centring the two wrapper boxes makes the label a centred flex
+ * item, and the stock margin, now measured from a centred position rather than
+ * from the top, would only push it back off again. */
+#status-bar > [role="status"],
+#status-bar #statusTextBox {
+  align-items: center !important;
+}
+
+#status-bar #statusText,
+#status-bar #urlText {
+  margin-block: 0 !important;
+}
+
+/* The three controls, as cards. Shape is #folderPaneHeaderBar > .button's,
+ * one size down: --fluent-radius-card at 8px on a 28px pill reads rounded
+ * without tipping into a stadium, and it keeps the bar agreeing with the
+ * radius unification the rest of the theme just went through.
+ *
+ * content-box for the same reason as those buttons -- the block axis is the
+ * only one being pinned. 26px of content plus the 1px stroke on each side is
+ * the 28px total; border-box would have to reach into the inline axis, where
+ * stock's own min-inline-size is what these buttons actually get.
+ *
+ * The transparent one-stop gradient is a placeholder layer. [checked] below
+ * fills it with the accent tint; keeping the layer present in every state is
+ * what lets that tint fade in rather than snap on. */
+#status-bar #spacesToolbarReveal,
+#status-bar #offline-status,
+#status-bar #calendar-status-todaypane-button {
+  background-color: var(--fluent-card) !important;
+  background-image: linear-gradient(transparent 0 0) !important;
+  color: var(--fluent-text-primary) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-sizing: content-box !important;
+  block-size: 26px !important;
+  padding-block: 0 !important;
+  padding-inline: 8px !important;
+  margin: 0 2px !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard),
+              background-image var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* Two IDs deep on purpose. Stock ships `padding: 0 2px !important` for this
+ * button in calendar/calendar.css:19, and specificity is the only way past an
+ * !important that is already there. Wider than the icon-only pair because it
+ * carries a text label. */
+#status-bar #calendar-status-todaypane-button {
+  padding-inline: 12px !important;
+}
+
+/* Solid ladder, not the subtle one. --fluent-base-chrome resolves to
+ * `transparent` under Mica (fluent-tokens.css:195), so a translucent tint over
+ * a filled pill would composite against the desktop and land DARKER than rest
+ * -- the trap the folder pane buttons hit. An opaque step sidesteps it. */
+#status-bar #spacesToolbarReveal:hover,
+#status-bar #offline-status:hover,
+#status-bar #calendar-status-todaypane-button:hover {
+  background-color: var(--fluent-solid-tertiary) !important;
+  border-color: var(--fluent-card-stroke) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+}
+
+#status-bar #spacesToolbarReveal:hover:active,
+#status-bar #offline-status:hover:active,
+#status-bar #calendar-status-todaypane-button:hover:active {
+  background-color: var(--fluent-solid-quart) !important;
+  box-shadow: none !important;
+}
+
+/* Today Pane holds [checked] for as long as the pane is open. Without the
+ * stock border there is nothing else left to read the toggle by, so the tint
+ * has to carry it -- as the gradient layer over the card fill, never as the
+ * background-color, or it would paint onto Mica instead of onto the pill. */
+#status-bar #calendar-status-todaypane-button[checked] {
+  background-image: linear-gradient(var(--fluent-accent-tint) 0 0) !important;
+}
+
+#status-bar #calendar-status-todaypane-button[checked]:hover {
+  background-image: linear-gradient(var(--fluent-accent-tint-strong) 0 0) !important;
 }
 
 /* ---------------------------------------------------------------------------
