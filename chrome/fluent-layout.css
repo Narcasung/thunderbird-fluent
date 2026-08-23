@@ -104,7 +104,6 @@ body#paneLayout {
   background-color: transparent !important;
 }
 
-#folderPane,
 #threadPane,
 #messagePane {
   background-color: var(--fluent-card) !important;
@@ -116,13 +115,72 @@ body#paneLayout {
   overflow: clip !important;
 }
 
+/* The folder pane is the exception: no card. It is a navigation pane, and
+ * WinUI does not put one on a surface -- NavigationView sits directly on the
+ * window backdrop, and only the content beside it gets a card. Mail apps built
+ * on Fluent do the same. Dropping the fill here also means the pane is Mica
+ * when Mica is on, which a nav pane should be.
+ *
+ * No new work is needed to make that happen: the whole chain above this pane
+ * -- browser, stack, :root, body#paneLayout -- is already transparent under
+ * (-moz-windows-mica), see the MICA block at the end of this file. Going
+ * transparent is enough.
+ *
+ * radius and overflow go with the fill. There is no surface left to round, and
+ * `clip` only ever existed to keep content inside those corners. */
+#folderPane {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Inner regions must not paint their own background over the card, or the
- * rounded corners get squared off from the inside. */
-#folderPaneHeaderBar,
+ * rounded corners get squared off from the inside.
+ * #folderPaneHeaderBar is deliberately absent -- it is a card of its own now,
+ * see below. */
 #threadPaneHeaderBar,
 #threadTree,
 #folderTree {
   background-color: transparent !important;
+}
+
+/* The folder pane's toolbar -- Get Messages / Write Message / More
+ * (about3Pane.xhtml:66-84) -- takes the card the pane just gave up, so the
+ * controls read as a floating command bar over the backdrop rather than three
+ * buttons loose on the desktop.
+ *
+ * margin-inline is --fluent-row-inset, not zero: that is the same inset the
+ * row fills use (fluent-lists.css:62), so the card's edges line up with the
+ * selected row's edges instead of missing them by 4px.
+ *
+ * padding overrides stock's --sidebar-header-spacing, 9px (variables.css:72).
+ * 9px around a 32px button makes a 50px slab; --fluent-row-inset makes it 40px,
+ * which is Fluent's card-button height and reads as a toolbar. */
+#folderPaneHeaderBar {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  margin-inline: var(--fluent-row-inset) !important;
+  margin-block-end: var(--fluent-gutter) !important;
+  padding: var(--fluent-row-inset) !important;
+}
+
+/* Both scroll affordances on the folder tree assume an opaque pane behind
+ * them, so both have to go now that there is not one (containers.css:27-48).
+ *
+ *   ::after   a 4px bar filled with var(--sidebar-background), which
+ *             fluent-tokens.css:189 maps to --fluent-card -- an opaque
+ *             card-coloured stripe straight across the top of a pane that no
+ *             longer has a card.
+ *   ::before  a black radial gradient meant to read as a shadow on white;
+ *             over Mica it is a smudge.
+ *
+ * `background: none` rather than a transparent colour, because ::before's is a
+ * background-IMAGE and a colour would not clear it. */
+#folderTree::before,
+#folderTree::after {
+  background: none !important;
 }
 
 /* ---------------------------------------------------------------------------
@@ -170,9 +228,9 @@ body#paneLayout {
 /* ---------------------------------------------------------------------------
  * COLLAPSED PANES
  * A collapsed pane must not leave a floating stroke or shadow behind.
+ * #folderPane is not listed: it has neither to leave behind any more.
  * ------------------------------------------------------------------------- */
 
-#folderPane.collapsed-by-splitter,
 #messagePane.collapsed-by-splitter {
   border: none !important;
   box-shadow: none !important;

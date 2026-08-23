@@ -74,6 +74,15 @@
   color: var(--fluent-text-primary) !important;
 }
 
+/* Account roots stay ordinary rows -- same hover, same selection, same pill as
+ * any folder, because that is what they are: clicking one opens Account
+ * Central. Only the weight changes. Stock pins them to full `bold`
+ * (about3Pane.css:396-398); Fluent uses semibold in chrome and never bold, the
+ * same call already made for unread messages further down this file. */
+#folderTree li[data-server-type] > .container > .name {
+  font-weight: var(--fluent-weight-strong) !important;
+}
+
 /* The accent pill. Scales in on selection -- CSS cannot slide it between rows
  * the way WinUI does, so it grows in place on the newly selected row. */
 #folderTree li.selected > .container::before,
