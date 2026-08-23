@@ -150,9 +150,10 @@ body#paneLayout {
  * which these are not -- they are three unrelated commands.
  *
  * margin-inline is --fluent-gutter and padding is zero, against stock's 9px
- * --sidebar-header-spacing (variables.css:72), so the buttons' edges land on
- * the same inset the row fills use (fluent-lists.css) rather than missing them
- * by 5px.
+ * --sidebar-header-spacing (variables.css:72). It only bounds the cluster --
+ * the buttons are centred, so this is the minimum they will ever sit from the
+ * pane edge, not where they sit. Nothing here lines up with the row fills
+ * below, which are inset further; a centred cluster has no edge to align.
  *
  * gap is a literal 12px rather than a token. Stock's 9px packed the three
  * boxes tightly enough to read as one strip; 12px is the gap-to-button ratio

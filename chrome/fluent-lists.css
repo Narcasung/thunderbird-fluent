@@ -66,14 +66,18 @@
  * fills, and the label keeps the room it had. Shrinking would have driven the
  * fill to 24px, Fluent's compact height, and crowded 1.1rem text inside it.
  *
- * margin-inline is --fluent-gutter, the same inset the pane uses against the
- * window, so the fill floats by the same amount on all four sides. The
- * scrollbar is handled separately -- see the scrollbar-gutter rule below --
- * so this margin never has to carry a lane for it. */
+ * margin-inline is a literal 12px, wider than the 4px above and below and
+ * wider than --fluent-gutter. Matching the gutter looked mean here: a row is
+ * a wide, short shape, so equal margins on all four sides read as tighter at
+ * the ends than at the top. The value matches the gap between the three
+ * buttons above (fluent-layout.css) without sharing a token with it -- they
+ * are the same number for different reasons. The scrollbar is handled
+ * separately, by the scrollbar-gutter rule below, so this margin never has to
+ * carry a lane for it. */
 #folderTree li > .container {
   position: relative !important;
   min-height: var(--fluent-row-fill-height) !important;
-  margin-inline: var(--fluent-gutter) !important;
+  margin-inline: 12px !important;
   margin-block: var(--fluent-row-gap) !important;
   border-radius: var(--fluent-radius-row) !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
