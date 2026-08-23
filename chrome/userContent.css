@@ -416,6 +416,27 @@
     gap: var(--fluent-gutter) !important;
   }
 
+  /* MICA. Same gate and same reasoning as Address Book -- see the note on
+   * that block, and the CONTENT TABS note in fluent-layout.css. The gutter
+   * this page shows is body's padding; both cards keep their fill --
+   * #accountTreeBox here, #contentFrame from its own document.
+   *
+   * :root HAS TO BE LISTED, and a first pass that left it out measured
+   * rgb(32, 32, 32) on the root with a transparent body under it. The
+   * temptation is to reason that body's background propagates to the canvas
+   * and is therefore the only one that matters. That only holds while the
+   * root is unpainted, and it is not: accountManager.css:10 imports
+   * in-content/common.css, which paints :root from --background-color-canvas
+   * (common-shared.css:54-57) -- a token section 2 of this file maps to
+   * --fluent-base. So the root paints, propagation never happens, and a
+   * transparent body just uncovers an opaque html. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency],
+    :root[fluent-transparency] body {
+      background-color: transparent !important;
+    }
+  }
+
   /* Upstream pins the sidebar to 100vh, which with the body padding overflows
    * the viewport by exactly that padding. Height goes back to the grid's own
    * stretch instead of the viewport's. */
@@ -887,6 +908,36 @@
     overflow: hidden !important;
   }
 
+  /* MICA. Same gate and same reasoning as Address Book -- see the note on
+   * that block, and the CONTENT TABS note in fluent-layout.css. The paint is on
+   * :root here and body is the card, so this is the whole page base: the
+   * gutter ring around the card, and nothing else.
+   *
+   * THE TRANSPARENT GRADIENT IS LOAD-BEARING. Every other page in this file
+   * takes :root and body to transparent together; this one cannot, because
+   * body IS the card and has to keep --fluent-card. That trips CSS background
+   * propagation: when the root element's background-color is transparent and
+   * its background-image is none, the canvas background is taken from body
+   * instead (nsCSSRendering::FindCanvasBackground, gated on
+   * nsStyleBackground::IsTransparent). So body's card fill was painting across
+   * the whole viewport -- gutter ring included, and square through the card's
+   * own rounded corners -- while every box still computed rgba(0, 0, 0, 0).
+   * That is why the ring read opaque and measured transparent at once, and it
+   * is also why it hid from instrumentation: a debug background-image on :root
+   * stops propagation, so the ring went lime and the bug went away exactly
+   * while it was being looked at.
+   *
+   * A fully transparent gradient is enough to make IsTransparent false. The
+   * root keeps its own background, propagation never runs, and what the root
+   * paints is nothing. A background-color cannot do this job: any value that
+   * stops propagation is by definition opaque. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency] {
+      background-color: transparent !important;
+      background-image: linear-gradient(transparent, transparent) !important;
+    }
+  }
+
   body {
     block-size: 100% !important;
     margin: 0 !important;
@@ -1035,6 +1086,29 @@
     overflow: hidden !important;
   }
 
+  /* MICA. Same gate and same reasoning as Address Book -- see the note on that
+   * block, and the CONTENT TABS note in fluent-layout.css.
+   *
+   * The paint is not ours and not on body: in-content/common-shared.css:54-57
+   * sets :root's background-color to --background-color-canvas, which the
+   * shared block above maps to --fluent-base. Overriding the token instead of
+   * the declaration would be wrong -- .sticky-container, .main-search and
+   * .main-heading read the same token (aboutaddons.css:67,75,102) and are
+   * already pinned to --fluent-card below, but the toolkit reads it in places
+   * this file does not track. So this overrides the one declaration.
+   *
+   * #sidebar goes to the backdrop with it, and that is deliberate rather than
+   * incidental: it has never had a fill of its own, it only ever showed the
+   * page canvas through. A nav rail on the backdrop is what this theme already
+   * does in the 3-pane window -- see the note at fluent-layout.css's
+   * #folderPane block. One rule here would give it --fluent-card instead if
+   * that reads better in place. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency] {
+      background-color: transparent !important;
+    }
+  }
+
   #full {
     block-size: 100vh !important;
   }
@@ -1129,6 +1203,24 @@
   body {
     background-color: var(--fluent-base) !important;
     color: var(--fluent-text-primary) !important;
+  }
+
+  /* MICA. Same gate and same reasoning as Address Book -- see the note on that
+   * block, and the CONTENT TABS note in fluent-layout.css. Both elements are
+   * listed because both are painted above. What is left on the backdrop is the
+   * margin ring around the two cards; #pref-category-box and
+   * #preferencesContainer keep their fill.
+   *
+   * The sub-dialogs are NOT affected and must not be. They are separate
+   * documents in a nested browser, which is not a root content document, so no
+   * backstop is composed for them in the first place and none of this applies;
+   * they are opaque because the block further down paints them, which is what
+   * a dialog over a page should be. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency],
+    :root[fluent-transparency] body {
+      background-color: transparent !important;
+    }
   }
 
   /* TWO CARDS ON THE WINDOW BASE, GUTTER AS MARGIN -- NOT AS BODY PADDING.

@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Fluent 2 Transparency Bridge",
   "description": "Lets the Fluent 2 theme's content tabs sit on the Mica backdrop. Sets one attribute; ships no other behaviour.",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "author": "thunderbird-fluent",
   "browser_specific_settings": {
     "gecko": {

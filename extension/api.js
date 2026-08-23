@@ -52,24 +52,33 @@ var { ExtensionCommon } = ChromeUtils.importESModule(
   "resource://gre/modules/ExtensionCommon.sys.mjs"
 );
 
-/* The content tabs the theme has finished. Matched with startsWith, because
- * these carry fragments and queries in normal use (about:preferences#general,
+/* The content tabs the theme paints. Matched with startsWith, because these
+ * carry fragments and queries in normal use (about:preferences#general,
  * about:addons?view=...).
  *
  * THIS LIST IS STAGED ON PURPOSE. Add a page here only once its CSS has
  * landed, never before. Stamping a page early is not harmless: suppressing
- * the backstop leaves whatever the page itself paints, and a page that
- * paints nothing on its root -- which is exactly what the backstop lets a
- * page get away with -- goes fully see-through, with no gate to stop it,
- * because the theme has no rule for that page yet to gate.
+ * the backstop leaves whatever the page itself paints, and a page that paints
+ * nothing on its root -- which is exactly what the backstop lets a page get
+ * away with -- goes fully see-through, with no gate to stop it, because the
+ * theme has no rule for that page yet to gate.
  *
- * Remaining, in the order they are being done:
- *   about:config           body is already the card; one surface
- *   about:preferences      plus its category sidebar
- *   about:addons           canvas comes through --background-color-canvas
- *   about:accountsettings  two documents, the am-* iframe is the second
+ * about:addons was the one that would have done it. Its canvas is not painted
+ * by this theme at all; it comes from the toolkit, :root against
+ * --background-color-canvas (in-content/common-shared.css:54-57).
+ *
+ * Deliberately NOT here: the Settings sub-dialogs. They are nested browsers,
+ * so they are not root content documents, so no backstop is composed for them
+ * and there is nothing for this to switch off. They stay opaque, which is what
+ * a dialog over a page should be.
  */
-const TRANSPARENT_PAGES = ["about:addressbook"];
+const TRANSPARENT_PAGES = [
+  "about:addressbook",
+  "about:accountsettings",
+  "about:preferences",
+  "about:config",
+  "about:addons",
+];
 
 const MARKER = "fluent-transparency";
 const XUL_NS =
