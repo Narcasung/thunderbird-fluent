@@ -96,10 +96,12 @@ toolbarbutton .toolbarbutton-icon,
 /* ---------------------------------------------------------------------------
  * SPACES RAIL GLYPHS
  *
- * Dormant in this profile -- xulstore has "spacesToolbar":{"hidden":"true"},
- * so the rail is not shown and these never render. Kept because they are
- * correct if the rail is ever unhidden, and because the status-bar variant
- * shares the class names.
+ * These render. This block used to say the opposite -- dormant, because
+ * xulstore had "spacesToolbar":{"hidden":"true"} -- and that was true when it
+ * was written. The rail has since been unhidden, and xulstore keeps saying
+ * hidden until Thunderbird next flushes it, so do not read that file as the
+ * current answer. The status-bar variant shares these class names and is the
+ * fallback shown while the rail IS hidden.
  * ------------------------------------------------------------------------- */
 
 /* The <img> is hidden ONLY for buttons that have a verified glyph below.

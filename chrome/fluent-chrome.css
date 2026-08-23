@@ -186,6 +186,31 @@
   background-color: var(--fluent-accent-tint) !important;
 }
 
+/* The spaces menu button -- the one that stands in for the whole rail while
+ * the rail is hidden, and opens #spacesButtonMenuPopup. It carries
+ * `class="button toolbar-button"` (messenger.xhtml:3562), so the block above
+ * already had it, which is exactly why it looked wrong: it was taking the
+ * ordinary 4px toolbar corner while everything it represents is an 8px card.
+ *
+ * Two IDs so this beats that block without editing it. The shared selector is
+ * (1,2,0); this is (2,0,0), and every other toolbar button keeps its 4px.
+ *
+ * border-box here, against the theme's usual habit of pinning the block axis
+ * only. That habit exists because border-box makes stock's 6em min-inline-size
+ * (widgets.css:18) pay for its own padding and truncates the label -- "New
+ * Message" became "New Mess...". This button has no label to truncate: stock
+ * hides its .toolbarbutton-text outright (spacesToolbar.css:236-238) and drops
+ * min-inline-size to auto, which is also what let it collapse to bare icon
+ * width and read as too small. A square 32x32 gives it the same footprint as
+ * the toolbar's other buttons and centres the icon in it. */
+#unifiedToolbar #spacesPinnedButton {
+  border-radius: var(--fluent-radius-card) !important;
+  box-sizing: border-box !important;
+  inline-size: 32px !important;
+  block-size: 32px !important;
+  padding: 0 !important;
+}
+
 /* ---------------------------------------------------------------------------
  * BUTTON GROUPS
  * Segmented groups (widgets.css:321-357) draw an outline round the cluster and
@@ -445,11 +470,39 @@
 #spacesToolbar {
   /* Thunderbird lays two gradients over the rail; they fight a flat surface. */
   background-image: none !important;
+
+  /* 6px, down from stock's 15. That is the same figure the folder pane, the
+   * thread pane and the address book were held to in the pass that unified
+   * them: the rail sits immediately beside the folder pane, and at 15px it was
+   * pacing its buttons at two and a half times the rhythm of the list right
+   * next to it. --fluent-row-gap cannot be reused here (see its comment in
+   * fluent-tokens.css), so this is written out.
+   *
+   * Set on the rail rather than on :root. Both names are needed and they are
+   * different things: the rail's own `gap` (spacesToolbar.css:84) is
+   * --spaces-gap and separates the three CONTAINERS, while each container's
+   * `gap` (:109) is --spaces-container-gap and separates the buttons inside
+   * it. Only the second is what the eye reads as the spacing between icons;
+   * the first is set to match so the settings/collapse pair at the bottom
+   * cannot pace differently from the spaces above them.
+   *
+   * Neither feeds --spaces-total-width -- that is padding, icon size and
+   * button padding only (:41) -- so closing these does not move #messengerBody
+   * or #titlebar inward, and the accent pill's -5px offset below, which is cut
+   * against --spaces-padding, stays where it is. */
+  --spaces-gap: 6px !important;
+  --spaces-container-gap: 6px !important;
 }
 
 .spaces-toolbar-button {
   position: relative !important;
-  border-radius: var(--fluent-radius-control) !important;
+  /* The card radius, not the control radius. Same call, and the same reason,
+   * as the folder rows in fluent-lists.css: these are ~33px squares standing
+   * in a column right beside 8px folder rows and the 8px pane cards, and at
+   * 4px they read as a tighter, different kind of object in the middle of
+   * them. The accent pill below is what marks selection; the corner is only
+   * shape, so it is free to agree with its neighbours. */
+  border-radius: var(--fluent-radius-card) !important;
   background-color: transparent !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
