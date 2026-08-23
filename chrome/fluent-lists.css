@@ -138,12 +138,19 @@
 }
 
 /* There is NO accent pill on a selected folder row, and there is no keyframe
- * left for one either -- both were removed here on request, together with the
- * leading accent bars on the message cards and the contact list. WinUI does
+ * left for one either -- both were removed here on request, at the same time as
+ * the leading accent bars on the message cards and the contact list. WinUI does
  * put a pill on the selected item of a NavigationView, so this is a departure
  * from the reference and a deliberate one: at this theme's row sizes the
  * indicator reads as a notch bitten out of the fill rather than as a marker
- * beside it. The subtle fill is what marks selection now, in all three lists.
+ * beside it. The subtle fill is what marks selection here.
+ *
+ * The message cards have since got their bar back -- see THREAD PANE -- CARDS
+ * VIEW -- but on different terms, and the difference is why this pane was not
+ * changed with it. A card is tinted with accent and can carry a bar painted
+ * over that tint as a second background layer, with nothing carved out. A
+ * folder row is a neutral fill with no second layer to spare and no accent to
+ * sit the bar against, so the notch would come straight back.
  *
  * `position: relative` stays on the container above. It is what an indicator
  * would need if one ever came back, and it costs nothing.
@@ -273,26 +280,50 @@
  * underneath. There is no pane fill under a row any more, so a translucent
  * tint that replaces the card would be a tint painted onto Mica.
  *
- * The tint layer is flat and full-bleed. It used to start --fluent-indicator-
- * width in, leaving the leading 3px of the card at the untinted fill so a
- * selection accent bar could sit there. Both states read as a notch cut out of
- * the highlight: on hover the strip stayed card-coloured and darker than the
- * rest of the card, on selection it was a bar of accent doing the same. A card
- * this size does not need a leading indicator -- it has a whole surface to
- * change colour. The bar survives in TABLE view, where a 32px row does need
- * one; that block is further up this file and is untouched by this.
+ * The tint layer is flat and full-bleed, and that is the whole point of it.
+ * It used to start --fluent-indicator-width in, leaving the leading 3px of the
+ * card at the untinted fill so a selection accent bar could sit there -- one
+ * gradient doing two jobs. Both states read as a notch cut out of the
+ * highlight: on hover the strip stayed card-coloured and darker than the rest
+ * of the card, on selection it was a bar of accent doing the same.
  *
- * Still a gradient rather than a plain colour, because the fill below it is
- * already background-color and a background-image is the only layer left that
- * paints on top of one. Keeping the same one-layer, one-colour structure in
- * every state is also what lets the hover fade interpolate; going from `none`
- * to an image would snap. */
+ * The bar is back, because a tint this weak is not enough on its own to say
+ * which card is selected. It is its own background LAYER now, above the tint
+ * and below nothing, so the notch cannot return: the tint fills the card edge
+ * to edge in every state and the bar is painted over it rather than carved out
+ * of it.
+ *
+ * Two layers rather than a pseudo-element, and the reason is stock's, not
+ * ours. A ::before bar can only be full height if the card clips it -- at 3px
+ * wide its own border-radius clamps to 3px and its corners poke out past the
+ * card's 8px curve. But .card-container is `overflow: visible` on purpose
+ * (threadCard.css:292-297): the unread dot and the reply badge both sit at
+ * inset -3px and hang outside the card deliberately. Clipping the card to fix
+ * the bar would cut those off. Backgrounds need no clipping -- they are
+ * already bounded by border-radius -- so the bar's ends follow the corner
+ * curve for free and nothing that overflows is touched.
+ *
+ * background-origin is border-box for both layers because the card keeps a 1px
+ * transparent border from stock. Left at the padding-box default the layers
+ * stop 1px short and the border strip shows background-color alone: a 1px
+ * untinted rim all round, measured at the leading edge before this was set.
+ *
+ * Gradients rather than plain colours because the fill below is already
+ * background-color and a background-image is the only layer left that paints
+ * on top of one. Keeping the same two-layer, one-colour-each structure in
+ * every state is also what lets hover and selection fade rather than snap;
+ * going from `none` to an image, or from one layer to two, would jump. */
 #threadTree tr.card-layout > td > .card-container {
   --fluent-row-tint: transparent;
+  --fluent-row-accent: transparent;
 
   margin-inline: var(--fluent-card-inset) !important;
   background-color: var(--fluent-card) !important;
-  background-image: linear-gradient(var(--fluent-row-tint) 0 0) !important;
+  background-image: linear-gradient(var(--fluent-row-accent) 0 0),
+                    linear-gradient(var(--fluent-row-tint) 0 0) !important;
+  background-size: var(--fluent-indicator-width) 100%, auto !important;
+  background-position: left center, 0 0 !important;
+  background-origin: border-box, border-box !important;
   background-repeat: no-repeat !important;
   border-color: transparent !important;
   border-radius: var(--fluent-radius-card) !important;
@@ -306,6 +337,16 @@
 
 #threadTree tr.card-layout.selected > td > .card-container {
   --fluent-row-tint: var(--fluent-accent-tint);
+  --fluent-row-accent: var(--fluent-accent);
+}
+
+/* Focused selection is the stronger tint. Table view has had this since it was
+ * written (see #threadTree tr.table-layout.selected above); cards view was
+ * missing it, so a focused selected card sat on the same 20% tint as an
+ * unfocused one -- about six levels of grey away from an unselected card, and
+ * the reason selection had become hard to pick out at all. */
+[is="tree-view-table-body"]:is(:focus, :focus-within) > tr.card-layout.selected > td > .card-container {
+  --fluent-row-tint: var(--fluent-accent-tint-strong);
 }
 
 /* ---------------------------------------------------------------------------
