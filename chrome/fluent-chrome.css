@@ -9,6 +9,12 @@
  * ships 4px 4px 0 0, which is the Explorer "merged into the content below"
  * shape -- wrong here, because the content below is a floating card separated
  * by a gutter, so there is nothing to merge into.
+ * Metrics come from Firefox 154's own sheets, not from eyeballing: the radius
+ * is --tab-border-radius -> --toolbarbutton-border-radius -> --button-border-radius
+ * -> --border-radius-medium = 8px (tokens-shared.css:33, 119, 578;
+ * tab.tokens.css:16), and the between-tab gap is .tabbrowser-tab's
+ * padding: 0 var(--tab-overflow-clip-margin) = 2px per side, 4px total
+ * (tabs.css:218, --dimension-2 in tokens-shared.css:368).
  * ------------------------------------------------------------------------- */
 
 #tabs-toolbar {
@@ -20,10 +26,14 @@
 }
 
 .tabmail-tab {
-  border-radius: var(--fluent-radius-control) !important;
+  /* 8px matches Firefox's tab radius exactly, and --fluent-radius-card already
+   * carries it. Thunderbird ships 4px 4px 0 0 (tabmail.css:53). */
+  border-radius: var(--fluent-radius-card) !important;
   border: none !important;
   background-color: transparent !important;
-  margin-inline: 1px !important;
+  /* 2px per side = Firefox's 4px between tabs. Thunderbird ships
+   * margin-inline-end: 1px, i.e. a 1px gap (tabmail.css:53). */
+  margin-inline: 2px !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
