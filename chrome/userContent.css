@@ -398,6 +398,146 @@
     from { transform: translateY(-50%) scaleY(0); }
     to   { transform: translateY(-50%) scaleY(1); }
   }
+
+  /* --- 10. Flyouts and menus.
+   * Character for character the recipe fluent-chrome.css carries for chrome
+   * popups, moved here because the sheet split cuts popups in half exactly the
+   * way it cuts pages (README.md:85-97). about:3pane declares its 64
+   * menupopups in a chrome docshell and userChrome.css reaches them; every
+   * page in this file is a content docshell, so its popups -- 12 in
+   * aboutAddressBook.xhtml, 76 in preferences.xhtml, more in the rest -- were
+   * reached by nothing at all. Right-clicking a contact gave a stock popup
+   * next to an Inbox that gave a Fluent one.
+   *
+   * It goes in the SHARED block and not in a per-page one because every page
+   * in the list has popups; per page this would be the same rule written seven
+   * times.
+   *
+   * The popups are not inside <body>. aboutAddressBook.xhtml:817-901 declares
+   * all five as direct children of <html>, after </body>, and the other pages
+   * do the same -- so nothing here may be scoped under body, and the tokens
+   * these rules read have to stay on :root where section 1 puts them. Move one
+   * to body and the popups silently lose it.
+   *
+   * 8px radius, 4px inner padding, and menu items inset 4px so hover fills a
+   * floating pill inside the menu rather than spanning edge to edge.
+   *
+   * The shadow IS ours, and it has to be. The chrome block used to carry a
+   * note saying the opposite -- leave it to Gecko's native popup shadow,
+   * adding one produces a double halo -- and that was true right up until the
+   * popup lost `appearance: auto`. Taking the native path away takes the
+   * native shadow with it: measured straight down past the popup's bottom
+   * edge, the fill steps 44 to 43 and stops, with no falloff anywhere. Without
+   * elevation a #2C2C2C menu sits on a #2B2B2B pane, one level apart out of
+   * 255, and disappears. --- */
+  menupopup,
+  panel {
+    /* The popup paints itself, not the OS. menu.css:48-55 hands every
+     * menupopup `appearance: auto` whenever (-moz-windows-mica-popups)
+     * matches, and that feature keeps matching after widget.windows.mica.popups
+     * is turned off -- the pref moves the widget, not the media query. A
+     * natively-appearing popup with no backdrop under it paints nothing, which
+     * is how menus ended up see-through. Ours is an opaque surface, so it has
+     * no use for the native path either way. */
+    appearance: none !important;
+
+    /* Follow the switch, do not restate it. popup.css:42 sets
+     * `color-scheme: light dark` on menupopup itself, which overrides what
+     * section 1 forces on :root -- and every --fluent-* token is a
+     * light-dark(), resolved against the ELEMENT's computed scheme. Left
+     * alone, a machine in Windows light mode would get light popups inside a
+     * dark theme. `inherit` puts them back under the one switch at :root
+     * instead of adding a second place to edit. */
+    color-scheme: inherit !important;
+
+    --panel-border-radius: var(--fluent-radius-card) !important;
+    --arrowpanel-padding: 4px !important;
+    --panel-color: var(--fluent-text-primary) !important;
+    --panel-border-color: var(--fluent-card-stroke) !important;
+
+    /* Block only. An inline value here is paid TWICE, because every menu item
+     * already carries its own margin-inline: the pill ends up inset by the
+     * sum, and 4 + 4 reads as a menu that cannot decide where its edge is.
+     * Stock lands on the same split for the same reason (contextMenu.css:27). */
+    --panel-padding: 4px 0 !important;
+
+    /* Both names, and they are not interchangeable. --panel-background is the
+     * arrowpanel-era token; what a popup paints is --panel-background-color,
+     * read by popup.css:76 on ::part(content). */
+    --panel-background: var(--fluent-flyout) !important;
+    --panel-background-color: var(--fluent-flyout) !important;
+
+    /* Stock draws its separator on menuseparator::before (menu.css:130-136),
+     * not on the element. Recolouring the token gets that line; painting our
+     * own border on the element gets a SECOND line 4px above it. */
+    --panel-separator-color: var(--fluent-divider) !important;
+
+    /* Elevation. The margin is not decoration -- popup.css:44-45 sizes the
+     * popup WINDOW by it and pulls the content back with a negative margin, so
+     * it is the room the shadow has to render into. Stock's 4px is cut for a
+     * 0-offset 4px blur; --fluent-shadow-flyout is offset 8 and blurred 16, so
+     * it needs 24 or it renders clipped square at the bottom. */
+    --panel-box-shadow: var(--fluent-shadow-flyout) !important;
+    --panel-box-shadow-margin: 24px !important;
+  }
+
+  /* The fill, painted rather than delegated. Belt and braces with the token
+   * above: --panel-background-color reaches this same surface through
+   * popup.css:76, but only as a variable, and a variable is one more thing
+   * that can be blanked out from under the theme. This declaration is the
+   * paint itself. */
+  menupopup::part(content),
+  panel::part(content) {
+    background-color: var(--fluent-flyout) !important;
+    background-image: none !important;
+    box-shadow: var(--fluent-shadow-flyout) !important;
+  }
+
+  /* Tooltips are deliberately NOT themed, on this side either. The default
+   * tooltip is native anonymous content, so no user or author sheet can reach
+   * it -- xul.css:380 says as much in a comment, and its Windows branch
+   * (xul.css:396-407) paints background #2b2a33 and border #f9f9fb outright,
+   * which is what the shipped build renders. A `tooltip { ... !important }`
+   * rule was tried on the chrome side and changed nothing, measured pixel for
+   * pixel. Do not add it back here: it cannot work for the tooltips users
+   * actually see, and it WOULD take the handful declared in markup, leaving
+   * the two kinds looking different. */
+
+  menupopup > menuitem,
+  menupopup > menu {
+    min-height: var(--fluent-control-height) !important;
+    margin-inline: var(--fluent-row-inset) !important;
+    border-radius: var(--fluent-radius-control) !important;
+    padding-inline: 8px !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  menupopup > menuitem:hover,
+  menupopup > menu:hover,
+  menupopup > menuitem[_moz-menuactive="true"],
+  menupopup > menu[_moz-menuactive="true"] {
+    background-color: var(--fluent-subtle-hover) !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* Menu separators are removed outright, on the same instruction that took
+   * the box outlines and the button-group ticks: this theme separates by
+   * spacing and by the fill under the pointer, not by drawn rules.
+   *
+   * display: none rather than a transparent line, because the rule was the
+   * whole element -- stock's menuseparator is a 0-height box whose ::before
+   * paints the line (menu.css:130-136), so hiding the line and keeping the box
+   * would leave a few pixels of dead space that nothing explains. The groups a
+   * menu used to separate now run together; that is the trade, and it is
+   * deliberate. #bookContext has one (aboutAddressBook.xhtml:828), and without
+   * this it would be the only menu in the theme still drawing rules.
+   *
+   * --panel-separator-color is still mapped above and is now unread here. It
+   * is left in place because it is a stock token other popup furniture can
+   * pick up, and mapping it costs nothing. */
+  menuseparator {
+    display: none !important;
+  }
 }
 
 
@@ -726,20 +866,6 @@
     margin-block: var(--fluent-row-gap) !important;
     border-radius: var(--fluent-radius-card) !important;
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
-  }
-
-  /* The Account Actions flyout. Upstream hardcodes a 2px radius and its own
-   * panel colours; Fluent wants overlayCornerRadius and the flyout surface. */
-  #accountActionsDropdown {
-    --panel-border-radius: var(--fluent-radius-card) !important;
-    --panel-background-color: var(--fluent-flyout) !important;
-    --panel-border-color: var(--fluent-card-stroke) !important;
-    --panel-text-color: var(--fluent-text-primary) !important;
-  }
-
-  #accountActionsDropdown > menuitem {
-    border-radius: var(--fluent-radius-control) !important;
-    margin-inline: var(--fluent-row-inset) !important;
   }
 
 }
