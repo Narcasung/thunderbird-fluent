@@ -9,14 +9,14 @@ A Fluent theme for Thunderbird.
 2. Install it from the Add-ons Manager: gear icon > Install Add-on From File.
 3. Restart Thunderbird.
 
-To uninstall: remove the add-on from the Add-ons Manager and restart.
+The addon will automatically change those prefs:
 
-That removes the theme but leaves the window backdrop on. To go all the way
-back to stock, open Settings > General > Config Editor and reset these
-(right-click > Reset):
+- `widget.windows.mica` to `true`
+- `widget.windows.mica.toplevel-backdrop` to `2`
+- `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`
 
-- `widget.windows.mica`
-- `widget.windows.mica.popups`
-- `widget.windows.mica.toplevel-backdrop`
-- `toolkit.legacyUserProfileCustomizations.stylesheets` — leave this one alone
-  if you have your own `userChrome.css`.
+## Uninstall
+
+Remove the add-on from the Add-ons Manager and restart.
+
+Removing the add-on should reset the aforementionned prefs. If you still notice undesired transparency, reset them yourself. (Settings > General > Config Editor at the bottom)
