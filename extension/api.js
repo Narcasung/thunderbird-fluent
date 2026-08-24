@@ -2,7 +2,7 @@
  * Fluent 2 for Thunderbird -- TRANSPARENCY BRIDGE
  *
  * WHAT THIS DOES, IN ONE SENTENCE
- * It sets the attribute `transparent` on the <browser> of five content tabs,
+ * It sets the attribute `transparent` on the <browser> of six content tabs,
  * and a marker attribute on their documents so the theme's CSS knows it may
  * drop those pages' backgrounds. Nothing else. No network, no message access,
  * no storage.
@@ -67,6 +67,11 @@ var { ExtensionCommon } = ChromeUtils.importESModule(
  * by this theme at all; it comes from the toolkit, :root against
  * --background-color-canvas (in-content/common-shared.css:54-57).
  *
+ * about:import is the same case rather than the hazard: it takes the toolkit
+ * root fill too, and the theme now paints :root itself in userContent.css's
+ * about:import block, gated on the marker this sets. Its CSS landed first,
+ * which is the order this list requires.
+ *
  * Deliberately NOT here: the Settings sub-dialogs. They are nested browsers,
  * so they are not root content documents, so no backstop is composed for them
  * and there is nothing for this to switch off. They stay opaque, which is what
@@ -78,6 +83,7 @@ const TRANSPARENT_PAGES = [
   "about:preferences",
   "about:config",
   "about:addons",
+  "about:import",
 ];
 
 const MARKER = "fluent-transparency";
