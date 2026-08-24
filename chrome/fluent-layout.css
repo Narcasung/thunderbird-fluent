@@ -528,6 +528,44 @@ body#paneLayout {
 }
 
 /* ---------------------------------------------------------------------------
+ * STANDALONE MESSAGE TAB
+ * Double-clicking a message opens a mailMessageTab: one <browser
+ * src="about:message"> in a <stack> (mailTabs.js:16, messenger.xhtml:6605).
+ * Its interior is already themed -- it is the same document #messageBrowser
+ * shows -- but stock gives it no outer surface, so it ran edge to edge while
+ * every other tab sat on a card. In the 3-pane tab that surface is
+ * #messagePane (:266); here nothing provides one, so the stack becomes it.
+ *
+ * Matched on src, not id: mailTabs.js:16 and :65 number both the browser and
+ * the panel per tab (mailMessageTabBrowser2, ...), so an id selector would
+ * skin the first message tab only. Same reasoning as the about:3pane rules
+ * at :693. #messageBrowser inside about:3pane also carries src="about:message"
+ * but is out of reach -- a descendant selector rooted at #tabpanelcontainer
+ * stops at the document boundary.
+ *
+ * The card goes on the stack, not the browser: a browser does not reliably
+ * clip its subdocument to a border-radius (see the MESSAGE PANE note above).
+ * Same shape as #chat-notification-top (:604), clip rather than hidden so no
+ * scroll container is created. The gutter matches body#paneLayout's padding
+ * (:249), so switching between this tab and the 3-pane tab does not shift the
+ * card edge. */
+
+#tabpanelcontainer stack:has(> browser[src="about:message"]) {
+  margin: var(--fluent-gutter) !important;
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  overflow: clip !important;
+}
+
+/* The browser takes the card fill too, the way the 3-pane message browsers do
+ * at :523, so nothing inside paints a different colour against the stack. */
+#tabpanelcontainer browser[src="about:message"] {
+  background-color: var(--fluent-card) !important;
+}
+
+/* ---------------------------------------------------------------------------
  * COLLAPSED PANES
  * A collapsed pane must not leave a floating stroke or shadow behind.
  * #folderPane is not listed: it has neither to leave behind any more.
