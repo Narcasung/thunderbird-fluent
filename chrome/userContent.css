@@ -71,6 +71,7 @@
                url-prefix("about:addressbook"),
                url-prefix("about:config"),
                url-prefix("about:addons"),
+               url-prefix("about:import"),
                url-prefix("about:preferences"),
                url-prefix("chrome://messenger/content/preferences/"),
                url-prefix("chrome://calendar/content/preferences/"),
@@ -1613,6 +1614,168 @@
   #prefs[has-visible-prefs] > .add > td::before {
     background-color: var(--fluent-card) !important;
   }
+}
+
+
+/* ============================================================================
+ * IMPORT AND EXPORT -- about:import
+ *
+ * Reached from Address Book > Import and from Tools > Import. It is a content
+ * tab, opened through openTab("contentTab") the same way about:addons is
+ * (mailCore.js:519-522), so this sheet reaches it and userChrome.css does not.
+ * The chrome side needs nothing: the Mica rules in fluent-layout.css:771-772
+ * key on the add-on's marker attribute rather than on a tab id, so they cover
+ * a new page for free.
+ *
+ * The page was not in the shared block's URI list until this pass, which is
+ * why it was stock in full rather than stale -- canvas, card fill, buttons,
+ * radios, fields and text colours all came straight from in-content/common.css.
+ * Enrolling it does most of the work. What is left is the page's own
+ * composition, plus two regressions the enrolment itself causes; both are
+ * below and both are marked.
+ *
+ * THE CARD IS body, and this is the second page built that way -- read the
+ * about:config note above first, the overflow and background-propagation traps
+ * it documents apply here unchanged.
+ *
+ * The reason is composition rather than the table box that forced it there.
+ * Stock lays the page out as a 600px column (aboutImport.css:140-144, #main
+ * { margin: 4em; max-inline-size: 600px }) inside a body that is already the
+ * flex column and already the scroller (aboutImport.css:20-26). body is the
+ * only box that spans the tab, so it is the only box that can be the card;
+ * everything inside it is a step of one flow rather than a separate surface.
+ * The stepper and the footer come inside the card with it, which is what
+ * happened to about:config's search toolbar and to about:addons' header bands
+ * as well: one card per page, its own furniture included.
+ *
+ * Sibling .tabPane divs exist for the start, app, calendar and export flows
+ * and the page's JS shows one <section> at a time, so anything written at that
+ * level covers every import flow, not just the address-book one this was found
+ * through.
+ *
+ * NOT DONE: two hardcoded fills in the calendar pane -- #calendar-item-list at
+ * rgba(215, 215, 219, .2) (aboutImport.css:220-226) and .calendar-item-wrapper
+ * at --color-surface-base (:228). Out of the flow this page was skinned for,
+ * left for a calendar pass.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:import") {
+
+  /* --primary is the icon colour beside every step heading (aboutImport.css:
+   * 181) and on the inline info icons (:360). messenger/shared/variables.css:122
+   * defines it as --color-primary-default, a fixed light blue (#58c9ff in
+   * dark, colors.css:131) that ignores the Windows accent entirely, and no
+   * part of this file maps it. It takes --fluent-accent-link rather than
+   * --fluent-accent for the reason the accent-as-text note in section 1 gives:
+   * these icons are drawn as a currentColor STROKE over the card, so they have
+   * a legibility floor to clear and the raw AccentColor does not clear it.
+   *
+   * --step-size is left alone. aboutImport.css:398 derives it from
+   * --button-height, which section 5 already maps to --fluent-control-height,
+   * so the stepper's circles arrive at 32px on their own. */
+  :root {
+    --primary: var(--fluent-accent-link) !important;
+  }
+
+  /* --- PANE GEOMETRY ---
+   * :root is the page base: one gutter of it shows as the ring around the
+   * card, and nothing else.
+   *
+   * The overflow swap is the load-bearing half, and this page starts from the
+   * opposite side of it than about:config did. Stock is html visible with body
+   * auto (aboutImport.css:20-26), so body's overflow is the first non-visible
+   * one and gets handed to the VIEWPORT -- the document scrolls and body is
+   * not a scroll container at all. Pinning html to hidden stops that: the
+   * viewport takes html's hidden instead, body's auto is honoured on body, and
+   * body becomes the scroller. Without it the card cannot close, because the
+   * page it is drawn on is what scrolls.
+   *
+   * block-size and inline-size are not restated: aboutImport.css:15-18 already
+   * sets both to 100% on :root and body, and 100% on the root resolves against
+   * the viewport. box-sizing is, so the gutter comes out of that 100% rather
+   * than pushing past it. */
+  :root {
+    padding: var(--fluent-gutter) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background-color: var(--fluent-base) !important;
+  }
+
+  /* MICA. Inert for now, and deliberately so: the marker is set by the add-on
+   * only on the pages in TRANSPARENT_PAGES (extension/api.js:75-81), and
+   * about:import is not in that list yet. That list's own header says the CSS
+   * lands first and the page is stamped afterwards, so this rule is written
+   * now and starts firing when the sixth entry is added.
+   *
+   * The transparent gradient is the same load-bearing trick about:config needs
+   * and for the same reason -- body IS the card here too, so it keeps
+   * --fluent-card while the root goes clear, and without a background-image on
+   * the root the canvas would be taken from body and paint the card's fill
+   * across the whole viewport, gutter ring and square corners included. The
+   * full mechanism is written out in the about:config block. */
+  @media (-moz-windows-mica) {
+    :root[fluent-transparency] {
+      background-color: transparent !important;
+      background-image: linear-gradient(transparent, transparent) !important;
+    }
+  }
+
+  /* body becomes the card and stays the scroller. Its own wash goes with it:
+   * aboutImport.css:25 paints rgba(0, 0, 0, .03) over whatever the canvas is,
+   * which was the page's only surface treatment and is now a smudge on ours. */
+  body {
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow: auto !important;
+
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  /* Stripped back to plain content. aboutImport.css:161-165 gives each step's
+   * section --background-color-box, which the shared block maps to
+   * --fluent-card (:228) -- the colour body just became. Left alone it would be
+   * card on card and read as nothing at all, so the fill and the radius go and
+   * body carries the surface for the whole flow. The padding stays: it is what
+   * holds the step icons clear of the heading text. */
+  .tabPane > section {
+    background-color: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* --- REGRESSION 1: the stepper's connector ---
+   * aboutImport.css:424 draws the dashes between steps as
+   * border-block-start: 2px dashed var(--button-border-color), and section 5
+   * maps --button-border-color to --fluent-control-stroke, which is transparent
+   * by design -- no box outline anywhere in the theme. So enrolling the page
+   * erased the line. --fluent-divider is the token for exactly this case: it
+   * draws separators, not outlines.
+   *
+   * The .completed and .current segments are excluded rather than overridden.
+   * They restate the same border at :436-439 in
+   * --button-primary-background-color, i.e. --fluent-accent, and that is right
+   * already -- but this is a user sheet, so an !important matching them here
+   * would outrank theirs and flatten the whole strip to one colour. */
+  #stepNav li:not(.completed, .current):not(:first-child)::before {
+    border-block-start-color: var(--fluent-divider) !important;
+  }
+
+  /* --- REGRESSION 2: borders drawn in the text colour ---
+   * aboutImport.css:110-113 rules the CSV field-map table and :293-295 boxes
+   * the calendar item description, both with 1px solid var(--text-color). The
+   * shared block maps --text-color to --fluent-text-primary (:234), which is
+   * pure #FFFFFF in dark, so enrolling the page turned both into white rules.
+   * The field map is step 2 of a CSV address-book import, so this one sits in
+   * the middle of the flow rather than at its edge. Same token as above: these
+   * are separators. */
+  #csvFieldMap th,
+  #csvFieldMap td,
+  .item-description {
+    border-color: var(--fluent-divider) !important;
+  }
+
 }
 
 

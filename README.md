@@ -83,7 +83,7 @@ off, unsupported, or dropped by DWM. Install step 3 is what turns it on.
 
 ## The content tabs
 
-Five pages live in content-type docshells, so `userChrome.css` cannot reach
+Six pages live in content-type docshells, so `userChrome.css` cannot reach
 them and `userContent.css` is the only sheet that can. The blocker was never
 how the `about:` page is registered — all of them are plain `ALLOW_SCRIPT` in
 `AboutRedirector.sys.mjs` — it is the hosting `<browser>` element's `type`.
@@ -96,6 +96,7 @@ how the `about:` page is registered — all of them are plain `ALLOW_SCRIPT` in
 | `about:accountsettings` | content (`openTab("contentTab", …)`) | `userContent.css` |
 | `about:addressbook` | content | `userContent.css` |
 | `about:config`, `about:addons` | content | `userContent.css` |
+| `about:import` | content (`openTab("contentTab", …)`) | `userContent.css` |
 
 Verified against `messenger.xhtml`, `specialTabs.js` and `AboutRedirector.sys.mjs`
 in TB 153's `omni.ja`.
