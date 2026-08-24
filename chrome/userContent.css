@@ -1624,11 +1624,18 @@
  * --sidebar-background which aboutExtra.css reads), buttons #383838 with a
  * #464646 hairline (--fluent-solid-quart under our .07 stroke).
  *
- * The category rail is already right by accident of good tokens.
- * categories-box.mjs renders moz-page-nav-buttons, whose shadow sheet defines
- * --page-nav-button-background-color-selected as --button-background-color and
- * the radius as --button-border-radius -- both mapped in section 5. Selection
- * measured #383838 at the theme's 4px radius, which is the treatment.
+ * The category rail used to be left to the tokens, and this banner used to
+ * say it was right by accident of them: the shadow sheet reads
+ * --page-nav-button-background-color-selected from --button-background-color
+ * and its radius from --button-border-radius (overrides/
+ * moz-page-nav-button.css:6,11), both mapped in section 5, so selection
+ * measured #383838 at the 4px control radius with no rule written. That was a
+ * CONTROL's treatment on a nav row, and it stopped being enough when the rail
+ * gave its card up: a bare rail needs the row shape, the row inset and the row
+ * separation the theme's four other nav panes have, and none of those three
+ * arrive by accident. They still arrive through custom properties -- see RAIL
+ * ROWS below -- because that is the only thing that crosses into
+ * moz-page-nav-button's shadow root.
  *
  * WHAT IS NOT DONE, AND WHY
  * The accent pill that marks selection on every other nav surface in this
@@ -1696,11 +1703,16 @@
    * exactly the BASE-with-cards-on-it arrangement fluent-layout.css describes.
    * Carding #content as well would nest cards inside a card.
    *
-   * #sidebar is the surface that is wrong: aboutExtra.css paints it
-   * --sidebar-background, i.e. --fluent-card, but it is flush to all four
-   * window edges with square corners, so it reads as a wall rather than a
-   * pane. The 3-pane window's folder pane is a card and this rail is the same
-   * kind of surface, so it gets the same treatment. */
+   * #sidebar is the surface that is wrong, and this note used to say so for
+   * the opposite reason: aboutExtra.css:34 paints it --sidebar-background,
+   * i.e. --fluent-card, flush to all four window edges with square corners, so
+   * it read as a wall rather than a pane -- and the answer was to card it, the
+   * way the folder pane was carded. The folder pane has since given its own
+   * card up (fluent-layout.css:289), and so have #booksPane, the Settings rail
+   * and #accountTreeBox. What was wrong with the wall was never the missing
+   * corners; it was the fill. A NavigationView sits on the window backdrop and
+   * only the content beside it gets a surface, so the fill goes and the rows
+   * carry the shape instead. */
 
   /* The page becomes a viewport-height row, for the same reason about:config
    * becomes a column: a card has to be able to close. #content is thousands
@@ -1723,12 +1735,15 @@
    * already pinned to --fluent-card below, but the toolkit reads it in places
    * this file does not track. So this overrides the one declaration.
    *
-   * #sidebar goes to the backdrop with it, and that is deliberate rather than
-   * incidental: it has never had a fill of its own, it only ever showed the
-   * page canvas through. A nav rail on the backdrop is what this theme already
-   * does in the 3-pane window -- see the note at fluent-layout.css's
-   * #folderPane block. One rule here would give it --fluent-card instead if
-   * that reads better in place. */
+   * #sidebar goes to the backdrop with it, and it takes an explicit rule to
+   * get there. An earlier pass here claimed the rail "has never had a fill of
+   * its own" and offered a one-line override to give it --fluent-card if that
+   * read better; both halves were wrong. aboutExtra.css:34 does paint it, with
+   * --sidebar-background, which section 2 maps to --fluent-card -- so it is
+   * zeroed below rather than merely left alone -- and giving it a card back is
+   * the opposite of what a nav rail wants. A rail on the backdrop is what this
+   * theme does in the 3-pane window and on all three other nav panes; see the
+   * note at fluent-layout.css's #folderPane block. */
   @media (-moz-windows-mica) {
     :root[fluent-transparency] {
       background-color: transparent !important;
@@ -1739,17 +1754,37 @@
     block-size: 100vh !important;
   }
 
+  /* The rail is a navigation pane and takes no card -- the fifth and last one
+   * in this theme to be settled that way, after #folderPane
+   * (fluent-layout.css:289), #booksPane, the Settings rail and #accountTreeBox
+   * (ACCOUNT SETTINGS above). WinUI does not put a NavigationView on a
+   * surface: it sits on the window backdrop and only the content beside it
+   * gets one, which here is #content. Dropping the fill is also what lets Mica
+   * reach the rail.
+   *
+   * transparent is stated rather than the rule deleted, because deleting it
+   * hands the pane straight back to stock: aboutExtra.css:34 paints #sidebar
+   * with --sidebar-background, which section 2 of this file maps to
+   * --fluent-card. radius, border and shadow are not restated for the opposite
+   * reason -- there is no surface left to round and nothing left to lift.
+   *
+   * The margin stays and is load-bearing at both edges, exactly as
+   * #pref-category-box's is (SETTINGS below). Leading: 8px of pane margin plus
+   * the rows' own 8px is the 16px between the window border and the first
+   * label that every other rail leaves. Trailing: it is what holds the rows
+   * off #content's card.
+   *
+   * top and height stay too, and their reason is now only half of what it was.
+   * aboutaddons.css:45-47 pins the rail `position: sticky; top: 0; height:
+   * 100vh` so it stays put while #content scrolls. The cropping argument goes
+   * with the card -- there are no corners left to crop -- but the pair is
+   * still what holds the rows off the top and bottom window edges, and the
+   * height is what the block-size chain below resolves its 100% against. */
   #sidebar {
     margin: var(--fluent-gutter) !important;
-    border: 1px solid var(--fluent-card-stroke) !important;
-    border-radius: var(--fluent-radius-card) !important;
-    box-shadow: var(--fluent-shadow-card) !important;
-
-    /* aboutaddons.css pins this to `top: 0; height: 100vh` so the rail stays
-     * put while #content scrolls. Both have to come in by a gutter or the
-     * card is cropped flush against the top and bottom of the window again --
-     * the sticky offset is what holds it off the top edge, the height is what
-     * holds it off the bottom. */
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     top: var(--fluent-gutter) !important;
     height: calc(100vh - 2 * var(--fluent-gutter)) !important;
   }
@@ -1760,7 +1795,7 @@
    * auto-height block -- and a percentage block-size on the host resolves
    * against it, finds `auto`, and falls back to the host's own :host rule of
    * `100vh`. That is 100vh of nav plus the 70px/24px margins its shadow sheet
-   * puts around the <nav>, inside a card that is 100vh minus two gutters:
+   * puts around the <nav>, inside a rail that is 100vh minus two gutters:
    * about 110px of overflow, and a scrollbar down the inside of the rail with
    * the footer links pushed out of sight below it. Sizing the intermediate
    * fixes it. The <nav> itself is in the shadow root and carries no part=, so
@@ -1770,6 +1805,106 @@
   #sidebar moz-page-nav {
     block-size: 100% !important;
     min-block-size: 0 !important;
+  }
+
+  /* --- RAIL ROWS ---
+   * The rows take the Settings rail's shape, which is the folder pane's a
+   * fifth time: 8px corners, the window's own 8px inset, 6px of backdrop
+   * between fills, a neutral subtle overlay and nothing at rest. The rule
+   * being ported is #categories > .category (SETTINGS below) and every number
+   * in it is argued there and at fluent-lists.css:59-107. The rest state is
+   * not written: --page-nav-button-background-color is already transparent
+   * upstream (overrides/moz-page-nav-button.css:9), and restating it would
+   * override nothing.
+   *
+   * It has to be done through custom properties. The paintable box -- the
+   * thing carrying the fill, the radius and the padding -- is an a[href] or a
+   * button inside moz-page-nav-button's shadow root
+   * (overrides/moz-page-nav-button.css:22-23), and it has no part=, so
+   * ::part() is closed as well. What is open is that moz-page-nav-button is
+   * itself a light-DOM element -- categories-box.mjs slots the buttons into
+   * moz-page-nav -- and its shadow sheet drives nearly everything from the
+   * --page-nav-button-* family declared on :host, i.e. on that same light-DOM
+   * element. A rule here matches it, and a USER !important outranks an author
+   * declaration whatever tree it comes from, so the values land inside.
+   *
+   * The two margins are why this is a rule and not only a token block:
+   *
+   *   inline. moz-page-nav-button.css:29 hard-declares margin-inline: 6px on
+   *     the inner box and no property reaches it. The host margin and that 6px
+   *     stack, so the gutter is asked for minus what is already spent, and the
+   *     fill lands at the same 8px inset off the rail's edge every other nav
+   *     pane uses -- 16px from the window once #sidebar's own margin is added.
+   *   block. The fill floats in the row slot rather than being the slot, and
+   *     3px per side is the 6px of backdrop between fills that
+   *     --fluent-row-gap names. The inner box has no block margin of its own
+   *     and the nav groups are grid-auto-rows: min-content with no gap
+   *     (overrides/moz-page-nav.css:30-32), so the host margin is all of it.
+   *
+   * That 6px is ADDED around the row, not carved out of its height the way
+   * 2993c12 carved it out of Settings'. The carve was forced there because
+   * #categories cannot scroll and every pixel its rows gain spills past the
+   * rail's foot. This nav does scroll -- moz-page-nav.css:17-18 gives <nav>
+   * overflow-y: auto with a stable scrollbar gutter, and the rule above gives
+   * it a real height to shrink into -- so the folder-pane model applies
+   * unchanged and the added height is absorbed by the scroll.
+   *
+   * Which is also why --page-nav-button-height is left alone, and that one
+   * matters: it is declared PER GROUP, 48px on .primary-nav-group and 44px on
+   * #secondary-nav-group (overrides/moz-page-nav.css:36,43), and reaches the
+   * buttons by flat-tree inheritance. A single value written here would beat
+   * both -- a declaration on the element always beats an inherited one -- and
+   * flatten the footer group to the categories' height.
+   *
+   * The 70px band above the first row is upstream's (moz-page-nav.css:20) and
+   * stays for the same reason Settings keeps its: it is what lines the first
+   * category up with the content beside it.
+   *
+   * No pill, on either count. There is none to remove -- messenger's override
+   * replaces the toolkit sheet wholesale and its button[selected] block has no
+   * ::before -- and none to add, both because the banner above spells out that
+   * a pseudo-element cannot be reached in there at all, and because the four
+   * other rails all went without one on request (fluent-lists.css:145-166). */
+  #sidebar moz-page-nav-button {
+    --page-nav-button-border-radius: var(--fluent-radius-card) !important;
+    --page-nav-button-background-color-hover: var(--fluent-subtle-hover) !important;
+
+    /* Stock leaves this one undefined in messenger -- nothing declares
+     * --button-text-color-hover, so `color` on hover and on the selected row
+     * resolves to invalid-at-computed-value and falls back to the inherited
+     * colour. It happens to look right; pinning it says so, and matches the
+     * explicit colour the Settings categories write on both states. */
+    --page-nav-button-text-color-hover: var(--fluent-text-primary) !important;
+
+    /* Selection is the SAME overlay as hover, which is what the folder pane,
+     * the books pane and both Settings rails do -- see fluent-lists.css:51-56.
+     * Stock sends it to --button-background-color, which section 5 maps to
+     * --fluent-solid-quart: an opaque control fill, and it read as one
+     * (#383838 measured) while the rail was a card. In a bare nav pane a
+     * control fill is the wrong object.
+     *
+     * What tells selection from hover is the weight, exactly as in Settings --
+     * and here it already ships: moz-page-nav-button.css:77 puts
+     * font-weight: 500 on button[selected]. It cannot be raised to
+     * --fluent-weight-strong from out here, since that is a direct declaration
+     * on the shadow button and no custom property carries it, so this rail's
+     * selected row is one step lighter than the Settings rail's semibold
+     * rather than equal to it. The fill is held while the selected row is
+     * hovered, because stock scopes its hover rule :not([selected])
+     * (moz-page-nav-button.css:64). */
+    --page-nav-button-background-color-selected: var(--fluent-subtle-hover) !important;
+
+    margin-inline: calc(var(--fluent-gutter) - 6px) !important;
+    margin-block: var(--fluent-row-gap) !important;
+  }
+
+  /* The pressed step, which the shadow sheet has no token for -- it declares
+   * rest, hover and selected and stops there. :active matches the host while
+   * the box inside it is being pressed, so retargeting the HOVER token under
+   * :active is the way in: a row cannot be pressed without being hovered.
+   * Same pair of overlays the Settings categories step through. */
+  #sidebar moz-page-nav-button:active {
+    --page-nav-button-background-color-hover: var(--fluent-subtle-pressed) !important;
   }
 
   /* --- #content AS A CARD ---
