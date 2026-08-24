@@ -26,6 +26,7 @@
 @import url("fluent-calendar.css");
 @import url("fluent-icons.css");
 @import url("fluent-account-central.css");
+@import url("fluent-search-results.css");
 
 /* >>> THE SWITCH <<<  light | dark
  * Drives every light-dark() pair in fluent-tokens.css, and tells Gecko how to
