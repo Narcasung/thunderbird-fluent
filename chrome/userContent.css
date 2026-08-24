@@ -430,24 +430,33 @@
     padding: var(--fluent-gutter) !important;
     gap: var(--fluent-gutter) !important;
 
-    /* AND THE ROW HAS TO BE PINNED, or both cards lose their bottom corners.
-     * Upstream declares columns only, so the single row is implicit and auto,
-     * and an auto track is sized to its items max-content. #accountTreeBox is
-     * a flex column: overflow-y on #accounttree zeroes its *min*-content but
-     * leaves its max-content alone, so the track asks for the height of the
-     * entire account tree and grows past body content box. Both cards stretch
-     * to that overflowing track, and AccountManager.xhtml:16 carries
-     * scrolling=false on <html>, so the excess is silently clipped instead of
-     * scrolled -- taking the bottom corners and the bottom gutter with it.
+    /* AND THE ROW HAS TO BE PINNED, or the one card left loses its bottom
+     * corners. Upstream declares columns only, so the single row is implicit
+     * and auto, and an auto track is sized to its items max-content.
+     * #accountTreeBox is a flex column: overflow-y on #accounttree zeroes its
+     * *min*-content but leaves its max-content alone, so the track asks for
+     * the height of the entire account tree and grows past body content box.
+     * Everything in the row stretches to that overflowing track, and
+     * AccountManager.xhtml:16 carries scrolling=false on <html>, so the excess
+     * is silently clipped instead of scrolled -- taking #contentFrame's bottom
+     * corners and the bottom gutter with it.
+     *
+     * The pin outlived the rail's card and gained a second job with it.
      * minmax(0, 1fr) sizes the row from the container rather than from the
-     * content, and the 0 minimum keeps the automatic minimum size out of it. */
+     * content, which is also what holds the now card-less rail to the viewport
+     * instead of letting it grow to its tree's max-content -- without it the
+     * rail stops scrolling and simply runs off the page, where before it only
+     * lost a corner. The 0 minimum keeps the automatic minimum size out of
+     * it. */
     grid-template-rows: minmax(0, 1fr) !important;
   }
 
   /* MICA. Same gate and same reasoning as Address Book -- see the note on
    * that block, and the CONTENT TABS note in fluent-layout.css. The gutter
-   * this page shows is body's padding; both cards keep their fill --
-   * #accountTreeBox here, #contentFrame from its own document.
+   * this page shows is body's padding, and there is one card left to keep its
+   * fill: #contentFrame, painted by its own document. #accountTreeBox is a
+   * bare nav pane now, so on this page the backdrop reaches everything except
+   * the frame.
    *
    * :root HAS TO BE LISTED, and a first pass that left it out measured
    * rgb(32, 32, 32) on the root with a transparent body under it. The
@@ -465,19 +474,34 @@
     }
   }
 
-  /* Upstream pins the sidebar to 100vh, which with the body padding overflows
-   * the viewport by exactly that padding. Height goes back to the grid's own
-   * stretch instead of the viewport's. */
+  /* The rail is a navigation pane, and the last of the four to give its card
+   * up -- #folderPane (fluent-layout.css:289), #booksPane (ADDRESS BOOK below)
+   * and the Settings rail went first, all for the same reason: WinUI does not
+   * put a NavigationView on a surface. It sits on the window backdrop and only
+   * the content beside it gets one. Dropping the fill is also what lets Mica
+   * reach the rail, which a nav pane should have.
+   *
+   * transparent rather than deleted, because stock repaints it --
+   * accountManager.css:48 sets background-color: var(--sidebar-background),
+   * which section 2 of this file maps to --fluent-card. radius and box-shadow
+   * are not restated: there is no surface left to round or to lift. box-sizing
+   * stays, because upstream's min/max-inline-size floors on this flex column
+   * are written against border-box.
+   *
+   * block-size is the older half of this rule and still load-bearing:
+   * upstream pins the sidebar to 100vh (accountManager.css:45), which with
+   * body's padding overflows the viewport by exactly that padding. Height goes
+   * back to the grid's own stretch instead of the viewport's. */
   #accountTreeBox {
     block-size: auto !important;
     box-sizing: border-box !important;
-    background-color: var(--fluent-card) !important;
-    border: 1px solid var(--fluent-card-stroke) !important;
-    border-radius: var(--fluent-radius-card) !important;
-    box-shadow: var(--fluent-shadow-card) !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
-  /* The pane iframe is the second card. Its own document paints the fill (see
+  /* The pane iframe is the card -- the only one on this page now that the rail
+   * beside it is bare. Its own document paints the fill (see
    * the am- block below) -- a background set here would sit behind an opaque
    * child document and never be seen, so the shell supplies only geometry. */
   #contentFrame {
@@ -504,8 +528,168 @@
     box-shadow: var(--fluent-shadow-flyout) !important;
   }
 
+  /* The rail's toolbar -- one button, Add Account (AccountManager.xhtml:
+   * 56-62). It is the same object #folderPaneHeaderBar and #booksPaneHeaderBar
+   * are, down to the class: all three are .sidebar-panel-header. So it takes
+   * the same answer (fluent-layout.css:410) -- the bar stays bare and the
+   * button gets its own box. None of the Address Book's "three buttons must
+   * not read as one segmented control" argument is needed here; there is only
+   * the one.
+   *
+   * margin-inline is the gutter and padding is zero, against stock's
+   * --sidebar-header-spacing (containers.css:12), so the button sits on the
+   * same edge the row fills below it do. justify-content is NOT restated:
+   * unlike the other two bars, accountManager.css:52 already centres this one,
+   * and with a single child there is nothing for space-between to strand.
+   *
+   * The font-weight this rule used to be is gone with the primary button it
+   * would have contradicted. It was semibold on the bar, and the button
+   * inherits through the font-weight: inherit below -- keeping it would have
+   * put back by inheritance the very weight 600 the next rule takes off. */
   #accountTreeHeaderBar {
-    font-weight: var(--fluent-weight-strong) !important;
+    background-color: transparent !important;
+    margin-inline: var(--fluent-gutter) !important;
+    margin-block-end: var(--fluent-gutter) !important;
+    padding: 0 !important;
+  }
+
+  /* Add Account is its own small card, exactly as in fluent-layout.css:447,
+   * and it loses its primary treatment on the way -- stock ships it
+   * class="button button-primary icon-button" (AccountManager.xhtml:57-58),
+   * a solid accent fill at weight 600 (widgets.css:137-142). The accent in a
+   * nav pane belongs to the selection, and two accent surfaces in one pane
+   * compete. Same call New Contact and Write Message both got.
+   *
+   * The subtle-fill ladder cannot be used for the states. Those fills are
+   * translucent and assume a transparent-rest control on an opaque surface;
+   * this one rests on a fill of its own over a transparent pane, so a
+   * translucent hover would composite against the backdrop and come out DARKER
+   * than the rest state. The solid ladder gives an opaque step.
+   *
+   * Height is the header card's, spelled out the long way -- padding to zero,
+   * the border subtracted from the total -- because box-sizing must stay
+   * content-box: this is an .icon-button with a min-inline-size floor
+   * (widgets.css:18), and under border-box that floor has to pay for the
+   * inline padding too. It also beats stock's own min-block-size: 24px
+   * (accountManager.css:58). Only the block axis is being pinned, and nothing
+   * touches the inline one deliberately: the icon is a background-image, so
+   * stock reserves its lane out of the label's own start padding
+   * (widgets.css:67-74) and any padding written here collapses that lane and
+   * lands the label on the icon. */
+  #accountTreeCreateAccount {
+    background-color: var(--fluent-card) !important;
+    color: var(--fluent-text-primary) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-sizing: content-box !important;
+    padding-block: 0 !important;
+    block-size: calc(var(--fluent-header-height) - 2px) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+    font-weight: inherit !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  #accountTreeCreateAccount:enabled:hover {
+    background-color: var(--fluent-solid-tertiary) !important;
+    border-color: var(--fluent-card-stroke) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+  }
+
+  #accountTreeCreateAccount:enabled:hover:active {
+    background-color: var(--fluent-solid-quart) !important;
+    box-shadow: none !important;
+  }
+
+  /* Account rows read as folder rows, because that is what they are: the same
+   * li > .container shape (AccountManager.xhtml:66-77), the same nav list, now
+   * on the same bare pane. Every number here is #folderTree's
+   * (fluent-lists.css:91) and the long note there argues each one. The two
+   * that matter most:
+   *
+   *   - the fill floats in the row slot rather than being the slot. 28px of
+   *     fill plus 3px of margin per side makes a 34px slot with 6px of
+   *     backdrop between fills, and the label keeps the room it had.
+   *   - margin-inline is the gutter, not the 16px that reads better inside a
+   *     pane, because #accountTreeBox is the leftmost paintable thing in this
+   *     window too and any larger stacks on body's padding into a band of
+   *     empty Mica before the first account name.
+   *
+   * This is deliberately NOT the Settings rail's answer, which is the nearest
+   * precedent and the wrong one to copy. There the 6px had to be CARVED out of
+   * the row height rather than added around it, because #categories is
+   * overflow: visible with min-block-size: auto (preferences.css:320-323) and
+   * a list that cannot scroll spills every pixel it gains past the rail's
+   * foot. #accounttree is a real scroll container -- accountManager.css:72-74
+   * gives it flex-grow: 1 and overflow-y: auto -- so the folder-pane model
+   * applies unchanged and the height these rows gain is absorbed by the
+   * scroll.
+   *
+   * The outer margin does not disturb the sub-rows' indentation: stock indents
+   * them with padding-inline-start: 42px INSIDE the container
+   * (shared/accountManager.css:174), not with anything on the container.
+   *
+   * No fills are written. list-container.css is loaded on this page too
+   * (AccountManager.xhtml:32) and drives every state from the
+   * --list-container-* family, which section 6 of the shared block above
+   * already retokenizes, borders included.
+   *
+   * All three geometry declarations override section 9's generic
+   * :is(ul, ol)[role="tree"] .container, which is written for nav rows that
+   * sit inside a card and is still right for the ones that do. This rail's no
+   * longer does. */
+  #accounttree li > .container {
+    position: relative !important;
+    min-height: var(--fluent-row-fill-height) !important;
+    margin-inline: var(--fluent-gutter) !important;
+    margin-block: var(--fluent-row-gap) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+  }
+
+  /* Reserve the scrollbar's lane whether or not it is showing, as on
+   * #folderTree (fluent-lists.css:111) and #books. Without it the bar overlays
+   * the content box, the row fills run underneath it, and the whole list
+   * shifts sideways as the bar comes and goes -- and this is the list that
+   * gains and loses a scrollbar every time an account is expanded. */
+  #accounttree {
+    scrollbar-gutter: stable !important;
+  }
+
+  /* Both scroll affordances go, exactly as they did on #folderTree
+   * (fluent-layout.css:471) and #books (ADDRESS BOOK below) -- #accounttree
+   * carries the same .sidebar-panel-scroll class (AccountManager.xhtml:63) and
+   * containers.css:27-48 hangs the same pair off it, both of which assume an
+   * opaque pane behind them:
+   *
+   *   ::after   a 4px bar filled with var(--sidebar-background), which this
+   *             sheet maps to --fluent-card -- an opaque card-coloured stripe
+   *             across the top of a pane that no longer has a card.
+   *   ::before  a black radial gradient meant to read as a shadow on white;
+   *             over Mica it is a dark smudge under the Add Account button.
+   *
+   * `background: none` rather than a transparent colour, because ::before's is
+   * a background-IMAGE and a colour would not clear it. */
+  #accounttree::before,
+  #accounttree::after {
+    background: none !important;
+  }
+
+  /* And no selection pill, which the folder pane, the books pane and the
+   * Settings rail all do without. Section 9 puts one on every nav row in these
+   * pages and it worked while these fills had 4px corners: the pill is 3x16 at
+   * inset-inline-start 0, and a 4px curve still had fill behind all of it. At
+   * 8px it does not -- at x=0 an 8px radius starts the fill at y=8, while a
+   * 16px pill centred in a 28px row starts at y=6, so the pill's ends hang off
+   * the fill and onto the backdrop. Measured against the corner, not guessed.
+   *
+   * The deeper reason is the one at fluent-lists.css:140: a neutral row fill
+   * on the backdrop has no second layer to paint a bar onto, so the indicator
+   * reads as a notch bitten out of the fill rather than a marker beside it.
+   * The subtle fill is the selection marker here. `position: relative` stays
+   * on the row above -- it costs nothing and it is what an indicator would
+   * need if one ever came back. */
+  #accounttree li.selected > .container::before {
+    content: none !important;
   }
 
   /* Semibold, never bold -- Fluent uses semibold throughout chrome. Upstream
@@ -514,13 +698,33 @@
     font-weight: var(--fluent-weight-strong) !important;
   }
 
+  /* The rail's two footer links -- Settings and Add-ons, html:a
+   * .sidebar-footer-link in .sidebar-footer-list (AccountManager.xhtml:
+   * 104-122). They were control-radius rows with stock's margin left alone,
+   * which was right while the rail was a card: they read as quiet rows on it.
+   * On the backdrop they would be the only unshaped things left in a column of
+   * 8px objects, so they take the rows' shape at the rows' inset, and the rows'
+   * 6px of separation with it -- these two touch each other exactly the way the
+   * accounts above them do. Stock gives them 6px of inline margin and
+   * --button-border-radius (shared/accountManager.css:238-241) and no block
+   * margin at all. Nothing is taken back off their height: they have no
+   * min-height to take it from (they size to their content), and there are only
+   * two of them.
+   *
+   * The hover fill this block used to write is gone, not lost.
+   * .sidebar-footer-link is a toolkit button and reads
+   * --button-background-color-hover (common-shared.css:1024), which section 5
+   * of the shared block above already maps to that same overlay -- the rule was
+   * restating what the token layer does anyway.
+   *
+   * What is left is character for character the SETTINGS block's rule below.
+   * The two pages ship the same markup and the same stock CSS, and now that
+   * both rails are bare there is nothing left to tell them apart. */
   .sidebar-footer-link {
-    border-radius: var(--fluent-radius-control) !important;
+    margin-inline: var(--fluent-gutter) !important;
+    margin-block: var(--fluent-row-gap) !important;
+    border-radius: var(--fluent-radius-card) !important;
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
-  }
-
-  .sidebar-footer-link:hover {
-    background-color: var(--fluent-subtle-hover) !important;
   }
 
   /* The Account Actions flyout. Upstream hardcodes a 2px radius and its own
@@ -1817,9 +2021,10 @@
    * subtle overlays in section 5 of the shared block above -- the same pair the
    * rows use. Only the transition is missing there.
    *
-   * The ACCOUNT SETTINGS block styles this same class at CONTROL radius and
-   * leaves the margin alone. That is right there and wrong here: those links
-   * sit inside #accountTreeBox, which still has its card. */
+   * The ACCOUNT SETTINGS block writes this rule verbatim for the same class on
+   * the same markup. It used to differ -- control radius, stock's margin -- and
+   * that was right while #accountTreeBox was a card. It is not one any more, so
+   * the two pages agree rather than diverge. */
   .sidebar-footer-link {
     margin-inline: var(--fluent-gutter) !important;
     margin-block: var(--fluent-row-gap) !important;
