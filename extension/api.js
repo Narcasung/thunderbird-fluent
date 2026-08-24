@@ -1,11 +1,20 @@
 /* ============================================================================
  * Fluent 2 for Thunderbird -- TRANSPARENCY BRIDGE
  *
- * WHAT THIS DOES, IN ONE SENTENCE
- * It sets the attribute `transparent` on the <browser> of six content tabs,
- * and a marker attribute on their documents so the theme's CSS knows it may
- * drop those pages' backgrounds. Nothing else. No network, no message access,
- * no storage.
+ * WHAT THIS DOES
+ * Two things, and the first is the one it exists for.
+ *
+ *   1. It sets the attribute `transparent` on the <browser> of six content
+ *      tabs, and a marker attribute on their documents so the theme's CSS
+ *      knows it may drop those pages' backgrounds.
+ *   2. It carries the theme's stylesheets inside itself and deploys them to
+ *      the profile, so the whole theme ships as one .xpi.
+ *
+ * Nothing else. No network, no message access, no storage.
+ *
+ * The second job is packaging, not behaviour -- see DEPLOYING THE STYLESHEETS
+ * further down for why it is here rather than in an install step, and why it
+ * writes files rather than registering the sheets itself.
  *
  * WHY IT HAS TO EXIST AT ALL
  * Under a root content document Gecko composes an opaque backstop beneath the
@@ -52,6 +61,10 @@ var { ExtensionCommon } = ChromeUtils.importESModule(
   "resource://gre/modules/ExtensionCommon.sys.mjs"
 );
 
+var { NetUtil } = ChromeUtils.importESModule(
+  "resource://gre/modules/NetUtil.sys.mjs"
+);
+
 /* The content tabs the theme paints. Matched with startsWith, because these
  * carry fragments and queries in normal use (about:preferences#general,
  * about:addons?view=...).
@@ -89,6 +102,197 @@ const TRANSPARENT_PAGES = [
 const MARKER = "fluent-transparency";
 const XUL_NS =
   "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+
+/* ---------------------------------------------------------------------------
+ * DEPLOYING THE STYLESHEETS
+ *
+ * The theme is CSS in the profile's chrome/ folder plus this add-on. Asking a
+ * user to copy a folder AND install an .xpi is two ways to get it wrong, so
+ * the .xpi carries the CSS and writes it out on first run. tools/chrome/ in
+ * the archive is a build-time copy of the repo's chrome/; pack-extension.ps1
+ * stages it, so chrome/ stays the single source of truth and the CSS is not
+ * duplicated in git.
+ *
+ * WHY WRITE FILES RATHER THAN REGISTER THE SHEETS
+ * nsIStyleSheetService.loadAndRegisterSheet(uri, USER_SHEET) would put these
+ * at the same cascade level with no profile files and no legacy-stylesheets
+ * pref at all. It was rejected, and the reason is scope: a registered sheet
+ * applies to EVERY document, and StyleSheetService has no chrome/content
+ * split. fluent-tokens.css:19, fluent-chrome.css:228 and fluent-layout.css:306
+ * are bare `:root` and `body` rules, so they would start landing on rendered
+ * HTML mail and on any page loaded in a content tab -- forcing color-scheme
+ * and the token palette across the Tier 4 boundary the theme draws on purpose.
+ * Closing that means @-moz-document-wrapping all eight chrome modules, and
+ * @import cannot sit inside @-moz-document, so userChrome.css's import hub
+ * would have to be rebuilt too. Writing files keeps the sheets exactly as they
+ * are and exactly as scoped as they are.
+ *
+ * WHY THE DEPLOY IS VERSION-GATED
+ * tools/sync.ps1 pushes CSS straight into the same folder during development.
+ * An unconditional copy at every startup would silently revert every push the
+ * next time Thunderbird started. So the deploy runs only when the add-on's own
+ * version differs from what was last written, which makes a version bump the
+ * one deliberate act that overwrites a working tree.
+ *
+ * WHY THE PREFS ARE SET HERE AND ONLY ON DEPLOY
+ * They used to live in profile/user.js, which is re-applied at every startup
+ * because prefs.js is rewritten on quit. Setting them on deploy instead puts
+ * them in prefs.js once and leaves them alone afterwards, so a user who turns
+ * the backdrop off in about:config keeps it off. The theme still renders
+ * without the three Mica prefs; every transparent surface just degrades to its
+ * opaque fallback. The fourth is not optional -- without it Gecko never reads
+ * the profile's chrome/ folder at all.
+ * ------------------------------------------------------------------------- */
+
+const PREF_BRANCH = "extensions.fluent-transparency.";
+const PREF_DEPLOYED_VERSION = PREF_BRANCH + "deployedVersion";
+const PREF_DEPLOYED_FILES = PREF_BRANCH + "deployedFiles";
+
+/* widget.windows.mica.popups is deliberately FALSE. With it on, toolkit hands
+ * menupopups to the native path (menu.css:48-55, "The mica backdrop takes care
+ * of our shadow, border, and border-radius") and DWM paints a 1px rim around
+ * the popup window. That rim is outside the CSS box: --panel-border-color is
+ * already transparent and cannot reach it, and neither can appearance: none.
+ * Translucent popups and no popup border are not both available -- this theme
+ * takes no border.
+ *
+ * toplevel-backdrop is DWM_SYSTEMBACKDROP_TYPE: 0 auto, 1 none, 2 Mica,
+ * 3 Acrylic, 4 Tabbed. */
+const THEME_PREFS = [
+  ["toolkit.legacyUserProfileCustomizations.stylesheets", true],
+  ["widget.windows.mica", true],
+  ["widget.windows.mica.popups", false],
+  ["widget.windows.mica.toplevel-backdrop", 2],
+];
+
+/* Each one in its own try, because a single bad pref must not take the deploy
+ * with it. It did once: an exception partway through this list left the CSS
+ * written, widget.windows.mica set, toplevel-backdrop unset and the version
+ * gate unrecorded -- so the theme came back after a re-enable with a flat
+ * background instead of the backdrop, and the next startup redeployed. Which
+ * pref threw did not matter; not being able to skip one did. */
+function setPref([name, value]) {
+  try {
+    if (typeof value === "boolean") {
+      Services.prefs.setBoolPref(name, value);
+    } else {
+      Services.prefs.setIntPref(name, value);
+    }
+  } catch (error) {
+    console.error(`fluent-transparency: could not set ${name}: ${error}`);
+  }
+}
+
+/* Read one file out of the .xpi.
+ *
+ * NOT fetch(). An Experiment API's parent script runs in a sandbox whose
+ * globals are an explicit allowlist -- ExtensionCommon.sys.mjs:1820-1855, with
+ * `wantGlobalProperties: ["ChromeUtils"]` and a hand-written Object.assign.
+ * IOUtils and PathUtils are on that list; fetch is not, so the first version of
+ * this deployed nothing and failed with `fetch is not defined`. NetUtil on a
+ * rootURI-resolved path is what stock uses for the same job in
+ * Extension.sys.mjs:1128-1145 (ExtensionData.readJSON), and Components is
+ * reachable here too -- parent/ext-compose.js uses it in this same sandbox. */
+function readFromArchive(extension, path) {
+  return new Promise((resolve, reject) => {
+    const uri = extension.rootURI.resolve(`./${path}`);
+    NetUtil.asyncFetch(
+      { uri, loadUsingSystemPrincipal: true },
+      (stream, status) => {
+        if (!Components.isSuccessCode(status)) {
+          reject(new Error(`${path} is not in the archive`));
+          return;
+        }
+        try {
+          resolve(
+            NetUtil.readInputStreamToString(stream, stream.available(), {
+              charset: "UTF-8",
+            })
+          );
+        } catch (error) {
+          reject(error);
+        } finally {
+          stream.close();
+        }
+      }
+    );
+  });
+}
+
+/* The file list is generated at build time rather than hardcoded, so adding a
+ * module to chrome/ needs no edit here. pack-extension.ps1 writes it. */
+async function bundledFileNames(extension) {
+  return JSON.parse(await readFromArchive(extension, "chrome-files.json"));
+}
+
+/* Copy the archive's CSS into <profile>/chrome/. */
+async function deployStylesheets(extension) {
+  const version = extension.version;
+  if (Services.prefs.getCharPref(PREF_DEPLOYED_VERSION, "") === version) {
+    return;
+  }
+
+  const names = await bundledFileNames(extension);
+  const target = PathUtils.join(PathUtils.profileDir, "chrome");
+  await IOUtils.makeDirectory(target, { ignoreExisting: true });
+
+  for (const name of names) {
+    const css = await readFromArchive(extension, `chrome/${name}`);
+    await IOUtils.writeUTF8(PathUtils.join(target, name), css);
+  }
+
+  THEME_PREFS.forEach(setPref);
+
+  /* Written last, and only after every file landed: a half-finished deploy
+   * that recorded itself as complete would never retry. */
+  Services.prefs.setCharPref(PREF_DEPLOYED_FILES, names.join(","));
+  Services.prefs.setCharPref(PREF_DEPLOYED_VERSION, version);
+
+  /* Flushed rather than left to the usual write-on-quit. The gate above is the
+   * only thing standing between a startup and an overwrite of the profile's
+   * chrome/ folder, so it has to survive a crash: without this, a session that
+   * ended badly would redeploy on the next launch and take any un-pushed
+   * tools/sync.ps1 edit with it. */
+  Services.prefs.savePrefFile(null);
+}
+
+/* Called from onShutdown for both disable and uninstall -- see the note there
+ * for why it cannot be only one of the two. The names come from a pref rather
+ * than from chrome-files.json because on the uninstall path the archive is
+ * already gone by the time this runs. */
+async function removeStylesheets() {
+  const names = Services.prefs.getCharPref(PREF_DEPLOYED_FILES, "");
+  const target = PathUtils.join(PathUtils.profileDir, "chrome");
+
+  for (const name of names.split(",").filter(Boolean)) {
+    await IOUtils.remove(PathUtils.join(target, name), { ignoreAbsent: true });
+  }
+
+  /* The folder itself stays. It is the user's, it may hold their own sheets,
+   * and an empty chrome/ costs nothing.
+   *
+   * THE FOUR THEME PREFS STAY TOO, and only the deploy bookkeeping is cleared.
+   * Clearing them was tried and made the disable/enable round trip worse than
+   * the problem it solved:
+   *
+   *   - widget.windows.mica needs a RESTART to take effect. Clearing it on
+   *     disable and setting it again on enable means the backdrop is gone for
+   *     the whole session after a re-enable, and comes back only on the launch
+   *     after. Removing the CSS is what makes disable visible; the backdrop
+   *     pref does not need to take part.
+   *   - toolkit.legacyUserProfileCustomizations.stylesheets may not be ours to
+   *     clear. Anyone who wrote their own userChrome.css set it first, and
+   *     turning it off would silently break their sheets, not just ours.
+   *
+   * All four are inert once the CSS is gone: an empty chrome/ folder is
+   * nothing to read, and a backdrop with no theme on it is a supported Gecko
+   * configuration rather than a broken state. It is still visible, though, so
+   * README's uninstall section lists all four for anyone who wants the stock
+   * window back -- keep the two lists in step. */
+  Services.prefs.clearUserPref(PREF_DEPLOYED_FILES);
+  Services.prefs.clearUserPref(PREF_DEPLOYED_VERSION);
+  Services.prefs.savePrefFile(null);
+}
 
 function isTargetPage(uri) {
   return TRANSPARENT_PAGES.some(page => uri.startsWith(page));
@@ -172,6 +376,14 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
   onStartup() {
     Services.obs.addObserver(documentObserver, "document-element-inserted");
     sweepOpenTabs();
+
+    /* Not awaited, and it does not need to be: nothing else here reads the
+     * files, and Gecko only looks at the profile's chrome/ folder during
+     * startup, so a deploy always takes effect at the NEXT launch. That is why
+     * installing this add-on ends with a restart. */
+    deployStylesheets(this.extension).catch(error => {
+      console.error("fluent-transparency: stylesheet deploy failed: " + error);
+    });
   }
 
   onShutdown(isAppShutdown) {
@@ -187,6 +399,34 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
       }
     }
     stamped.clear();
+
+    /* AND THE STYLESHEETS GO WITH IT.
+     *
+     * This was `static onUninstall` first, and it never ran. The static hooks
+     * are dispatched only to modules in apiManager's eventModules registry
+     * (ExtensionParent.sys.mjs:112-119 and :208-215), that registry is built
+     * from the manifests of INSTALLED add-ons, and the module's url points
+     * into the add-on being removed -- so by the time the hook would fire
+     * there is nothing left to load it from. Measured: the theme stayed fully
+     * applied after two uninstalls, and the console showed the load failing as
+     * "module is not a constructor" at ExtensionCommon.sys.mjs:1679.
+     *
+     * onShutdown has no such problem: it is an instance method on a live
+     * object, and the un-stamping above already depends on it working.
+     *
+     * The cost is that this cannot tell a disable from an uninstall -- both
+     * arrive here as isAppShutdown false. So disabling the add-on also removes
+     * the theme, which is coherent rather than merely tolerable: the add-on IS
+     * the theme now. The round trip closes because removeStylesheets clears
+     * the version gate, so re-enabling redeploys on the next startup.
+     *
+     * Not awaited -- the caller ignores the return value
+     * (ExtensionCommon.sys.mjs:366-371) -- and it does not need to be. The
+     * session keeps running, nothing else touches these files, and Gecko only
+     * reads them at startup, so the removal lands long before it matters. */
+    removeStylesheets().catch(error => {
+      console.error("fluent-transparency: stylesheet cleanup failed: " + error);
+    });
   }
 
   getAPI() {

@@ -13,6 +13,21 @@
   With no switch it only reports differences and changes nothing.
   It never deletes files in either direction.
 
+  THE ADD-ON WRITES TO THE SAME FOLDER. Since 2.0.0 the .xpi carries the
+  stylesheets and deploys them to the profile on startup, so -Push is no longer
+  the only thing that writes there. The deploy is gated on the add-on's own
+  version (see DEPLOYING THE STYLESHEETS in extension\api.js), which means a
+  -Push survives every restart until the next version bump in
+  extension\manifest.json -- and that bump then overwrites the folder with
+  whatever was in chrome\ at pack time. Two consequences while iterating:
+
+    - Don't bump the add-on version mid-CSS-session; it reclaims the folder.
+    - After a bump, -Push again, or run the profile on the packed copy.
+
+  On a profile that has only ever had the .xpi installed, the chrome folder does
+  not exist until the add-on has run once. The "not found" throw below means
+  that, not a broken setup: start Thunderbird once, then -Push.
+
 .EXAMPLE
   .\sync.ps1              # report only
   .\sync.ps1 -Pull
