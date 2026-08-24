@@ -1724,9 +1724,31 @@
    *     sit INSIDE a card, which these no longer do, and 4px corners beside the
    *     8px content card read as a tighter kind of object.
    *
-   * Row height is deliberately left at upstream's --size-item-xlarge (48px).
-   * This is page-level navigation with 24px icons (--icon-size-large), not a
-   * dense list, and Fluent's own Settings nav is taller than its list rows.
+   * The fill floats in the row slot rather than being the slot, the third
+   * thing this list borrows from the folder pane: stock sizes the row to the
+   * full 48px (common-shared.css:564), so two adjacent filled rows share an
+   * edge and read as one block instead of as two rows -- which is exactly what
+   * they did once the pane behind them stopped separating them.
+   *
+   * The gap is taken OUT of the row, not added to it. #categories is
+   * overflow: visible with min-block-size: auto
+   * (shared/preferences/preferences.css:320-323), so it does not scroll: any
+   * height the rows gain here spills past the rail instead, and upstream has
+   * already spent 70px of the rail on the alignment band above. So the
+   * min-height comes down by exactly the two margins and the PITCH stays at
+   * upstream's 48px, with 42px of fill and 6px of backdrop between fills. 6px
+   * is the folder pane's gap and the thread pane's -- see --fluent-row-gap.
+   *
+   * 42px of fill is still generous, which is the point: this is page-level
+   * navigation with 24px icons (--icon-size-large), not a dense list, and
+   * Fluent's own Settings nav is taller than its list rows. The folder pane's
+   * fill is 28px.
+   *
+   * margin-inline is a shorthand on purpose. Stock indents the rows with
+   * margin-inline-start: var(--space-xxlarge) (common-shared.css:567) for a
+   * list with no sidebar surface to sit on, and messenger already overrides it
+   * with 6px (shared/common.css:60); one longhand here would leave whichever
+   * of the two won still holding the other side.
    *
    * The 70px of backdrop above the first row is upstream's too
    * (common-shared.css:537-543) and is kept on purpose: it is what lines the
@@ -1735,7 +1757,9 @@
    * alone, which it still does. */
   #categories > .category {
     position: relative !important;
+    min-block-size: calc(var(--size-item-xlarge) - 2 * var(--fluent-row-gap)) !important;
     margin-inline: var(--fluent-gutter) !important;
+    margin-block: var(--fluent-row-gap) !important;
     border-radius: var(--fluent-radius-card) !important;
     border-color: transparent !important;
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
@@ -1781,8 +1805,12 @@
    * Nothing in this block touched them before, and while the rail was a card
    * that was fine: they read as quiet rows on it. On the backdrop they would be
    * the only unshaped things left in a column of 8px objects, so they take the
-   * rows' shape at the rows' inset. Stock gives them 6px and
-   * --button-border-radius (shared/preferences/preferences.css:325-328).
+   * rows' shape at the rows' inset, and the rows' 6px of separation with it --
+   * these two touch each other exactly the way the categories did. Stock gives
+   * them 6px of inline margin and --button-border-radius
+   * (shared/preferences/preferences.css:325-328) and no block margin at all.
+   * Nothing is taken back off their height: they have no min-height to take it
+   * from (they size to their content), and there are only two of them.
    *
    * No fills are written. .sidebar-footer-link is a toolkit button and reads
    * --button-background-color-hover / -active, both already retokenized to the
@@ -1794,6 +1822,7 @@
    * sit inside #accountTreeBox, which still has its card. */
   .sidebar-footer-link {
     margin-inline: var(--fluent-gutter) !important;
+    margin-block: var(--fluent-row-gap) !important;
     border-radius: var(--fluent-radius-card) !important;
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
