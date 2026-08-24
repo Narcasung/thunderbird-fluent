@@ -667,3 +667,96 @@ menupopup > menu[_moz-menuactive="true"] {
 menuseparator {
   display: none !important;
 }
+
+/* ---------------------------------------------------------------------------
+ * TAB TOOLBARS
+ * The strip at the top of a tab that has one: Chat's #chat-toolbar
+ * (messenger.xhtml:5471) and, further down, the Search Results toolbar. Both
+ * are ordinary chrome toolboxes -- .mail-toolbox and .contentTabToolbox -- and
+ * stock paints them exactly like the unified toolbar used to be painted, so
+ * they get exactly what the unified toolbar got in fluent-layout.css: the base
+ * chrome surface, no image, no rule under them.
+ *
+ * The hairline is not a border. shared/primaryToolbar.css:7-9 fills the box
+ * with --toolbar-background-color, and classic/primaryToolbar.css:7-13 adds a
+ * ::after that draws a 1px --chrome-content-separator-color line beneath it --
+ * a pseudo-element, so `border: none` alone leaves it standing. It goes for
+ * the same reason the one under the tab strip went: in Fluent the chrome is
+ * one continuous surface and the card edge below does the separating.
+ * ------------------------------------------------------------------------- */
+
+.mail-toolbox,
+.contentTabToolbox,
+.mail-toolbox > toolbar,
+.contentTabToolbox > toolbar,
+.inline-toolbar {
+  appearance: none !important;
+  background-color: var(--fluent-base-chrome) !important;
+  background-image: none !important;
+  color: var(--fluent-text-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mail-toolbox::after,
+.contentTabToolbox::after {
+  display: none !important;
+}
+
+/* The first item on a tab toolbar starts one gutter in, so its hover fill
+ * begins on the same line as the row fills in the pane below it.
+ *
+ * Stock has no line to begin on. Its leading inset is assembled from four
+ * declarations that know nothing about each other -- 1px of toolbar padding
+ * (classic/primaryToolbar.css:15), then 1px of button margin, 1px of
+ * transparent button border and 5px of button padding, all from
+ * shared/messenger.css:295-312 -- and the 8px they add up to lands on the
+ * button's GLYPH rather than on its box, so nothing below it agrees.
+ *
+ * The margin goes on the box instead and the button keeps its own padding and
+ * border: the fill lines up with the contact rows at 8px, and the glyph sits
+ * inside it exactly as it does on every other button in the window. Only the
+ * leading edge moves, and only on the first item, so the spacing BETWEEN
+ * buttons is untouched.
+ */
+.mail-toolbox > toolbar,
+.contentTabToolbox > toolbar {
+  padding-inline-start: 0 !important;
+}
+
+.mail-toolbox > toolbar > :first-child,
+.contentTabToolbox > toolbar > :first-child {
+  margin-inline-start: var(--fluent-gutter) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * CHAT STATUS SELECTOR
+ * The editable status message in #chat-toolbar. It is a label that swaps for
+ * an input on click, so it has to read as a field in both states or the swap
+ * looks like a glitch.
+ *
+ * Stock leaves it bare until hover and then hands it the --toolbar-field-*
+ * family (shared/chat.css:736-760), whose resting border is far brighter than
+ * a Fluent control's. The control step, the card fill and the transparent
+ * stroke tokens put it on the same footing as every other input in the theme,
+ * and the stock focus outline is dropped the way it is dropped on the search
+ * bar above -- see FOCUS.
+ * ------------------------------------------------------------------------- */
+
+#chat-status-selector .statusMessageToolbarItem {
+  border-radius: var(--fluent-radius-control) !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  margin-inline-start: 0 !important;
+}
+
+#chat-status-selector:hover > vbox > .statusMessageToolbarItem,
+#chat-status-selector .statusMessageToolbarItem:focus,
+#chat-status-selector > vbox > .statusMessageToolbarItem[editing] {
+  background-color: var(--fluent-card) !important;
+  color: var(--fluent-text-primary) !important;
+  border-top-color: var(--fluent-control-stroke-top) !important;
+  border-inline-color: var(--fluent-control-stroke) !important;
+  border-bottom-color: var(--fluent-control-stroke-bottom) !important;
+  outline: none !important;
+}

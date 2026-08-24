@@ -376,6 +376,107 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * CHAT CONTACT LIST
+ * #contactlistbox is a richlistbox, not a tree, so none of the token families
+ * above reach it -- every state is written out here. It is a nav pane sitting
+ * on the backdrop (see CHAT in fluent-layout.css), which settles the two
+ * questions the folder pane already answered: the rows carry the fill rather
+ * than the pane, and the fill stays neutral. Accent appears only as the pill.
+ *
+ * Row geometry is the folder pane's, deliberately -- the two lists are the same
+ * kind of object in the same position, one space apart, and a different inset
+ * or radius between them would read as an accident.
+ * ------------------------------------------------------------------------- */
+
+#contactlistbox {
+  appearance: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  /* Stock pulls the list 1px into the pane's border so rows can overdraw it
+   * (shared/chat.css:99-103). That border is gone, so the offset is just a
+   * 1px misalignment against the gutter. */
+  margin-inline-start: 0 !important;
+  scrollbar-gutter: stable !important;
+}
+
+/* The three row kinds share their box. The fill floats inside the row slot the
+ * way the folder pane's does, so two selected rows never share an edge.
+ *
+ * Stock's border is `border-block: 1px solid transparent` (shared/chat.css:172)
+ * and turns --sidebar-border on selection (:194, !important -- beaten here by
+ * origin, a user sheet outranking an author one). It stays in the box model as
+ * transparent so nothing shifts by 2px when selection moves. */
+#contactlistbox > richlistitem {
+  margin-inline: var(--fluent-gutter) !important;
+  margin-block: var(--fluent-row-gap) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+  color: var(--fluent-text-primary) !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* Hover and selection, neutral both. Stock hover is a flat `rgba(0, 0, 0, 0.1)`
+ * (shared/chat.css:180) that reads as a grey slab on a dark backdrop; stock
+ * selection is --imbox-selected-background-color, which is `Field` -- the same
+ * colour as the pane it used to sit on, so a selected row looked like a hole
+ * rather than a highlight. */
+#contactlistbox > richlistitem:hover,
+#contactlistbox > richlistitem[selected="true"],
+#contactlistbox:focus > richlistitem[selected="true"] {
+  background-color: var(--fluent-subtle-hover) !important;
+  color: var(--fluent-text-primary) !important;
+}
+
+#contactlistbox > richlistitem:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* The selection pill. .box-line is stock's own element -- a vbox at the leading
+ * edge of every contact and conversation row (chat-contact.js:37,
+ * chat-imconv.js:41) whose `selected` attribute is kept in sync with the row's.
+ * Stock draws it as a full-height 2px bar in --tabline-color; Fluent's nav
+ * indicator is a rounded 3x16 stub, centred, so the element is reshaped rather
+ * than hidden and a second one invented. */
+#contactlistbox .box-line {
+  inline-size: var(--fluent-indicator-width) !important;
+  block-size: var(--fluent-indicator-height) !important;
+  margin-block: auto !important;
+  border-radius: calc(var(--fluent-indicator-width) / 2) !important;
+  background-color: transparent !important;
+}
+
+#contactlistbox .box-line[selected="true"] {
+  background-color: var(--fluent-accent) !important;
+}
+
+/* Group headers -- Conversations / Online / Offline. They are rows in the same
+ * list but they are labels, not destinations: no fill on hover, no pill, and
+ * semibold rather than the full `bold` stock pins them to (shared/chat.css:163).
+ * Same call as the account rows in the folder pane and the unread messages in
+ * the thread pane. */
+#contactlistbox > richlistitem[is="chat-group-richlistitem"] {
+  font-weight: var(--fluent-weight-strong) !important;
+  color: var(--fluent-text-secondary) !important;
+}
+
+#contactlistbox > richlistitem[is="chat-group-richlistitem"]:hover,
+#contactlistbox > richlistitem[is="chat-group-richlistitem"][selected] {
+  background-color: transparent !important;
+  color: var(--fluent-text-secondary) !important;
+}
+
+/* Stock turns a conversation with unread activity blue (shared/chat.css:168,
+ * literal `color: blue`). Fluent says the same thing with the system accent. */
+#contactlistbox > richlistitem[is="chat-imconv-richlistitem"][attention] {
+  color: var(--fluent-accent) !important;
+}
+
+#contactlistbox > richlistitem[is="chat-imconv-richlistitem"][unread] {
+  font-weight: var(--fluent-weight-strong) !important;
+}
+
+/* ---------------------------------------------------------------------------
  * GENERIC LIST CONTAINERS
  * Every tree row in the app, chrome side: the folder pane, and the several
  * dialogs that build a list the same way. Address Book and the other

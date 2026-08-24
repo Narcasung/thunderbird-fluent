@@ -539,6 +539,132 @@ body#paneLayout {
 }
 
 /* ---------------------------------------------------------------------------
+ * CHAT
+ * The one tab that needed no add-on. #chatTabPanel is static markup inside
+ * messenger.xhtml (:5468), not a document in a browser, so nothing here sits
+ * under a root content document: there is no canvas backstop to suppress, no
+ * `transparent` attribute to set, and userChrome.css reaches every box in the
+ * pane directly. Compare the five content tabs in the MICA block at the end of
+ * this file, which need all three.
+ *
+ * The one exception is #conv-log-browser, a real content browser holding the
+ * conversation transcript. That document is styled by chrome://chat/skin/
+ * conv.css and is deliberately left alone; the card below clips it.
+ *
+ * Geometry follows about:3pane exactly. The panel is the surface the card
+ * floats on, the contact list is a nav pane and gets no card, and the splitter
+ * between them becomes the gutter.
+ * ------------------------------------------------------------------------- */
+
+/* The panel itself is the backdrop, so it takes --fluent-base-chrome and goes
+ * transparent under Mica with everything else. The gutter is NOT padded here:
+ * #chat-toolbar is a chrome toolbar and belongs full-bleed, like the unified
+ * toolbar above it. #chatPanel carries the padding instead, so the ring of
+ * backdrop starts below the toolbar. */
+#chatTabPanel {
+  background-color: var(--fluent-base-chrome) !important;
+}
+
+#chatPanel {
+  padding: var(--fluent-gutter) !important;
+  box-sizing: border-box !important;
+}
+
+/* The contact list is a nav pane: no card, no fill, no hairline -- the same
+ * call as #folderPane above, for the same WinUI reason.
+ *
+ * Two stock rules paint it and both are beaten here. chat.css:24 hands it
+ * --layout-background-1 through a :root:not([lwt-tree], [lwtheme]) descendant,
+ * and shared/chat.css:84 draws `border-inline-end: 1px solid
+ * var(--sidebar-border)` -- the hairline in the screenshot. That hairline is
+ * what the gutter replaces, so it goes rather than being recoloured. */
+#listPaneBox {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+}
+
+/* The splitter becomes the gutter between the pane and the card, the same move
+ * the 3pane splitters made above.
+ *
+ * Stock is 5px wide with `margin-inline-end: -5px` (shared/chat.css:631-650),
+ * which pulls it back over the conversation column so that only its 1px border
+ * shows. Negative margin and gutter cannot both be true: the margin is zeroed,
+ * the width becomes --fluent-gutter, and the whole 8px band stays draggable.
+ * The collapsed-state accent border (shared/chat.css:647) is left alone -- it
+ * only paints while the pane is collapsed and dragged over. */
+#listSplitter {
+  appearance: none !important;
+  inline-size: var(--fluent-gutter) !important;
+  margin-inline: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* The conversation column is the card. #chat-notification-top rather than
+ * #conversationsBox inside it, so a notification bar (added there lazily,
+ * messenger.xhtml:5551) lands inside the card instead of floating above it.
+ *
+ * clip, not hidden: keeps the transcript browser inside the rounded corners
+ * without creating a scroll container. */
+#chat-notification-top {
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  overflow: clip !important;
+}
+
+/* Everything between the card and its content must stop painting, or the card
+ * fill is covered by a second opaque sheet at the same size.
+ *
+ *   #conversationsBox        chat.css:29, --imbox-selected-background-color
+ *   .im-placeholder-screen   shared/chat.css:19, `background-color: Field`
+ *                            -- the flat surface that filled the whole tab
+ *   .convBox / .conv-top     the live conversation, once one is open
+ */
+#conversationsBox,
+#chatTabPanel .im-placeholder-screen,
+#chatTabPanel .convBox,
+#chatTabPanel .conv-top,
+#chatTabPanel #logDisplay {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+#chatTabPanel .im-placeholder-screen {
+  color: var(--fluent-text-primary) !important;
+}
+
+/* The empty state. Stock rules the title off with `border-block-end: 1px solid
+ * var(--sidebar-border)` (shared/chat.css:58) and runs it at `font-weight:
+ * lighter`, both of which are the stock look rather than ours: Fluent titles
+ * are semibold and a divider inside a card is --fluent-divider. */
+#chatTabPanel .im-placeholder-title {
+  font-weight: var(--fluent-weight-strong) !important;
+  border-block-end-color: var(--fluent-divider) !important;
+}
+
+/* The innerbox is held at 0.8 opacity (shared/chat.css:48), which drags the
+ * title down with it. Our own two text tokens carry that distinction already,
+ * and they keep the title at full contrast. */
+#chatTabPanel .im-placeholder-innerbox {
+  opacity: 1 !important;
+  color: var(--fluent-text-secondary) !important;
+}
+
+#chatTabPanel .im-placeholder-title {
+  color: var(--fluent-text-primary) !important;
+}
+
+/* The conversation's own header strip, once a chat is open. Same divider
+ * treatment as everywhere else inside a card (shared/chat.css:347). */
+#chatTabPanel .conv-top-info {
+  background-color: transparent !important;
+  border-block-end-color: var(--fluent-divider) !important;
+}
+
+/* ---------------------------------------------------------------------------
  * AUTO-HIDDEN TAB BAR
  * "Auto hide tab bar" removes the tab strip when only one tab is open. Pin it
  * to zero height when hidden so the cards below do not shift by a partial row
