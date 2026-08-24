@@ -29,7 +29,7 @@
         display: grid;
         gap: 10px;
         grid-template-columns: auto 1fr;
-        padding: 10px 2px;
+        padding: 10px 10px;
       }
 
       .row + .row {
@@ -50,6 +50,32 @@
         opacity: 0.75;
       }
 
+      /* The Mica sub-settings. Hidden outright rather than disabled when Mica
+         is off: neither of them means anything without a backdrop to apply
+         it to, and a greyed row still asks to be read. */
+      .sub {
+        display: grid;
+        gap: 4px 10px;
+        grid-template-columns: max-content 1fr;
+        margin-top: 12px;
+        max-width: 24rem;
+      }
+
+      .sub label {
+        align-self: center;
+      }
+
+      .sub .hint {
+        grid-column: 2;
+        margin: 0 0 4px;
+      }
+
+      .sub input,
+      .sub select {
+        margin: 0;
+        width: 100%;
+      }
+
     </style>
   </head>
 
@@ -60,8 +86,7 @@
         <label for="light">Light mode</label>
         <p class="hint">
           Switches the whole theme between the light and dark palettes, and
-          Thunderbird's own theme with it -- the tab strip, menus and calendar
-          take their colours from that, not from this add-on.
+          Thunderbird's own theme with it.
         </p>
       </div>
     </div>
@@ -71,10 +96,21 @@
       <div>
         <label for="mica">Mica backdrop</label>
         <p class="hint">
-          Lets the Windows desktop show through the window. With it off the
-          theme keeps its shape and every transparent surface falls back to a
-          solid colour.
+          Windows only. Lets the background show through the window with a nice blur effect.
         </p>
+
+        <div class="sub" id="mica-options" hidden>
+          <label for="backdrop">Style</label>
+          <select id="backdrop">
+            <option value="2">Mica</option>
+            <option value="3">Acrylic</option>
+          </select>
+          <label for="transparency">Transparency</label>
+          <input id="transparency" type="range" min="10" max="100" step="10" />
+          <p class="hint">
+            How much of the backdrop shows through.
+          </p>
+        </div>
       </div>
     </div>
 

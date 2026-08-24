@@ -177,6 +177,39 @@ const PREF_LIGHT = PREF_BRANCH + "light";
 const PREF_MICA = PREF_BRANCH + "mica";
 const PREF_WIDGET_MICA = "widget.windows.mica";
 
+/* The two Mica sub-settings, both intent prefs in our own branch for the same
+ * reason `mica` is one: a redeploy re-applies the theme prefs and must not
+ * overwrite an answer the user gave.
+ *
+ * `backdrop` is DWM_SYSTEMBACKDROP_TYPE. Two of the five values are offered:
+ * 2 Mica and 3 Acrylic. 0 (auto) is not a look and 1 (none) is what the Mica
+ * checkbox already does. 4 (Tabbed) was offered and removed -- measured
+ * against Acrylic in both palettes and indistinguishable from it, so it was a
+ * third entry that answered nothing.
+ *
+ * `transparency` is ours, not DWM's, and the stylesheets read it themselves --
+ * see THE VEIL in fluent-tokens.css. Five steps because -moz-pref tests a pref
+ * and cannot read one as a value. It counts the way a user reads it: 100 is
+ * all backdrop, 0 is none, and the token it drives is the complement. */
+const PREF_BACKDROP = PREF_BRANCH + "backdrop";
+const PREF_TRANSPARENCY = PREF_BRANCH + "transparency";
+const PREF_TOPLEVEL_BACKDROP = "widget.windows.mica.toplevel-backdrop";
+
+const BACKDROPS = [2, 3];
+/* Must stay in step with the -moz-pref blocks in fluent-tokens.css and with
+ * the slider's min/step in options.html -- all three list the same values, and
+ * a value that reaches the pref without a block behind it silently paints
+ * nothing. 0 is absent on purpose: see the note on that list. */
+const TRANSPARENCIES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+/* Anything unknown reads as Mica -- a profile that saw the Tabbed option
+ * before it was withdrawn still has 4 written in its prefs, and a select with
+ * no matching option renders blank. */
+function backdropValue() {
+  const stored = Services.prefs.getIntPref(PREF_BACKDROP, 2);
+  return BACKDROPS.includes(stored) ? stored : 2;
+}
+
 /* WHY THE LIGHT SWITCH ALSO SWITCHES THUNDERBIRD'S OWN THEME
  * color-scheme moves every light-dark() pair this theme writes, and moves
  * nothing that Thunderbird paints from its built-in theme. Those colours
@@ -187,7 +220,7 @@ const PREF_WIDGET_MICA = "widget.windows.mica";
  * menupopups, the calendar views and the chat tab dark against a light window.
  *
  * So the setting changes both. The theme the user had is recorded the first
- * time this runs, and put back on uninstall (uninstallWatcher below), because
+ * time this runs, and put back on uninstall (addonWatcher below), because
  * this is a visible Thunderbird setting the add-on did not own. */
 const THEME_LIGHT = "thunderbird-compact-light@mozilla.org";
 const THEME_DARK = "thunderbird-compact-dark@mozilla.org";
@@ -235,7 +268,7 @@ function themePrefs() {
   return [
     ["toolkit.legacyUserProfileCustomizations.stylesheets", true],
     [PREF_WIDGET_MICA, Services.prefs.getBoolPref(PREF_MICA, true)],
-    ["widget.windows.mica.toplevel-backdrop", 2],
+    [PREF_TOPLEVEL_BACKDROP, backdropValue()],
   ];
 }
 
@@ -346,6 +379,16 @@ async function deployStylesheets(extension) {
   if (!Services.prefs.prefHasUserValue(PREF_MICA)) {
     Services.prefs.setBoolPref(PREF_MICA, true);
   }
+  if (!Services.prefs.prefHasUserValue(PREF_BACKDROP)) {
+    Services.prefs.setIntPref(PREF_BACKDROP, 2);
+  }
+  if (!Services.prefs.prefHasUserValue(PREF_TRANSPARENCY)) {
+    Services.prefs.setIntPref(PREF_TRANSPARENCY, 100);
+  }
+  /* `veil` was this setting's name and counted the other way. Nothing reads it
+   * now, and leaving a stale one in about:config next to its replacement is
+   * how someone ends up changing the wrong one. */
+  clearPref(PREF_BRANCH + "veil");
 
   const ownedBefore = new Set(readList(PREF_OWNED_PREFS));
   const owned = themePrefs()
@@ -398,6 +441,8 @@ async function removeStylesheets(forGood) {
     clearPref(PREF_OWNED_PREFS);
     clearPref(PREF_LIGHT);
     clearPref(PREF_MICA);
+    clearPref(PREF_BACKDROP);
+    clearPref(PREF_TRANSPARENCY);
     clearPref(PREF_PREVIOUS_THEME);
   }
 
@@ -406,8 +451,9 @@ async function removeStylesheets(forGood) {
   Services.prefs.savePrefFile(null);
 }
 
-/* Tells an uninstall apart from a disable, which onShutdown cannot do on its
- * own -- both reach it with isAppShutdown false.
+/* Tells an uninstall and an upgrade apart from a disable, neither of which
+ * onShutdown can see on its own -- all three reach it with isAppShutdown
+ * false.
  *
  * The order this depends on is in XPIInstall.sys.mjs:5066-5130
  * (XPIInstall.uninstallAddon): the onUninstalling listeners are called BEFORE
@@ -422,9 +468,29 @@ async function removeStylesheets(forGood) {
  * cleared, and redeploys both the sheets and the prefs. The flag is reset
  * there rather than here because that restart is the only thing that can
  * follow it. */
-const uninstallWatcher = {
+const addonWatcher = {
   addonId: null,
   uninstalling: false,
+  upgrading: false,
+
+  /* AN UPGRADE MUST NOT TAKE THE STYLESHEETS WITH IT. Installing a new version
+   * over this one is a shutdown followed by a startup, so the outgoing copy
+   * used to delete all ten sheets and the incoming one wrote them back -- but
+   * a deploy happens after startup and Gecko reads the profile's chrome folder
+   * DURING startup, so the next session began with an empty folder and no
+   * theme at all. Measured: the process start time and the files' mtime were
+   * the same second, and the window came up stock.
+   *
+   * onInstalling arrives before any of that (XPIInstall.sys.mjs:1925, ahead of
+   * the staging and of bootstrap.shutdown), so the removal can be skipped
+   * outright. The old CSS then stays in place for one session -- the version
+   * gate no longer matches, so the new copy redeploys at the next startup,
+   * which is the first one that could read it anyway. */
+  onInstalling(addon) {
+    if (addon.id === this.addonId) {
+      this.upgrading = true;
+    }
+  },
 
   onUninstalling(addon) {
     if (addon.id !== this.addonId) {
@@ -528,9 +594,10 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
   onStartup() {
     Services.obs.addObserver(documentObserver, "document-element-inserted");
 
-    uninstallWatcher.addonId = this.extension.id;
-    uninstallWatcher.uninstalling = false;
-    AddonManager.addAddonListener(uninstallWatcher);
+    addonWatcher.addonId = this.extension.id;
+    addonWatcher.uninstalling = false;
+    addonWatcher.upgrading = false;
+    AddonManager.addAddonListener(addonWatcher);
 
     sweepOpenTabs();
 
@@ -545,7 +612,7 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
 
   onShutdown(isAppShutdown) {
     Services.obs.removeObserver(documentObserver, "document-element-inserted");
-    AddonManager.removeAddonListener(uninstallWatcher);
+    AddonManager.removeAddonListener(addonWatcher);
     if (isAppShutdown) {
       return;
     }
@@ -577,14 +644,18 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
      * the sheets, which is coherent rather than merely tolerable: the add-on IS
      * the theme now. The round trip closes because removeStylesheets clears
      * the version gate, so re-enabling redeploys on the next startup. The one
-     * thing that does need the distinction is the prefs, and uninstallWatcher
+     * thing that does need the distinction is the prefs, and addonWatcher
      * above supplies it.
      *
      * Not awaited -- the caller ignores the return value
      * (ExtensionCommon.sys.mjs:366-371) -- and it does not need to be. The
      * session keeps running, nothing else touches these files, and Gecko only
      * reads them at startup, so the removal lands long before it matters. */
-    removeStylesheets(uninstallWatcher.uninstalling).catch(error => {
+    if (addonWatcher.upgrading) {
+      return;
+    }
+
+    removeStylesheets(addonWatcher.uninstalling).catch(error => {
       console.error("fluent-transparency: stylesheet cleanup failed: " + error);
     });
   }
@@ -611,6 +682,8 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
           return {
             light: Services.prefs.getBoolPref(PREF_LIGHT, false),
             mica: Services.prefs.getBoolPref(PREF_MICA, true),
+            backdrop: backdropValue(),
+            transparency: Services.prefs.getIntPref(PREF_TRANSPARENCY, 100),
           };
         },
 
@@ -636,6 +709,28 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
         async setMica(enabled) {
           Services.prefs.setBoolPref(PREF_MICA, enabled);
           Services.prefs.setBoolPref(PREF_WIDGET_MICA, enabled);
+          Services.prefs.savePrefFile(null);
+        },
+
+        /* Both of these validate against their own list rather than trusting
+         * the caller. The options page is the only caller today, but these
+         * write a Gecko pref and a value the stylesheets branch on, and a
+         * number from outside that lands in either place is not something to
+         * find out about later. */
+        async setBackdrop(value) {
+          if (!BACKDROPS.includes(value)) {
+            throw new Error(`unknown backdrop ${value}`);
+          }
+          Services.prefs.setIntPref(PREF_BACKDROP, value);
+          Services.prefs.setIntPref(PREF_TOPLEVEL_BACKDROP, value);
+          Services.prefs.savePrefFile(null);
+        },
+
+        async setTransparency(value) {
+          if (!TRANSPARENCIES.includes(value)) {
+            throw new Error(`unknown transparency ${value}`);
+          }
+          Services.prefs.setIntPref(PREF_TRANSPARENCY, value);
           Services.prefs.savePrefFile(null);
         },
       },

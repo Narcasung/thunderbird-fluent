@@ -195,6 +195,100 @@
 @media (-moz-windows-mica) {
   :root {
     --fluent-base-chrome: transparent;
+
+    /* The veil's own token, and NOT --fluent-base-chrome. That one is read by
+     * a dozen surfaces which nest -- #navigation-toolbox wraps #titlebar wraps
+     * #tabs-toolbar, #unifiedToolbarContainer wraps unified-toolbar -- and a
+     * translucent fill on each of them composites against the one below.
+     * Measured: at half strength the toolbar stack read as three quarters
+     * while #tabmail beside it read as half, and the step between them drew a
+     * seam across the window at the titlebar and the status bar. The veil is
+     * therefore painted ONCE, on :root in fluent-layout.css's MICA block, and
+     * every base surface stays fully transparent above it.
+     *
+     * ONCE PER WINDOW, NOT ONCE PER DOCUMENT. userContent.css deliberately
+     * has no veil: a content tab's document stacks on top of the chrome root
+     * that already carries it, so tinting there too made the tab area two
+     * layers deep against one for the rail beside it -- the same seam again,
+     * now running down the edge of the tab. Those documents stay transparent
+     * and the chrome veil shows through them. */
+    --fluent-veil: transparent;
+  }
+
+  /* THE VEIL. The backdrop is DWM's and its strength is not ours to set --
+   * DWM_SYSTEMBACKDROP_TYPE is an enum, there is no opacity on it. What IS
+   * ours is how much of our own base surface sits between the backdrop and
+   * the user, so the options page's Transparency slider paints this token
+   * instead of leaving it fully transparent. 100 is the case above and the
+   * default: all backdrop, no veil.
+   *
+   * DISCRETE STEPS, NOT A FREE 0-100, because -moz-pref works in a media query
+   * and nowhere else: CSS can test a pref against one literal value and cannot
+   * read one as a number, and there is no less-than form to build a range out
+   * of. So every step the slider can produce needs a block here, and the
+   * slider's `step` attribute in options.html has to match this list exactly
+   * -- a value with no block falls through to the default and the slider looks
+   * broken rather than wrong.
+   *
+   * The list stops at 10 because 0 is not a setting: a fully opaque window
+   * with a backdrop behind it that never shows is what turning Mica off does,
+   * minus the titlebar treatment DWM keeps.
+   *
+   * THE PREF COUNTS THE OPPOSITE WAY TO THE TOKEN. It is transparency, as the
+   * options page names it, while --fluent-veil is the opacity of what covers
+   * the backdrop. Each step below pairs a transparency with its complement. */
+  @media -moz-pref("extensions.fluent-transparency.transparency", 90) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 10%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 80) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 20%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 70) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 30%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 60) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 40%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 50) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 50%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 40) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 60%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 30) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 70%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 20) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 80%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 10) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 90%, transparent);
+    }
   }
 }
 

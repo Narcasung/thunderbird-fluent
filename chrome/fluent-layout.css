@@ -724,6 +724,16 @@ body#paneLayout {
  * ------------------------------------------------------------------------- */
 
 @media (-moz-windows-mica) {
+  /* THE VEIL, and this is the only place it is painted. Every base surface
+   * above resolves to transparent under Mica, so the window is a single sheet
+   * of glass and this is the one layer of tint on it -- see the note on
+   * --fluent-veil in fluent-tokens.css for why it cannot ride on
+   * --fluent-base-chrome with the rest. At the default 0 this is transparent
+   * and the rule costs nothing. */
+  :root {
+    background-color: var(--fluent-veil) !important;
+  }
+
   /* Chrome side: the browser and the stack that wraps it. Descendant
    * selectors stop at the document boundary, so this cannot leak into the
    * message browsers -- those live inside about:3pane and are still painted
