@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Thunderbird Fluent",
+  "description": "The Fluent 2 theme for Thunderbird",
+  "version": "2.5.0",
+  "author": "thunderbird-fluent",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "fluent-transparency@thunderbird-fluent",
+      "strict_min_version": "128.0"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "experiment_apis": {
+    "fluentTransparency": {
+      "schema": "schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["fluentTransparency"]],
+        "script": "api.js",
+        "events": ["startup"]
+      }
+    }
+  }
+}

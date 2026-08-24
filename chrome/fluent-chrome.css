@@ -9,6 +9,12 @@
  * ships 4px 4px 0 0, which is the Explorer "merged into the content below"
  * shape -- wrong here, because the content below is a floating card separated
  * by a gutter, so there is nothing to merge into.
+ * Metrics come from Firefox 154's own sheets, not from eyeballing: the radius
+ * is --tab-border-radius -> --toolbarbutton-border-radius -> --button-border-radius
+ * -> --border-radius-medium = 8px (tokens-shared.css:33, 119, 578;
+ * tab.tokens.css:16), and the between-tab gap is .tabbrowser-tab's
+ * padding: 0 var(--tab-overflow-clip-margin) = 2px per side, 4px total
+ * (tabs.css:218, --dimension-2 in tokens-shared.css:368).
  * ------------------------------------------------------------------------- */
 
 #tabs-toolbar {
@@ -20,10 +26,14 @@
 }
 
 .tabmail-tab {
-  border-radius: var(--fluent-radius-control) !important;
+  /* 8px matches Firefox's tab radius exactly, and --fluent-radius-card already
+   * carries it. Thunderbird ships 4px 4px 0 0 (tabmail.css:53). */
+  border-radius: var(--fluent-radius-card) !important;
   border: none !important;
   background-color: transparent !important;
-  margin-inline: 1px !important;
+  /* 2px per side = Firefox's 4px between tabs. Thunderbird ships
+   * margin-inline-end: 1px, i.e. a 1px gap (tabmail.css:53). */
+  margin-inline: 2px !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
@@ -139,9 +149,22 @@
 /* ---------------------------------------------------------------------------
  * UNIFIED TOOLBAR BUTTONS
  * 32px tall, 4px radius, Fluent subtle-fill state ladder.
+ *
+ * #threadPaneHeaderBar is in the selector because the toolbar is not the only
+ * place a .unified-toolbar-button appears: Quick Filter and the display button
+ * in the thread pane's header carry the same class (about3Pane.xhtml:79-88)
+ * and were left on stock styling by an id-scoped selector. Stock's rest state
+ * already has border-color: transparent (widgets.css:95-100), which is why
+ * they looked right until they were hovered or switched on -- the state rules
+ * at :104 and :126 put --toolbar-button-hover-border-color back, and Quick
+ * Filter is a check-button that STAYS in that state while the filter bar is
+ * open. That is the border that would not go away. The transparent border in
+ * the base rule below is !important, so it holds in every state.
  * ------------------------------------------------------------------------- */
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button) {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button),
+#threadPaneHeaderBar .button,
+#quick-filter-bar .button {
   min-height: var(--fluent-control-height) !important;
   border-radius: var(--fluent-radius-control) !important;
   border: 1px solid transparent !important;
@@ -149,11 +172,131 @@
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover,
+#threadPaneHeaderBar .button:hover,
+#quick-filter-bar .button:hover {
   background-color: var(--fluent-subtle-hover) !important;
 }
 
-#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover:active {
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button):hover:active,
+#threadPaneHeaderBar .button:hover:active,
+#quick-filter-bar .button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
+
+/* Switched on. Killing the border above also took away stock's only other
+ * marker for it on these buttons -- a border plus a fill that the transparent
+ * background here overrides -- so "on" needs saying again, and the accent tint
+ * says it the way selection does everywhere else in this theme. Quick Filter
+ * is the button that made this necessary; the toggles in the unified toolbar
+ * get it too, and had nothing before. */
+#unifiedToolbar .button:is(.toolbar-button, .unified-toolbar-button)[aria-pressed="true"],
+#threadPaneHeaderBar .button[aria-pressed="true"],
+#quick-filter-bar .button[aria-pressed="true"] {
+  background-color: var(--fluent-accent-tint) !important;
+}
+
+/* The spaces menu button -- the one that stands in for the whole rail while
+ * the rail is hidden, and opens #spacesButtonMenuPopup. It carries
+ * `class="button toolbar-button"` (messenger.xhtml:3562), so the block above
+ * already had it, which is exactly why it looked wrong: it was taking the
+ * ordinary 4px toolbar corner while everything it represents is an 8px card.
+ *
+ * Two IDs so this beats that block without editing it. The shared selector is
+ * (1,2,0); this is (2,0,0), and every other toolbar button keeps its 4px.
+ *
+ * border-box here, against the theme's usual habit of pinning the block axis
+ * only. That habit exists because border-box makes stock's 6em min-inline-size
+ * (widgets.css:18) pay for its own padding and truncates the label -- "New
+ * Message" became "New Mess...". This button has no label to truncate: stock
+ * hides its .toolbarbutton-text outright (spacesToolbar.css:236-238) and drops
+ * min-inline-size to auto, which is also what let it collapse to bare icon
+ * width and read as too small. A square 32x32 gives it the same footprint as
+ * the toolbar's other buttons and centres the icon in it. */
+#unifiedToolbar #spacesPinnedButton {
+  border-radius: var(--fluent-radius-card) !important;
+  box-sizing: border-box !important;
+  inline-size: 32px !important;
+  block-size: 32px !important;
+  padding: 0 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * BUTTON GROUPS
+ * Segmented groups (widgets.css:321-357) draw an outline round the cluster and
+ * then a 1px rule between every pair of buttons inside it -- the group's own
+ * border, plus a border-inline-end on the first child and on each middle one.
+ * That is the vertical tick between the quick filter's five toggles, and it is
+ * the same idea as the outlines this theme has already removed everywhere
+ * else: a line drawn to say "these are separate", where Fluent separates by
+ * spacing and by the fill that appears under the pointer.
+ *
+ * border-COLOR only. The 1px keeps its place in the layout, so nothing shifts
+ * and the buttons stay on the pixel grid they were laid out on. */
+.button-group,
+.button-group > .button {
+  border-color: transparent !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * MESSAGE HEADER BUTTONS
+ * Reply / Forward / Archive / Spam / Delete / More, in the message header
+ * (about:message). #messageBrowser has no type="content" -- it is a chrome
+ * docshell, so userChrome.css reaches inside it and no @-moz-document scope is
+ * needed.
+ *
+ * These are XUL toolbarbuttons, not the HTML .button used elsewhere, so they
+ * take none of the rules above and were left entirely on stock styling: six
+ * outlined boxes with square corners in a row. The outline is already gone via
+ * --toolbarbutton-header-bordercolor in fluent-tokens.css; what is left here is
+ * the shape and the state fills, matched to the unified toolbar's.
+ *
+ * The menu-button variant (More) is three elements -- the button itself and the
+ * anonymous .toolbarbutton-menubutton-button / -dropmarker children -- and
+ * stock borders all three (messageHeader.css:184-189), so all three are listed.
+ * ------------------------------------------------------------------------- */
+
+#messageHeader .message-header-view-button,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker {
+  border: 1px solid transparent !important;
+  border-radius: var(--fluent-radius-control) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
+}
+
+/* Room inside them. Stock gives these 3px of inline padding
+ * (messageHeader.css:165) against a 16px icon and a label, which was fine while
+ * every button was fenced off by its own outline and is not once the outlines
+ * are gone -- the hover fill lands tight around the content and the labels of
+ * two neighbouring buttons sit closer to each other than each is to its own
+ * edge. 8px inline is the same room the menu items get.
+ *
+ * The menu-button variant is excluded from the first selector on purpose: stock
+ * zeroes ITS padding and pads the inner button instead (messageHeader.css:
+ * 170-176), so padding the host as well would count it twice. The dropmarker is
+ * an arrow with no label and takes half. */
+#messageHeader .message-header-view-button:not([is="toolbarbutton-menu-button"]),
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button {
+  padding-inline: 8px !important;
+  padding-block: 4px !important;
+}
+
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker {
+  padding-inline: 4px !important;
+  padding-block: 4px !important;
+}
+
+#messageHeader .message-header-view-button:not([disabled]):hover,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button:not([disabled]):hover,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker:not([disabled]):hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+#messageHeader .message-header-view-button:not([disabled]):is(:hover:active, [open="true"]),
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-button:not([disabled]):hover:active,
+#messageHeader .message-header-view-button > .toolbarbutton-menubutton-dropmarker:not([disabled]):hover:active {
   background-color: var(--fluent-subtle-pressed) !important;
 }
 
@@ -216,25 +359,115 @@
  * toolbar, which is the only place this widget appears.
  * ------------------------------------------------------------------------- */
 
+/* #qfb-qs-textbox is the quick filter's field. It is a <search-bar> like the
+ * toolbar's, but the element carries no `search-bar` CLASS (about3Pane.xhtml:
+ * 173), so the class selector above never matched it and it sat on stock
+ * styling inside an otherwise themed bar. */
 .search-bar,
-#unifiedToolbar .search-bar {
+#unifiedToolbar .search-bar,
+#qfb-qs-textbox {
   box-sizing: border-box !important;
   min-block-size: var(--fluent-control-height) !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
-  border-radius: var(--fluent-radius-control) !important;
+  /* Card, not control: the 8px step is the one the rest of the mail window
+   * settled on -- folder rows, thread cards, the thread header and the folder
+   * pane buttons all moved there, and the search bar was the odd 4px left. */
+  border-radius: var(--fluent-radius-card) !important;
   background-color: var(--fluent-card) !important;
   border-width: 1px !important;
   border-style: solid !important;
   border-top-color: var(--fluent-control-stroke-top) !important;
   border-inline-color: var(--fluent-control-stroke) !important;
   border-bottom-color: var(--fluent-control-stroke-bottom) !important;
-  /* Inherited into the shadow tree; see (2) and (3) above. */
+  /* Inherited into the shadow tree; see (2) and (3) above. --button-border-radius
+   * is the shadow input's own radius (shared/search-bar.css:30) and is pinned
+   * globally to the 4px control step in fluent-tokens.css. Re-declaring it here
+   * keeps the field from disagreeing with the host it hides under, should its
+   * fill or stroke ever stop being transparent. */
+  --button-border-radius: var(--fluent-radius-card) !important;
   --search-bar-border-color: transparent !important;
   --search-bar-background: transparent !important;
   --search-bar-focus-background: transparent !important;
   --focus-outline-color: transparent !important;
+}
+
+/* WIDTH -- toolbar bar only, which is why this is a second rule rather than
+ * three more declarations above: the quick filter's field sits in a bar of its
+ * own and must keep its stock sizing.
+ *
+ * Stock is `.unified-toolbar .search-bar { flex: 1 1 33% }`
+ * (shared/unifiedToolbarShared.css:67). The 33% basis is not what makes the bar
+ * span the window -- flex-GROW is. Measured off a 1033px window: the field ran
+ * x=51 to x=1001, ~950px, ~92% of the frame. Dropping grow to 0 is the whole
+ * fix; the inline-size then decides, and 320px is the "about a third" the user
+ * asked for (~317px measured target).
+ *
+ * min() rather than a flat 320px so the bar yields on a narrow window instead
+ * of crowding the toolbar buttons off the end. Stock's min-inline-size: 5em
+ * still floors it.
+ *
+ * Specificity: #unifiedToolbar .search-bar (1,1,0) outranks stock's
+ * .unified-toolbar .search-bar (0,2,0). */
+#unifiedToolbar .search-bar {
+  flex: 0 1 auto !important;
+  inline-size: min(320px, 40%) !important;
+}
+
+/* POSITION -- right, on request.
+ *
+ * The rule above only sets a size; where the bar lands is decided by the
+ * spacers around it. The default layout is ["spacer", "search-bar", "spacer"]
+ * (CustomizableItems.sys.mjs:20) and a spacer is flex: 1 1 auto, so the ~630px
+ * the bar gives up splits evenly between the two and it centres itself.
+ * Collapsing the trailing spacer piles all of that slack on the leading one
+ * instead, and the bar is pushed to the end of the toolbar.
+ *
+ * A spacer is an <li> that gets its class the same way the search bar does
+ * (customizable-element.mjs:112), so a sibling combinator reaches it. General
+ * sibling, not adjacent: this must still hold if a second trailing spacer is
+ * added in Customize.
+ *
+ * Consequence: the bar now sits flush against whatever ends the toolbar. In the
+ * default layout nothing follows it, so that is the right edge. Add buttons
+ * AFTER the search bar in Customize and they will butt straight up against it,
+ * and a spacer between them will NOT open a gap -- every spacer trailing the
+ * bar is collapsed, that one included. Anything added should go before the bar,
+ * or this rule needs narrowing to :last-child.
+ *
+ * Specificity: (1,2,0) over stock's .unified-toolbar .spacer (0,2,0). */
+#unifiedToolbar .search-bar ~ .spacer {
+  flex: 0 0 auto !important;
+}
+
+/* TEXT SIZE -- asked for, deliberately not done. Recorded so it is not
+ * re-opened blind.
+ *
+ * The shadow field hard-codes `input { font-size: 1rem }`
+ * (shared/search-bar.css:27). That is a literal, not a custom property, so the
+ * inheritance trick that reaches everything else in this widget does not reach
+ * it, and the widget exposes no ::part to select through. The reachable
+ * options were all wrong in some way: a font-size on the host enlarges only the
+ * slotted placeholder, so "Search..." would be big and snap back to 1rem the
+ * instant anything is typed; `zoom` on the host does scale placeholder and
+ * typed text together, but scales the box with them, putting it back in
+ * conflict with both the width above and the 32px --fluent-control-height.
+ *
+ * Behind that sits the standing rule in fluent-tokens.css: this theme ships no
+ * font-size token and leaves every text SIZE to Thunderbird, which scales it
+ * off the user's font-size pref and the uidensity setting. Raising that pref is
+ * the real fix if the chrome reads small; patching one widget is not. */
+
+/* The one thing the quick filter's field cannot share: its fill. The shared
+ * rule paints a search bar --fluent-card, which reads in the unified toolbar because
+ * that toolbar sits on the window base. This field sits ON a card
+ * (fluent-layout.css gives #quick-filter-bar one), and card on card is
+ * invisible -- every control stroke in this theme is transparent, so there is
+ * no outline left to define the box either. One step up the solid ladder is
+ * what makes it a field again. */
+#qfb-qs-textbox {
+  background-color: var(--fluent-solid-tertiary) !important;
 }
 
 /* ---------------------------------------------------------------------------
@@ -247,11 +480,39 @@
 #spacesToolbar {
   /* Thunderbird lays two gradients over the rail; they fight a flat surface. */
   background-image: none !important;
+
+  /* 6px, down from stock's 15. That is the same figure the folder pane, the
+   * thread pane and the address book were held to in the pass that unified
+   * them: the rail sits immediately beside the folder pane, and at 15px it was
+   * pacing its buttons at two and a half times the rhythm of the list right
+   * next to it. --fluent-row-gap cannot be reused here (see its comment in
+   * fluent-tokens.css), so this is written out.
+   *
+   * Set on the rail rather than on :root. Both names are needed and they are
+   * different things: the rail's own `gap` (spacesToolbar.css:84) is
+   * --spaces-gap and separates the three CONTAINERS, while each container's
+   * `gap` (:109) is --spaces-container-gap and separates the buttons inside
+   * it. Only the second is what the eye reads as the spacing between icons;
+   * the first is set to match so the settings/collapse pair at the bottom
+   * cannot pace differently from the spaces above them.
+   *
+   * Neither feeds --spaces-total-width -- that is padding, icon size and
+   * button padding only (:41) -- so closing these does not move #messengerBody
+   * or #titlebar inward, and the accent pill's -5px offset below, which is cut
+   * against --spaces-padding, stays where it is. */
+  --spaces-gap: 6px !important;
+  --spaces-container-gap: 6px !important;
 }
 
 .spaces-toolbar-button {
   position: relative !important;
-  border-radius: var(--fluent-radius-control) !important;
+  /* The card radius, not the control radius. Same call, and the same reason,
+   * as the folder rows in fluent-lists.css: these are ~33px squares standing
+   * in a column right beside 8px folder rows and the 8px pane cards, and at
+   * 4px they read as a tighter, different kind of object in the middle of
+   * them. The accent pill below is what marks selection; the corner is only
+   * shape, so it is free to agree with its neighbours. */
+  border-radius: var(--fluent-radius-card) !important;
   background-color: transparent !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
@@ -307,21 +568,81 @@
  * 8px radius, 4px inner padding, and menu items inset 4px so hover fills a
  * floating pill inside the menu rather than spanning edge to edge.
  *
- * NOTE: no box-shadow is set here on purpose. Gecko draws a native OS shadow
- * around popup windows; adding our own on top produces a muddy double halo.
- * Verify against the native shadow before introducing --fluent-shadow-flyout
- * here, and only then with -moz-window-shadow: none.
+ * The shadow IS ours, and it has to be. This block used to carry a note saying
+ * the opposite -- leave it to Gecko's native popup shadow, adding one produces
+ * a double halo -- and that was true right up until the popup lost
+ * `appearance: auto`. Taking the native path away takes the native shadow with
+ * it: measured straight down past the popup's bottom edge, the fill steps 44
+ * to 43 and stops, with no falloff anywhere. Without elevation a #2C2C2C menu
+ * sits on a #2B2B2B pane, one level apart out of 255, and disappears.
  * ------------------------------------------------------------------------- */
 
 menupopup,
 panel {
+  /* The popup paints itself, not the OS. menu.css:48-55 hands every menupopup
+   * `appearance: auto` whenever (-moz-windows-mica-popups) matches, and that
+   * feature keeps matching after widget.windows.mica.popups is turned off --
+   * the pref moves the widget, not the media query. A natively-appearing popup
+   * with no backdrop under it paints nothing, which is how menus ended up
+   * see-through. Ours is an opaque surface, so it has no use for the native
+   * path either way. */
+  appearance: none !important;
+
   --panel-border-radius: var(--fluent-radius-card) !important;
   --arrowpanel-padding: 4px !important;
-  --panel-padding: 4px !important;
-  --panel-background: var(--fluent-flyout) !important;   /* transparent under mica-popups, see fluent-tokens.css */
   --panel-color: var(--fluent-text-primary) !important;
   --panel-border-color: var(--fluent-card-stroke) !important;
+
+  /* Block only. An inline value here is paid TWICE, because every menu item
+   * already carries its own margin-inline: the pill ends up inset by the sum,
+   * and 4 + 4 reads as a menu that cannot decide where its edge is. Stock
+   * lands on the same split for the same reason (contextMenu.css:27). */
+  --panel-padding: 4px 0 !important;
+
+  /* Both names, and they are not interchangeable. --panel-background is the
+   * arrowpanel-era token; what a popup paints is --panel-background-color,
+   * read by popup.css:76 on ::part(content). userContent.css has carried the
+   * -color form since it was written; the chrome side only ever got away
+   * without it because mica-popups was making popups transparent. */
+  --panel-background: var(--fluent-flyout) !important;
+  --panel-background-color: var(--fluent-flyout) !important;
+
+  /* Stock draws its separator on menuseparator::before (menu.css:130-136), not
+   * on the element. Recolouring the token gets that line; painting our own
+   * border on the element gets a SECOND line 4px above it, which is what the
+   * theme used to do. */
+  --panel-separator-color: var(--fluent-divider) !important;
+
+  /* Elevation. The margin is not decoration -- popup.css:44-45 sizes the popup
+   * WINDOW by it and pulls the content back with a negative margin, so it is
+   * the room the shadow has to render into. Stock's 4px is cut for a 0-offset
+   * 4px blur; --fluent-shadow-flyout is offset 8 and blurred 16, so it needs
+   * 24 or it renders clipped square at the bottom. */
+  --panel-box-shadow: var(--fluent-shadow-flyout) !important;
+  --panel-box-shadow-margin: 24px !important;
 }
+
+/* The fill, painted rather than delegated. Belt and braces with the token
+ * above: --panel-background-color reaches this same surface through
+ * popup.css:76, but only as a variable, and a variable is one more thing that
+ * can be blanked out from under the theme -- which is exactly what happened
+ * while the mica-popups block was still live. This declaration is the paint
+ * itself. */
+menupopup::part(content),
+panel::part(content) {
+  background-color: var(--fluent-flyout) !important;
+  background-image: none !important;
+  box-shadow: var(--fluent-shadow-flyout) !important;
+}
+
+/* Tooltips are deliberately NOT themed. The default tooltip is native
+ * anonymous content, so no user or author sheet can reach it -- xul.css:380
+ * says as much in a comment, and its Windows branch (xul.css:396-407) paints
+ * background #2b2a33 and border #f9f9fb outright, which is exactly what the
+ * shipped build renders. A `tooltip { ... !important }` rule here was tried
+ * and changed nothing, measured pixel for pixel. Do not add it back: it cannot
+ * work for the tooltips users actually see, and it WOULD take the handful of
+ * tooltips declared in markup, leaving the two kinds looking different. */
 
 menupopup > menuitem,
 menupopup > menu {
@@ -340,8 +661,112 @@ menupopup > menu[_moz-menuactive="true"] {
   color: var(--fluent-text-primary) !important;
 }
 
+/* Menu separators are removed outright, on the same instruction that took the
+ * box outlines and the button-group ticks: this theme separates by spacing and
+ * by the fill under the pointer, not by drawn rules.
+ *
+ * display: none rather than a transparent line, because the rule was the whole
+ * element -- stock's menuseparator is a 0-height box whose ::before paints the
+ * line (menu.css:130-136), so hiding the line and keeping the box would leave
+ * a few pixels of dead space that nothing explains. The groups a menu used to
+ * separate now run together; that is the trade, and it is deliberate.
+ *
+ * --panel-separator-color is still mapped above and is now unread here. It is
+ * left in place because it is a stock token other popup furniture can pick up,
+ * and mapping it costs nothing. */
 menuseparator {
-  border-top: 1px solid var(--fluent-divider) !important;
-  border-bottom: none !important;
-  margin-inline: 8px !important;
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * TAB TOOLBARS
+ * The strip at the top of a tab that has one: Chat's #chat-toolbar
+ * (messenger.xhtml:5471) and, further down, the Search Results toolbar. Both
+ * are ordinary chrome toolboxes -- .mail-toolbox and .contentTabToolbox -- and
+ * stock paints them exactly like the unified toolbar used to be painted, so
+ * they get exactly what the unified toolbar got in fluent-layout.css: the base
+ * chrome surface, no image, no rule under them.
+ *
+ * The hairline is not a border. shared/primaryToolbar.css:7-9 fills the box
+ * with --toolbar-background-color, and classic/primaryToolbar.css:7-13 adds a
+ * ::after that draws a 1px --chrome-content-separator-color line beneath it --
+ * a pseudo-element, so `border: none` alone leaves it standing. It goes for
+ * the same reason the one under the tab strip went: in Fluent the chrome is
+ * one continuous surface and the card edge below does the separating.
+ * ------------------------------------------------------------------------- */
+
+.mail-toolbox,
+.contentTabToolbox,
+.mail-toolbox > toolbar,
+.contentTabToolbox > toolbar,
+.inline-toolbar {
+  appearance: none !important;
+  background-color: var(--fluent-base-chrome) !important;
+  background-image: none !important;
+  color: var(--fluent-text-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mail-toolbox::after,
+.contentTabToolbox::after {
+  display: none !important;
+}
+
+/* The first item on a tab toolbar starts one gutter in, so its hover fill
+ * begins on the same line as the row fills in the pane below it.
+ *
+ * Stock has no line to begin on. Its leading inset is assembled from four
+ * declarations that know nothing about each other -- 1px of toolbar padding
+ * (classic/primaryToolbar.css:15), then 1px of button margin, 1px of
+ * transparent button border and 5px of button padding, all from
+ * shared/messenger.css:295-312 -- and the 8px they add up to lands on the
+ * button's GLYPH rather than on its box, so nothing below it agrees.
+ *
+ * The margin goes on the box instead and the button keeps its own padding and
+ * border: the fill lines up with the contact rows at 8px, and the glyph sits
+ * inside it exactly as it does on every other button in the window. Only the
+ * leading edge moves, and only on the first item, so the spacing BETWEEN
+ * buttons is untouched.
+ */
+.mail-toolbox > toolbar,
+.contentTabToolbox > toolbar {
+  padding-inline-start: 0 !important;
+}
+
+.mail-toolbox > toolbar > :first-child,
+.contentTabToolbox > toolbar > :first-child {
+  margin-inline-start: var(--fluent-gutter) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * CHAT STATUS SELECTOR
+ * The editable status message in #chat-toolbar. It is a label that swaps for
+ * an input on click, so it has to read as a field in both states or the swap
+ * looks like a glitch.
+ *
+ * Stock leaves it bare until hover and then hands it the --toolbar-field-*
+ * family (shared/chat.css:736-760), whose resting border is far brighter than
+ * a Fluent control's. The control step, the card fill and the transparent
+ * stroke tokens put it on the same footing as every other input in the theme,
+ * and the stock focus outline is dropped the way it is dropped on the search
+ * bar above -- see FOCUS.
+ * ------------------------------------------------------------------------- */
+
+#chat-status-selector .statusMessageToolbarItem {
+  border-radius: var(--fluent-radius-control) !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  margin-inline-start: 0 !important;
+}
+
+#chat-status-selector:hover > vbox > .statusMessageToolbarItem,
+#chat-status-selector .statusMessageToolbarItem:focus,
+#chat-status-selector > vbox > .statusMessageToolbarItem[editing] {
+  background-color: var(--fluent-card) !important;
+  color: var(--fluent-text-primary) !important;
+  border-top-color: var(--fluent-control-stroke-top) !important;
+  border-inline-color: var(--fluent-control-stroke) !important;
+  border-bottom-color: var(--fluent-control-stroke-bottom) !important;
+  outline: none !important;
 }

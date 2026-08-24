@@ -8,3 +8,7 @@ shots/
 *.bak
 *.pre-*
 *.orig
+
+# Built add-on. tools/pack-extension.ps1 regenerates it from extension/,
+# which is the source of truth; a zip in history would only ever go stale.
+dist/

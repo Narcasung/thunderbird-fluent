@@ -1,0 +1,79 @@
+[
+  {
+    "namespace": "fluentTransparency",
+    "description": "The theme's two settings. The rest of the add-on's work happens in api.js's onStartup and needs no callable surface; these exist only so options.html can read and write the prefs, which an extension page cannot do on its own.",
+    "functions": [
+      {
+        "name": "getSettings",
+        "type": "function",
+        "async": true,
+        "description": "Current values of both settings.",
+        "parameters": []
+      },
+      {
+        "name": "setLight",
+        "type": "function",
+        "async": true,
+        "description": "Switch the palette between light and dark. Applies without a restart.",
+        "parameters": [
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "setMica",
+        "type": "function",
+        "async": true,
+        "description": "Turn the Mica window backdrop on or off.",
+        "parameters": [
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "setBackdrop",
+        "type": "function",
+        "async": true,
+        "description": "Pick the DWM backdrop type: 2 Mica, 3 Acrylic.",
+        "parameters": [
+          {
+            "name": "value",
+            "type": "integer",
+            "enum": [
+              2,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "name": "setTransparency",
+        "type": "function",
+        "async": true,
+        "description": "How much of the backdrop shows through, 10 to 100 in steps of 10.",
+        "parameters": [
+          {
+            "name": "value",
+            "type": "integer",
+            "enum": [
+              10,
+              20,
+              30,
+              40,
+              50,
+              60,
+              70,
+              80,
+              90,
+              100
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

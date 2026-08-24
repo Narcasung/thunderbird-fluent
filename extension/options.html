@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fluent 2</title>
+    <!-- Styles are inline because the CSP blocks inline SCRIPT, not inline
+         style, and two rules do not need a file of their own. The palette is
+         left to color-scheme: this page renders inside the Add-ons Manager,
+         which the theme already paints, and hardcoding colours here would be
+         the one surface that fails to follow the switch it operates. -->
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      body {
+        font: message-box;
+        font-size: 1rem;
+        margin: 0;
+        padding: 4px 0;
+      }
+
+      /* Two columns, and the label block is ONE grid item rather than a
+         label and a paragraph placed separately -- with the text as loose
+         children, anything added to a row lands back in the checkbox column
+         and shoves the layout sideways. */
+      .row {
+        align-items: start;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: auto 1fr;
+        padding: 10px 10px;
+      }
+
+      .row + .row {
+        border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+      }
+
+      input {
+        margin: 2px 0 0;
+      }
+
+      label {
+        display: block;
+      }
+
+      .hint {
+        font-size: 0.9em;
+        margin: 2px 0 0;
+        opacity: 0.75;
+      }
+
+      /* The Mica sub-settings. Hidden outright rather than disabled when Mica
+         is off: neither of them means anything without a backdrop to apply
+         it to, and a greyed row still asks to be read. */
+      .sub {
+        display: grid;
+        gap: 4px 10px;
+        grid-template-columns: max-content 1fr;
+        margin-top: 12px;
+        max-width: 24rem;
+      }
+
+      .sub label {
+        align-self: center;
+      }
+
+      .sub .hint {
+        grid-column: 2;
+        margin: 0 0 4px;
+      }
+
+      .sub input,
+      .sub select {
+        margin: 0;
+        width: 100%;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div class="row">
+      <input id="light" type="checkbox" />
+      <div>
+        <label for="light">Light mode</label>
+        <p class="hint">
+          Switches the whole theme between the light and dark palettes, and
+          Thunderbird's own theme with it.
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <input id="mica" type="checkbox" />
+      <div>
+        <label for="mica">Mica backdrop</label>
+        <p class="hint">
+          Windows only. Lets the background show through the window with a nice blur effect.
+        </p>
+
+        <div class="sub" id="mica-options" hidden>
+          <label for="backdrop">Style</label>
+          <select id="backdrop">
+            <option value="2">Mica</option>
+            <option value="3">Acrylic</option>
+          </select>
+          <label for="transparency">Transparency</label>
+          <input id="transparency" type="range" min="10" max="100" step="10" />
+          <p class="hint">
+            How much of the backdrop shows through.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

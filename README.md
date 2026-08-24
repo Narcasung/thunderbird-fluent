@@ -1,214 +1,22 @@
 # thunderbird-fluent
 
-A Fluent 2 (Windows 11 / WinUI 3) theme for Thunderbird 153 ESR, written as a
-`userChrome.css` module set.
-
-Not a packaged extension. Thunderbird's store "themes" are static themes
-(`manifest.json` `"theme"` key: colours and images only) and cannot do layout,
-corner radii, glyph substitution, or state selectors — strictly less capable
-than this. See `docs/handoff-mica.md` for that comparison and the conditions
-under which switching to a MailExtension would actually pay off.
-
-## Layout
-
-```
-chrome/     the deployable stylesheets — mirrors the profile chrome/ folder
-tools/      capture.ps1 (screenshots), sync.ps1 (repo <-> profile)
-docs/       handoff notes from prior working sessions
-profile/    user.js — the Mica prefs, deployed to the profile root
-```
-
-`chrome/userChrome.css` is the entry point: module imports, the light/dark
-switch, and nothing else.
-
-**Design rationale lives in the CSS files themselves, as comments.** Read
-`chrome/fluent-tokens.css` first — it is the source of truth for palette,
-geometry, elevation, motion, and typography, and every other module consumes
-its tokens. Do not re-derive the design from the docs folder.
+A Fluent theme for Thunderbird.
 
 ## Install
 
-Thunderbird only reads from the profile. This repo is history; the profile is
-what runs.
+1. Download `fluent-transparency.xpi` from the
+   [latest release](https://github.com/Narcasung/thunderbird-fluent/releases/latest).
+2. Install it from the Add-ons Manager: gear icon > Install Add-on From File.
+3. Restart Thunderbird.
 
-1. Set `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`
-   (Settings > General > Config Editor).
-2. Copy `chrome/*.css` into
-   `%APPDATA%\Thunderbird\Profiles\<profile>\chrome\`, or run
-   `tools\sync.ps1 -Push`.
-3. Copy `profile/user.js` into the profile root — beside `prefs.js`, not in
-   `chrome/`. It carries the three Mica prefs; without them the theme still
-   renders, but every transparent surface degrades to its opaque fallback and
-   there is no backdrop. `prefs.js` is rewritten on quit, which is why these
-   live in `user.js`.
-4. Restart Thunderbird. There is no hot reload — every CSS change needs a full
-   restart.
+The addon will automatically change those prefs:
 
-To disable: close Thunderbird, rename the profile's `chrome` folder, reopen.
-To disable one module: comment out its `@import` in `userChrome.css`.
+- `widget.windows.mica` to `true`
+- `widget.windows.mica.toplevel-backdrop` to `2`
+- `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`
 
-## Working on it
+## Uninstall
 
-```powershell
-tools\sync.ps1              # report differences only, changes nothing
-tools\sync.ps1 -Pull        # profile -> repo, capture iteration
-tools\sync.ps1 -Push        # repo -> profile, deploy
-tools\capture.ps1 -Name x   # screenshot the Thunderbird window
-tools\capture.ps1 -DelaySeconds 6   # ...with time to open a menu first
-```
+Remove the add-on from the Add-ons Manager and restart.
 
-Verify by pixel-sampling captures with `System.Drawing`, not by eyeballing
-zoomed crops — reading colour off a crop produced two wrong conclusions early
-on, and sampling settled both immediately.
-
-## Status
-
-| Area | State |
-|---|---|
-| Tier 1–2: 3-pane, chrome, tabs, lists, icons | Shipped, verified light + dark |
-| Tier 3: Calendar | Shipped, verified light + dark |
-| Tier 3: Account Settings, Address Book | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
-| Tier 3: Settings and its sub-dialogs | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
-| Tier 3: Advanced Preferences, Add-ons Manager | Shipped (`userContent.css`), verified dark by pixel-sampling; light not yet checked |
-| Tier 3: Account Central | Shipped (`fluent-account-central.css`), verified dark by pixel-sampling; light not yet checked |
-| Mica backdrop: window, menus, 3-pane gutters | Shipped, verified by pixel-sampling |
-| Mica backdrop: Calendar tab | Shipped, verified by pixel-sampling |
-| Mica backdrop: content tabs | Not reachable — see below |
-| Tier 4: message content | Out of scope by decision — `userContent.css` is scoped away from it |
-
-Transparency is gated on the `-moz-windows-mica` and `-moz-windows-mica-popups`
-media features, so the theme degrades to opaque by itself when the backdrop is
-off, unsupported, or dropped by DWM. Install step 3 is what turns it on.
-
-## The content tabs
-
-Five pages live in content-type docshells, so `userChrome.css` cannot reach
-them and `userContent.css` is the only sheet that can. The blocker was never
-how the `about:` page is registered — all of them are plain `ALLOW_SCRIPT` in
-`AboutRedirector.sys.mjs` — it is the hosting `<browser>` element's `type`.
-
-| Surface | Docshell | Sheet that reaches it |
-|---|---|---|
-| `about:3pane`, `about:message` | chrome (no `type` attribute → default) | `userChrome.css` |
-| `msgAccountCentral.xhtml` | chrome (`#accountCentralBrowser`, no `type`) | `userChrome.css` |
-| `about:preferences` | content (`#preferencesbrowser type="content"`) | `userContent.css` |
-| `about:accountsettings` | content (`openTab("contentTab", …)`) | `userContent.css` |
-| `about:addressbook` | content | `userContent.css` |
-| `about:config`, `about:addons` | content | `userContent.css` |
-
-Verified against `messenger.xhtml`, `specialTabs.js` and `AboutRedirector.sys.mjs`
-in TB 153's `omni.ja`.
-
-Everything below was settled by canary — loud-colour rules pushed to the
-profile and pixel-sampled — rather than by reading source, and each answer
-cost a restart. Don't re-derive them:
-
-- **Scope on `about:`, not on the chrome URL.** Every page matched its
-  `about:` URI. Blocks keyed on the `chrome://` URL the page is served from
-  fired on nothing, on all five.
-- **Per-page `@-moz-document url-prefix()` solves the Tier 4 problem.**
-  `userContent.css` also hits message display, which is out of scope; message
-  docshells never carry these `about:` URIs. Every rule in that file is scoped
-  and none may be added unscoped.
-- **Account Settings is two documents.** `AccountManager.xhtml` is a shell
-  around `<iframe id="contentFrame">` holding
-  `chrome://messenger/content/am-*.xhtml`, where every actual setting lives.
-  The `about:` scope reaches 10% of the surface; the `am-` prefix reaches 78%.
-- **Nested `chrome://` documents inside a content docshell are reachable.**
-  Proven on the `am-*` panes and on Settings' `dialogFrame`. Scope any further
-  sub-dialog by its chrome path — no restart needed to find out.
-- **Mica does NOT reach a content docshell, and `#1C1B22` is the trap.**
-  Transparency does not cross a content browser, so dropping a content page's
-  background exposes Gecko's default canvas — `#1C1B22` in dark, which is
-  `--color-gray-90` in `design-system/tokens-shared.css`, not a backdrop
-  colour. It has B > R,G, so beside our flat `#202020` it reads exactly like a
-  Mica sample. Two checks separate them: a real backdrop **varies** with what
-  is behind the window (this was identical at 16 points across 1500px and
-  100% of every row band over 300px of height), and the chrome that does get
-  the backdrop sampled `#1D1D1D` in the same capture. Do not use "is it
-  blue-tinted" as the test. No user sheet can change this — the canvas colour
-  comes from the docshell, not the cascade.
-- **Custom properties do not cross a document boundary.** `fluent-tokens.css`
-  reaches none of these pages; each document restates the palette. That is why
-  `userContent.css` carries its own `color-scheme`, which must be kept equal to
-  the switch in `userChrome.css`.
-- **A card has to be able to close, and a `<table>` cannot be one.** Giving a
-  content surface a gutter, a radius and an elevation only reads as a card if
-  all four edges are visible, so a surface longer than the viewport has to
-  become its own scroll container rather than letting the document scroll. On
-  `about:config` the obvious target, `#prefs`, cannot do it: a table box cannot
-  be sized below its content, so `flex: 1` plus `min-block-size: 0` will not
-  shrink it, and Gecko ignores `overflow` on a table box, so it never becomes a
-  scroller either. The attempt rendered pixel-identical to the build before it.
-  `body` is the wrapper that was already there — it takes the card, the height
-  and the `overflow: auto`, and the table goes back to being a plain table
-  drawn on it. Note the propagation rule this depends on: the first of
-  html/body with a non-visible overflow hands it to the viewport and is itself
-  then treated as visible, so `html: hidden` + `body: auto` makes body the
-  scroller, and the reverse order does not.
-- **`about:config` and `about:addons` get a fourth sheet: Thunderbird's own.**
-  `aboutAddonsExtra.js` injects `chrome://messenger/skin/aboutExtra.css` into
-  both, despite the name. It is not a token file — it restates things as direct
-  declarations, so a token override cannot reach them. It sets `about:config`'s
-  row striping to `--layout-background-1` (which is why the toolkit's
-  `--table-row-background-color-alternate` never gets read on that page, and
-  mapping it would be a rule that fires on nothing) and `.card`'s radius to
-  `--button-border-radius` (which is why cards rendered at the 4px control
-  radius even with `--border-radius-large` mapped). Check this file before
-  concluding a token override failed.
-
-Three token vocabularies meet on these pages, and all three need mapping or
-half the surface stays stock: messenger's `--layout-*` ladder, messenger's
-`--color-*-base` semantics, and toolkit's Acorn tokens
-(`--background-color-box`, `--border-color`, `--button-*`, `--border-radius-*`).
-The chrome modules only ever needed the first. `userContent.css`'s shared block
-maps all three; Settings, Advanced Preferences and Add-ons Manager are built on
-the Acorn layer almost entirely, so adding their `about:` URIs to that block's
-selector list is most of what they need.
-
-That held when it was tested. Adding the two URIs and writing nothing else
-already gave `about:config` and `about:addons` the full palette — canvas,
-striping, hover, borders, fields, buttons, sidebar and the Add-ons category
-rail's selection all sampled as theme values on the first capture. What was
-left was four things the palette cannot express, and they are the whole of the
-per-page work: two card radii that `aboutExtra.css` declares directly, the
-toolkit's 700 bold on modified prefs, card elevation, and hyperlinks.
-
-Add-ons Manager has one known gap: `addon-updates-message` and
-`message-bar-stack` are shadow DOM. Its core UI (`addon-card`, `categories-box`,
-`addon-page-header`) is light DOM and reachable.
-
-Settings held to the same pattern — the palette landed from the selector list
-alone, and the per-page work was structure: two cards with the gutter as margin
-(`.main-content` is pinned to `100vh`, so body padding would overflow the
-viewport by exactly the padding), the sticky search strip repainted onto the
-card it now sits on, and the category list moved from upstream's accent-tinted
-label to the folder-pane model. Measured on the final capture: base `#202020`,
-both panes `#2B2B2B`, an 8px gutter between `#3A3A3A` strokes, selected row
-`#373737` with a 3×16 accent pill centred on a 48px row, fields `#303030` at
-32px.
-
-Its sub-dialogs carry one trap worth keeping. They are separate documents, and
-the `<dialog>` element does not cover the last row of its own document —
-toolkit's `dialog.css` gives `:host` an asymmetric `padding-block: 8px 10px`.
-Upstream hides the gap by keeping the canvas next to the dialog surface
-(`:root[dialogroot]` moves `--background-color-canvas` to `--color-gray-80`).
-Mapping that token to the window base, which is right for a page, therefore
-draws a 1px window-coloured line across the bottom of every sub-dialog. It was
-`#202020` at `y=1003` under `#2B2B2B` on both sides; the fix is to move the
-canvas back to the card inside the sub-dialog scope. The other three edges
-sampled clean, which is what pointed at the padding rather than at the fill.
-
-Fingerprint for "no override landed": TB 153 dark stock
-`--layout-background-0` is `#18181b` and `-1` is `#27272a`. Sampling those
-exact values means the sheet never applied.
-
-## Environment this was built against
-
-- Thunderbird 153.1.0 (mozilla-esr153). It auto-updated from 140.13.0 partway
-  through the first session, invalidating notes taken from the old `omni.ja` —
-  verify structure against the installed archive rather than memory.
-- Windows 11 Pro 22631. The machine's accent is a desaturated slate
-  (`#4A5459`), which is why selection tints look muted; the tint percentages in
-  `fluent-tokens.css` are raised to compensate and should be lowered toward
-  Fluent's spec 12%/24% under a vivid accent.
+Removing the add-on should reset the aforementionned prefs. If you still notice undesired transparency, reset them yourself. (Settings > General > Config Editor at the bottom)

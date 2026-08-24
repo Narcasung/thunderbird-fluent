@@ -45,6 +45,9 @@
   --fluent-card:              light-dark(#FFFFFF, #2B2B2B);  /* the three panes */
   --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);  /* blocks inside a pane */
   --fluent-solid-quart:       light-dark(#EFEFEF, #383838);  /* controls in content */
+  /* Opaque, and it stays opaque. Popups in this theme do not participate in
+   * Mica -- see the note where the (-moz-windows-mica-popups) block used to
+   * be, further down this file. */
   --fluent-flyout:            light-dark(#F9F9F9, #2C2C2C);  /* menus, panels */
 
   /* --- Text --- */
@@ -54,14 +57,35 @@
   --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
 
   /* --- Strokes ---
-   * Fluent's control stroke is asymmetric: in light mode the bottom edge is
-   * darker (a grounding shadow baked into the border); in dark mode the TOP
-   * edge is lighter instead. Consumed in fluent-chrome.css. */
+   * Every box outline in this theme is transparent, on the user's explicit
+   * instruction: no hairline around a pane, a card, a button, an input or a
+   * popup. Surfaces are told apart by fill and shadow alone.
+   *
+   * This is the single point that does it. Every border the theme draws routes
+   * through one of these five -- grep `border` across chrome/ and there is no
+   * literal colour anywhere -- so nothing else needs editing, and restoring the
+   * strokes is a matter of putting the values below back.
+   *
+   * The values, for whenever that happens. Fluent's control stroke is
+   * asymmetric: in light mode the bottom edge is darker, a grounding shadow
+   * baked into the border; in dark mode the TOP edge is lighter instead.
+   *   divider               light-dark(rgba(0,0,0,.08), rgba(255,255,255,.08))
+   *   card-stroke           light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
+   *   control-stroke        light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
+   *   control-stroke-top    light-dark(rgba(0,0,0,.06), rgba(255,255,255,.09))
+   *   control-stroke-bottom light-dark(rgba(0,0,0,.16), rgba(255,255,255,.07))
+   *
+   * --fluent-divider is kept SEPARATE and still painted. It is not a box
+   * outline: it draws the rule under the thread pane's column headers
+   * (fluent-lists.css) and the sidebar/section separators mapped below. Those
+   * are structure, not decoration, and blanking them merges the column headers
+   * into the first row. If those should go too, this is the one line to
+   * change -- but check that header first. */
   --fluent-divider:               light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
-  --fluent-card-stroke:           light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
-  --fluent-control-stroke:        light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .07));
-  --fluent-control-stroke-top:    light-dark(rgba(0, 0, 0, .06), rgba(255, 255, 255, .09));
-  --fluent-control-stroke-bottom: light-dark(rgba(0, 0, 0, .16), rgba(255, 255, 255, .07));
+  --fluent-card-stroke:           transparent;
+  --fluent-control-stroke:        transparent;
+  --fluent-control-stroke-top:    transparent;
+  --fluent-control-stroke-bottom: transparent;
 
   /* --- Subtle fills: the Fluent list/nav state ladder --- */
   --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));
@@ -93,7 +117,39 @@
   --fluent-radius-control:    4px;   /* controlCornerRadius */
   --fluent-radius-row:        4px;
   --fluent-row-inset:         4px;
+  /* The thread pane's own inset, measured from the pane edge, shared by the
+   * message cards and the header card above them (fluent-lists.css,
+   * fluent-layout.css). Deliberately a step wider than --fluent-gutter: that
+   * one is the gap BETWEEN panes, and a card wants more air than a splitter.
+   * One name for both consumers is what stops the header card and the list
+   * under it drifting apart. */
+  --fluent-card-inset:        12px;
+  /* A folder-pane row is a 28px fill floating in a taller slot, not a fill
+   * that IS the slot -- two adjacent fills would otherwise share an edge and
+   * merge into one block. The gap is per side, so the slot works out at
+   * 28 + 2*3 = 34px and there is 6px of backdrop between one fill and the
+   * next. That deliberately breaks the 32px pitch 0add3a5 matched to the
+   * Account Settings sidebar; the folder pane runs one step looser than that
+   * sidebar, on purpose.
+   *
+   * 6px is not a free choice: it is what the thread pane's message cards get
+   * (3px of td padding either side of a row, fluent-lists.css), and the two
+   * lists sit side by side. It cannot be expressed as one shared token,
+   * because the thread pane pays for its gap out of a JS-fixed row height and
+   * the folder pane adds its own -- the number matches, the mechanism cannot.
+   * The address book's contact list is the third list held to it. Change one
+   * of the three and change all three. */
+  --fluent-row-fill-height:   28px;
+  --fluent-row-gap:           3px;
   --fluent-control-height:    32px;
+  /* The height of the strip across the top of the window's two left panes:
+   * the thread pane's header card and each of the folder pane's three button
+   * cards. They sit side by side at the same y, so an odd pixel between them
+   * reads as a mistake -- one token, both consumers, in fluent-layout.css.
+   * Taller than --fluent-control-height because these are cards, not controls;
+   * the number is what the header card measured at with its content driving
+   * it, rounded up. */
+  --fluent-header-height:     40px;
   --fluent-row-height-table:  32px;  /* table view stays dense */
   --fluent-row-height-card:   40px;  /* cards view gets full Fluent height */
   --fluent-indicator-width:   3px;
@@ -139,22 +195,121 @@
 @media (-moz-windows-mica) {
   :root {
     --fluent-base-chrome: transparent;
+
+    /* The veil's own token, and NOT --fluent-base-chrome. That one is read by
+     * a dozen surfaces which nest -- #navigation-toolbox wraps #titlebar wraps
+     * #tabs-toolbar, #unifiedToolbarContainer wraps unified-toolbar -- and a
+     * translucent fill on each of them composites against the one below.
+     * Measured: at half strength the toolbar stack read as three quarters
+     * while #tabmail beside it read as half, and the step between them drew a
+     * seam across the window at the titlebar and the status bar. The veil is
+     * therefore painted ONCE, on :root in fluent-layout.css's MICA block, and
+     * every base surface stays fully transparent above it.
+     *
+     * ONCE PER WINDOW, NOT ONCE PER DOCUMENT. userContent.css deliberately
+     * has no veil: a content tab's document stacks on top of the chrome root
+     * that already carries it, so tinting there too made the tab area two
+     * layers deep against one for the rail beside it -- the same seam again,
+     * now running down the edge of the tab. Those documents stay transparent
+     * and the chrome veil shows through them. */
+    --fluent-veil: transparent;
+  }
+
+  /* THE VEIL. The backdrop is DWM's and its strength is not ours to set --
+   * DWM_SYSTEMBACKDROP_TYPE is an enum, there is no opacity on it. What IS
+   * ours is how much of our own base surface sits between the backdrop and
+   * the user, so the options page's Transparency slider paints this token
+   * instead of leaving it fully transparent. 100 is the case above and the
+   * default: all backdrop, no veil.
+   *
+   * DISCRETE STEPS, NOT A FREE 0-100, because -moz-pref works in a media query
+   * and nowhere else: CSS can test a pref against one literal value and cannot
+   * read one as a number, and there is no less-than form to build a range out
+   * of. So every step the slider can produce needs a block here, and the
+   * slider's `step` attribute in options.html has to match this list exactly
+   * -- a value with no block falls through to the default and the slider looks
+   * broken rather than wrong.
+   *
+   * The list stops at 10 because 0 is not a setting: a fully opaque window
+   * with a backdrop behind it that never shows is what turning Mica off does,
+   * minus the titlebar treatment DWM keeps.
+   *
+   * THE PREF COUNTS THE OPPOSITE WAY TO THE TOKEN. It is transparency, as the
+   * options page names it, while --fluent-veil is the opacity of what covers
+   * the backdrop. Each step below pairs a transparency with its complement. */
+  @media -moz-pref("extensions.fluent-transparency.transparency", 90) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 10%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 80) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 20%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 70) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 30%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 60) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 40%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 50) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 50%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 40) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 60%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 30) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 70%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 20) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 80%, transparent);
+    }
+  }
+
+  @media -moz-pref("extensions.fluent-transparency.transparency", 10) {
+    :root {
+      --fluent-veil: color-mix(in srgb, var(--fluent-base) 90%, transparent);
+    }
   }
 }
 
-/* Popups get their own backdrop, and their own feature query -- the two prefs
- * are independent, so a popup must never be made transparent on the strength
- * of the window backdrop working. Under mica-popups, toolkit switches the
- * menupopup to native appearance and the DWM backdrop supplies the shadow,
- * border and corner radius; all our tokens have to do is stop painting over
- * it. Menu ITEM fills stay -- they are translucent state layers and composite
- * onto the backdrop correctly. */
-@media (-moz-windows-mica-popups) {
-  :root {
-    --fluent-flyout: transparent;
-    --arrowpanel-background: transparent !important;
-  }
-}
+/* There is NO (-moz-windows-mica-popups) block here, and that is deliberate.
+ *
+ * There used to be one, blanking --fluent-flyout to transparent so the DWM
+ * backdrop could show through. It was removed once popups were taken off Mica
+ * (profile/user.js sets widget.windows.mica.popups to false, because the
+ * border that backdrop draws is outside the CSS box and this theme draws no
+ * box outlines). What the removal fixed is subtler than a dead rule: the pref
+ * and the media feature do NOT move together. Turning the pref off stops the
+ * widget applying a backdrop to popup windows -- the border goes -- but
+ * (-moz-windows-mica-popups) keeps matching, so menu.css:48 keeps handing the
+ * popup `appearance: auto`. Native paint with no backdrop beneath it paints
+ * nothing at all, and a blanked --fluent-flyout leaves nothing else to paint
+ * either, so menus came up SEE-THROUGH over the main window's Mica: measured
+ * as a 69-to-73 gradient in both axes where a flat #2C2C2C was expected.
+ * fluent-chrome.css closes the other half by forcing appearance: none.
+ *
+ * So: do not gate popup surfaces on this feature. Menu ITEM fills are fine as
+ * translucent state layers -- they composite onto whatever the popup paints. */
 
 /* ---------------------------------------------------------------------------
  * 2. MAPPING ONTO THUNDERBIRD'S TOKENS
@@ -184,6 +339,14 @@
   --layout-border-0: var(--fluent-divider) !important;
   --layout-border-1: var(--fluent-card-stroke) !important;
   --layout-border-2: var(--fluent-control-stroke) !important;
+
+  /* XUL toolbarbutton strokes. Only ever used as border-color, and the message
+   * header's Reply/Forward/Archive row is the most visible consumer -- six
+   * outlined boxes in a row, which is what a Fluent command bar specifically
+   * is not. Both go transparent, same as every other box outline in this
+   * theme. The buttons keep their hover fill, which comes from elsewhere. */
+  --toolbarbutton-header-bordercolor: transparent !important;
+  --toolbarbutton-active-bordercolor: transparent !important;
 
   /* Sidebar tokens -- the folder pane reads these rather than --layout-* */
   --sidebar-background: var(--fluent-card) !important;
