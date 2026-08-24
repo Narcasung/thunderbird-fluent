@@ -1,6 +1,39 @@
 [
   {
     "namespace": "fluentTransparency",
-    "description": "No callable surface. The namespace exists only so the parent script below it is loaded at startup; all of the work happens in api.js's onStartup."
+    "description": "The theme's two settings. The rest of the add-on's work happens in api.js's onStartup and needs no callable surface; these exist only so options.html can read and write the prefs, which an extension page cannot do on its own.",
+    "functions": [
+      {
+        "name": "getSettings",
+        "type": "function",
+        "async": true,
+        "description": "Current values of both settings.",
+        "parameters": []
+      },
+      {
+        "name": "setLight",
+        "type": "function",
+        "async": true,
+        "description": "Switch the palette between light and dark. Applies without a restart.",
+        "parameters": [
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "setMica",
+        "type": "function",
+        "async": true,
+        "description": "Turn the Mica window backdrop on or off. Needs a restart.",
+        "parameters": [
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ]
+      }
+    ]
   }
 ]

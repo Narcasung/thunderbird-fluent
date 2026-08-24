@@ -88,7 +88,15 @@
    * deliberately absent: these pages sit inside a tab, on the card surface,
    * with the window backdrop already resolved behind them. --- */
   :root {
-    color-scheme: dark;  /* >>> THE SWITCH <<< keep equal to userChrome.css */
+    /* >>> THE SWITCH <<<  see the light override below.
+     * !important is NOT optional here, for the reason this file's header
+     * gives about every other declaration: in-content/common-shared.css:32
+     * sets `color-scheme: light dark` on :root, that is an AUTHOR rule, and
+     * author-normal beats user-normal. Without it this line loses -- which
+     * went unnoticed for as long as the answer was dark either way, since
+     * `light dark` under a dark OS resolves to exactly what we asked for.
+     * Asking for light is what made the loss visible. */
+    color-scheme: dark !important;
 
     --fluent-base:              light-dark(#F3F3F3, #202020);
     --fluent-card:              light-dark(#FFFFFF, #2B2B2B);
@@ -188,6 +196,18 @@
      * fluent-tokens.css section 1 for why the ramp is not restated. */
     --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     --fluent-weight-strong:     600;
+  }
+
+  /* >>> THE SWITCH <<<  the light half, kept equal to userChrome.css's.
+   * These documents cannot see userChrome.css, so the pref has to be read
+   * again here. -moz-pref is chrome-only syntax allowed by the sheet's USER
+   * origin rather than by the document's, which is why it can be used on
+   * content pages at all -- the same distinction that decides which sheet
+   * reaches these pages in the first place. */
+  @media -moz-pref("extensions.fluent-transparency.light") {
+    :root {
+      color-scheme: light !important;
+    }
   }
 
   /* --- 2. messenger's --layout-* ladder ---

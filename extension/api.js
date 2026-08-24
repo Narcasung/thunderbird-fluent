@@ -163,6 +163,54 @@ const PREF_DEPLOYED_VERSION = PREF_BRANCH + "deployedVersion";
 const PREF_DEPLOYED_FILES = PREF_BRANCH + "deployedFiles";
 const PREF_OWNED_PREFS = PREF_BRANCH + "ownedPrefs";
 
+/* THE TWO SETTINGS, and the only two. They are prefs rather than
+ * browser.storage because both have to be readable outside JavaScript: `light`
+ * is read by the stylesheets themselves through @media -moz-pref (the >>> THE
+ * SWITCH <<< blocks in userChrome.css and userContent.css), and both are
+ * reachable in about:config for anyone who would rather not open a UI.
+ *
+ * `mica` holds INTENT, not state; widget.windows.mica is what Gecko reads.
+ * Keeping the two apart is what stops a redeploy from undoing the setting: a
+ * version bump re-applies the theme prefs, and if the list held a hardcoded
+ * true it would turn Mica back on under a user who had switched it off. */
+const PREF_LIGHT = PREF_BRANCH + "light";
+const PREF_MICA = PREF_BRANCH + "mica";
+const PREF_WIDGET_MICA = "widget.windows.mica";
+
+/* WHY THE LIGHT SWITCH ALSO SWITCHES THUNDERBIRD'S OWN THEME
+ * color-scheme moves every light-dark() pair this theme writes, and moves
+ * nothing that Thunderbird paints from its built-in theme. Those colours
+ * arrive as --lwt-* custom properties injected on the chrome root by
+ * LightweightThemeConsumer.sys.mjs, from the theme add-on that is currently
+ * enabled -- no media query and no cascade to override. Measured: with the
+ * Dark theme still selected, light mode left the tab strip, the toolbars, the
+ * menupopups, the calendar views and the chat tab dark against a light window.
+ *
+ * So the setting changes both. The theme the user had is recorded the first
+ * time this runs, and put back on uninstall (uninstallWatcher below), because
+ * this is a visible Thunderbird setting the add-on did not own. */
+const THEME_LIGHT = "thunderbird-compact-light@mozilla.org";
+const THEME_DARK = "thunderbird-compact-dark@mozilla.org";
+const PREF_PREVIOUS_THEME = PREF_BRANCH + "previousTheme";
+
+async function enableTheme(id) {
+  const theme = await AddonManager.getAddonByID(id);
+  if (!theme) {
+    console.error(`fluent-transparency: no built-in theme ${id}`);
+    return;
+  }
+  await theme.enable();
+}
+
+async function applyBuiltInTheme(light) {
+  if (!Services.prefs.prefHasUserValue(PREF_PREVIOUS_THEME)) {
+    const themes = await AddonManager.getAddonsByTypes(["theme"]);
+    const active = themes.find(theme => theme.isActive);
+    Services.prefs.setCharPref(PREF_PREVIOUS_THEME, active ? active.id : "");
+  }
+  await enableTheme(light ? THEME_LIGHT : THEME_DARK);
+}
+
 /* deployedFiles and ownedPrefs are comma-joined lists. */
 function readList(name) {
   return Services.prefs.getCharPref(name, "").split(",").filter(Boolean);
@@ -183,11 +231,13 @@ function readList(name) {
  *
  * toplevel-backdrop is DWM_SYSTEMBACKDROP_TYPE: 0 auto, 1 none, 2 Mica,
  * 3 Acrylic, 4 Tabbed. */
-const THEME_PREFS = [
-  ["toolkit.legacyUserProfileCustomizations.stylesheets", true],
-  ["widget.windows.mica", true],
-  ["widget.windows.mica.toplevel-backdrop", 2],
-];
+function themePrefs() {
+  return [
+    ["toolkit.legacyUserProfileCustomizations.stylesheets", true],
+    [PREF_WIDGET_MICA, Services.prefs.getBoolPref(PREF_MICA, true)],
+    ["widget.windows.mica.toplevel-backdrop", 2],
+  ];
+}
 
 /* Each one in its own try, because a single bad pref must not take the deploy
  * with it. It did once, and it was the type mismatch on mica.popups described
@@ -286,10 +336,21 @@ async function deployStylesheets(extension) {
    * values already in prefs.js, so prefHasUserValue says "not ours" for every
    * one of them. Carrying the previous list forward is what stops a bump from
    * quietly disowning the prefs this add-on set on first install. */
+  /* Written out rather than left to default, so both settings exist in
+   * about:config the moment the theme does. The stylesheets read `light`
+   * through @media -moz-pref, which treats a missing pref as false -- the same
+   * answer, but only one of the two is visible to someone looking for it. */
+  if (!Services.prefs.prefHasUserValue(PREF_LIGHT)) {
+    Services.prefs.setBoolPref(PREF_LIGHT, false);
+  }
+  if (!Services.prefs.prefHasUserValue(PREF_MICA)) {
+    Services.prefs.setBoolPref(PREF_MICA, true);
+  }
+
   const ownedBefore = new Set(readList(PREF_OWNED_PREFS));
-  const owned = THEME_PREFS.filter(
-    entry => setPref(entry) || ownedBefore.has(entry[0])
-  ).map(([name]) => name);
+  const owned = themePrefs()
+    .filter(entry => setPref(entry) || ownedBefore.has(entry[0]))
+    .map(([name]) => name);
 
   /* Written last, and only after every file landed: a half-finished deploy
    * that recorded itself as complete would never retry. */
@@ -335,6 +396,9 @@ async function removeStylesheets(forGood) {
   if (forGood) {
     readList(PREF_OWNED_PREFS).forEach(clearPref);
     clearPref(PREF_OWNED_PREFS);
+    clearPref(PREF_LIGHT);
+    clearPref(PREF_MICA);
+    clearPref(PREF_PREVIOUS_THEME);
   }
 
   clearPref(PREF_DEPLOYED_FILES);
@@ -363,8 +427,21 @@ const uninstallWatcher = {
   uninstalling: false,
 
   onUninstalling(addon) {
-    if (addon.id === this.addonId) {
-      this.uninstalling = true;
+    if (addon.id !== this.addonId) {
+      return;
+    }
+    this.uninstalling = true;
+
+    /* Put the user's theme back, and do it HERE rather than in the cleanup
+     * that onShutdown runs. Enabling an add-on is AddonManager work, and by
+     * the time onShutdown is reached this add-on is already being torn down
+     * inside XPIInstall's uninstall path. This notification arrives before any
+     * of that, with the session fully alive. */
+    const previous = Services.prefs.getCharPref(PREF_PREVIOUS_THEME, "");
+    if (previous) {
+      enableTheme(previous).catch(error => {
+        console.error("fluent-transparency: theme restore failed: " + error);
+      });
     }
   },
 };
@@ -512,7 +589,56 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
     });
   }
 
+  /* What options.html talks to. An addon_parent experiment is reachable from
+   * the add-on's own extension pages as browser.fluentTransparency.*, so the
+   * options page needs no background script and no messaging -- it calls
+   * straight into this.
+   *
+   * THIS NEEDS "paths" IN THE MANIFEST and is silent without it. `events` and
+   * `paths` feed two different registries: events gets the module loaded at
+   * startup (Extension.sys.mjs:2128 moduleData, ExtensionCommon:1545), paths
+   * is what findAPIPath walks to decide which module owns
+   * fluentTransparency.getSettings (ExtensionCommon:1322-1335, and the
+   * registration at :1565 is a plain `details.paths || []`). Declaring only
+   * events gives an add-on that starts up correctly and answers no calls at
+   * all: the path resolves to undefined and the child sees "fun is not a
+   * function" from ExtensionParent.sys.mjs:1317, with nothing naming the
+   * manifest. */
   getAPI() {
-    return { fluentTransparency: {} };
+    return {
+      fluentTransparency: {
+        async getSettings() {
+          return {
+            light: Services.prefs.getBoolPref(PREF_LIGHT, false),
+            mica: Services.prefs.getBoolPref(PREF_MICA, true),
+          };
+        },
+
+        /* Applies live. The sheets read this pref through @media -moz-pref and
+         * Gecko re-evaluates pref media queries when the pref changes; the
+         * built-in theme swap is live too. */
+        async setLight(enabled) {
+          Services.prefs.setBoolPref(PREF_LIGHT, enabled);
+          Services.prefs.savePrefFile(null);
+          await applyBuiltInTheme(enabled);
+        },
+
+        /* Applies live, which was not the expectation: widget.windows.mica is
+         * a StaticPref and the backdrop is a window-frame property, so this
+         * was written believing it needed a restart and the options page said
+         * so. Measured otherwise -- the window changes on the toggle. The
+         * notice came back out.
+         *
+         * Both prefs are written -- the intent one so a redeploy keeps this
+         * answer, the widget one so the next launch acts on it. Ownership is
+         * deliberately not touched: it records who set the pref first, and
+         * that does not change because the value did. */
+        async setMica(enabled) {
+          Services.prefs.setBoolPref(PREF_MICA, enabled);
+          Services.prefs.setBoolPref(PREF_WIDGET_MICA, enabled);
+          Services.prefs.savePrefFile(null);
+        },
+      },
+    };
   }
 };

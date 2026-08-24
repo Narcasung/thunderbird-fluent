@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Fluent 2 Transparency Bridge",
   "description": "The Fluent 2 theme for Thunderbird: ships its stylesheets and lets its content tabs sit on the Mica backdrop.",
-  "version": "2.0.6",
+  "version": "2.2.0",
   "author": "thunderbird-fluent",
   "browser_specific_settings": {
     "gecko": {
@@ -10,11 +10,16 @@
       "strict_min_version": "128.0"
     }
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
   "experiment_apis": {
     "fluentTransparency": {
       "schema": "schema.json",
       "parent": {
         "scopes": ["addon_parent"],
+        "paths": [["fluentTransparency"]],
         "script": "api.js",
         "events": ["startup"]
       }

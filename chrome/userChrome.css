@@ -30,9 +30,26 @@
 
 /* >>> THE SWITCH <<<  light | dark
  * Drives every light-dark() pair in fluent-tokens.css, and tells Gecko how to
- * render native widgets (scrollbars, checkboxes) so they cannot desync. */
+ * render native widgets (scrollbars, checkboxes) so they cannot desync.
+ *
+ * Dark is the value in the sheet and light is an override, so a profile with
+ * no pref set renders the theme this was designed in. The add-on's options
+ * page writes the pref; nothing here needs editing to change mode, which is
+ * the whole point -- an edit made in the profile survives only until the next
+ * version bump redeploys the folder over it.
+ *
+ * -moz-pref is a chrome-only media feature, and a user sheet is allowed to use
+ * it: stock reads widget.windows.mica.toplevel-backdrop the same way in
+ * messenger.css:52. Gecko re-evaluates pref media queries when the pref
+ * changes, so this applies live. */
 :root {
   color-scheme: dark !important;
+}
+
+@media -moz-pref("extensions.fluent-transparency.light") {
+  :root {
+    color-scheme: light !important;
+  }
 }
 
 /* Load canary. If the theme is active, the Developer Toolbox inspector will
