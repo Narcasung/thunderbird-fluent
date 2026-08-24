@@ -414,6 +414,19 @@
     background-color: var(--fluent-base) !important;
     padding: var(--fluent-gutter) !important;
     gap: var(--fluent-gutter) !important;
+
+    /* AND THE ROW HAS TO BE PINNED, or both cards lose their bottom corners.
+     * Upstream declares columns only, so the single row is implicit and auto,
+     * and an auto track is sized to its items max-content. #accountTreeBox is
+     * a flex column: overflow-y on #accounttree zeroes its *min*-content but
+     * leaves its max-content alone, so the track asks for the height of the
+     * entire account tree and grows past body content box. Both cards stretch
+     * to that overflowing track, and AccountManager.xhtml:16 carries
+     * scrolling=false on <html>, so the excess is silently clipped instead of
+     * scrolled -- taking the bottom corners and the bottom gutter with it.
+     * minmax(0, 1fr) sizes the row from the container rather than from the
+     * content, and the 0 minimum keeps the automatic minimum size out of it. */
+    grid-template-rows: minmax(0, 1fr) !important;
   }
 
   /* MICA. Same gate and same reasoning as Address Book -- see the note on
