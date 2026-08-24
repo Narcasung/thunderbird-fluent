@@ -98,7 +98,10 @@
    * across the splitter, all of which are 8px; at 4px the folder rows read as
    * a different, tighter kind of object in the middle of them. --fluent-radius-
    * row still describes rows that sit INSIDE a card, where the smaller corner
-   * is right -- the address book's contact list is one. */
+   * is right; the address book used to be the example and no longer is. Its
+   * books pane took this rule wholesale, corners included, when its panes gave
+   * their cards up the same way these did -- see ADDRESS BOOK in
+   * userContent.css. */
   border-radius: var(--fluent-radius-card) !important;
   transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
@@ -146,11 +149,13 @@
  * beside it. The subtle fill is what marks selection here.
  *
  * The message cards have since got their bar back -- see THREAD PANE -- CARDS
- * VIEW -- but on different terms, and the difference is why this pane was not
- * changed with it. A card is tinted with accent and can carry a bar painted
- * over that tint as a second background layer, with nothing carved out. A
- * folder row is a neutral fill with no second layer to spare and no accent to
- * sit the bar against, so the notch would come straight back.
+ * VIEW -- and so have the address book's contact cards, on the same terms.
+ * That is the difference, and it is why this pane was not changed with them. A
+ * card is tinted with accent and can carry a bar painted over that tint as a
+ * second background layer, with nothing carved out. A folder row is a neutral
+ * fill with no second layer to spare and no accent to sit the bar against, so
+ * the notch would come straight back. The address book's BOOK rows are that
+ * same kind of row and went the same way -- no pill there either.
  *
  * `position: relative` stays on the container above. It is what an indicator
  * would need if one ever came back, and it costs nothing.
