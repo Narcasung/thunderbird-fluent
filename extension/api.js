@@ -65,6 +65,10 @@ var { NetUtil } = ChromeUtils.importESModule(
   "resource://gre/modules/NetUtil.sys.mjs"
 );
 
+var { AddonManager } = ChromeUtils.importESModule(
+  "resource://gre/modules/AddonManager.sys.mjs"
+);
+
 /* The content tabs the theme paints. Matched with startsWith, because these
  * carry fragments and queries in normal use (about:preferences#general,
  * about:addons?view=...).
@@ -139,39 +143,66 @@ const XUL_NS =
  * because prefs.js is rewritten on quit. Setting them on deploy instead puts
  * them in prefs.js once and leaves them alone afterwards, so a user who turns
  * the backdrop off in about:config keeps it off. The theme still renders
- * without the three Mica prefs; every transparent surface just degrades to its
- * opaque fallback. The fourth is not optional -- without it Gecko never reads
+ * without the two Mica prefs; every transparent surface just degrades to its
+ * opaque fallback. The third is not optional -- without it Gecko never reads
  * the profile's chrome/ folder at all.
+ *
+ * WHY THE DEPLOY RECORDS WHICH PREFS WERE ITS OWN
+ * Uninstalling reverts them (see the uninstall watcher below), and reverting a
+ * pref this add-on did not set would be a bug rather than tidiness. The Mica
+ * pair is plausibly already set by the user for their own reasons, and
+ * toolkit.legacyUserProfileCustomizations.stylesheets is the dangerous one:
+ * anyone with their own userChrome.css turned it on first, and clearing it
+ * would silently switch off THEIR sheets on the next launch. So the deploy
+ * checks prefHasUserValue before each write and remembers only the prefs that
+ * had no user value, and uninstall clears only that list.
  * ------------------------------------------------------------------------- */
 
 const PREF_BRANCH = "extensions.fluent-transparency.";
 const PREF_DEPLOYED_VERSION = PREF_BRANCH + "deployedVersion";
 const PREF_DEPLOYED_FILES = PREF_BRANCH + "deployedFiles";
+const PREF_OWNED_PREFS = PREF_BRANCH + "ownedPrefs";
 
-/* widget.windows.mica.popups is deliberately FALSE. With it on, toolkit hands
- * menupopups to the native path (menu.css:48-55, "The mica backdrop takes care
- * of our shadow, border, and border-radius") and DWM paints a 1px rim around
- * the popup window. That rim is outside the CSS box: --panel-border-color is
- * already transparent and cannot reach it, and neither can appearance: none.
- * Translucent popups and no popup border are not both available -- this theme
- * takes no border.
+/* deployedFiles and ownedPrefs are comma-joined lists. */
+function readList(name) {
+  return Services.prefs.getCharPref(name, "").split(",").filter(Boolean);
+}
+
+/* WIDGET.WINDOWS.MICA.POPUPS IS NOT HERE, and adding it back needs evidence
+ * this list never had. It was carried from the user.js days as the boolean
+ * `false`, to stop toolkit handing popups to the native path (menu.css:48-55,
+ * "The mica backdrop takes care of our shadow, border, and border-radius")
+ * where DWM paints a 1px rim outside the CSS box that --panel-border-color
+ * cannot reach.
+ *
+ * The pref is an int, default 2. So setBoolPref threw NS_ERROR_UNEXPECTED on
+ * every deploy this project ever ran, and the value never once landed: the rim
+ * the entry existed to prevent was never observed, because the configuration
+ * that was supposed to produce it was never applied. Measured at 0 and at 2
+ * afterwards -- popups render identically. Nothing to fix, so nothing to set.
  *
  * toplevel-backdrop is DWM_SYSTEMBACKDROP_TYPE: 0 auto, 1 none, 2 Mica,
  * 3 Acrylic, 4 Tabbed. */
 const THEME_PREFS = [
   ["toolkit.legacyUserProfileCustomizations.stylesheets", true],
   ["widget.windows.mica", true],
-  ["widget.windows.mica.popups", false],
   ["widget.windows.mica.toplevel-backdrop", 2],
 ];
 
 /* Each one in its own try, because a single bad pref must not take the deploy
- * with it. It did once: an exception partway through this list left the CSS
- * written, widget.windows.mica set, toplevel-backdrop unset and the version
- * gate unrecorded -- so the theme came back after a re-enable with a flat
- * background instead of the backdrop, and the next startup redeployed. Which
- * pref threw did not matter; not being able to skip one did. */
+ * with it. It did once, and it was the type mismatch on mica.popups described
+ * above: the throw left the CSS written, widget.windows.mica set,
+ * toplevel-backdrop unset and the version gate unrecorded -- so the theme came
+ * back after a re-enable with a flat background instead of the backdrop, and
+ * the next startup redeployed. That entry is gone now, but the guard stays:
+ * the failure it turns into a logged line is otherwise a profile configured
+ * half way with nothing said about it.
+ *
+ * The return value is ownership, not success: true only if the pref had no
+ * user value before this wrote one, so uninstall knows what is safe to revert.
+ * A pref that threw is not ours either way. */
 function setPref([name, value]) {
+  const ours = !Services.prefs.prefHasUserValue(name);
   try {
     if (typeof value === "boolean") {
       Services.prefs.setBoolPref(name, value);
@@ -180,6 +211,16 @@ function setPref([name, value]) {
     }
   } catch (error) {
     console.error(`fluent-transparency: could not set ${name}: ${error}`);
+    return false;
+  }
+  return ours;
+}
+
+function clearPref(name) {
+  try {
+    Services.prefs.clearUserPref(name);
+  } catch (error) {
+    console.error(`fluent-transparency: could not clear ${name}: ${error}`);
   }
 }
 
@@ -241,10 +282,18 @@ async function deployStylesheets(extension) {
     await IOUtils.writeUTF8(PathUtils.join(target, name), css);
   }
 
-  THEME_PREFS.forEach(setPref);
+  /* A redeploy (version bump, or re-enable after a disable) finds its own
+   * values already in prefs.js, so prefHasUserValue says "not ours" for every
+   * one of them. Carrying the previous list forward is what stops a bump from
+   * quietly disowning the prefs this add-on set on first install. */
+  const ownedBefore = new Set(readList(PREF_OWNED_PREFS));
+  const owned = THEME_PREFS.filter(
+    entry => setPref(entry) || ownedBefore.has(entry[0])
+  ).map(([name]) => name);
 
   /* Written last, and only after every file landed: a half-finished deploy
    * that recorded itself as complete would never retry. */
+  Services.prefs.setCharPref(PREF_OWNED_PREFS, owned.join(","));
   Services.prefs.setCharPref(PREF_DEPLOYED_FILES, names.join(","));
   Services.prefs.setCharPref(PREF_DEPLOYED_VERSION, version);
 
@@ -260,39 +309,65 @@ async function deployStylesheets(extension) {
  * for why it cannot be only one of the two. The names come from a pref rather
  * than from chrome-files.json because on the uninstall path the archive is
  * already gone by the time this runs. */
-async function removeStylesheets() {
-  const names = Services.prefs.getCharPref(PREF_DEPLOYED_FILES, "");
+async function removeStylesheets(forGood) {
   const target = PathUtils.join(PathUtils.profileDir, "chrome");
 
-  for (const name of names.split(",").filter(Boolean)) {
+  for (const name of readList(PREF_DEPLOYED_FILES)) {
     await IOUtils.remove(PathUtils.join(target, name), { ignoreAbsent: true });
   }
 
   /* The folder itself stays. It is the user's, it may hold their own sheets,
    * and an empty chrome/ costs nothing.
    *
-   * THE FOUR THEME PREFS STAY TOO, and only the deploy bookkeeping is cleared.
-   * Clearing them was tried and made the disable/enable round trip worse than
-   * the problem it solved:
+   * THE THEME PREFS ONLY GO ON THE UNINSTALL PATH. On a disable they stay,
+   * because clearing them there was tried and made the round trip worse than
+   * the problem it solved: widget.windows.mica needs a RESTART to take effect,
+   * so clearing it on disable and setting it again on enable leaves the
+   * backdrop gone for the whole session after a re-enable and back only on the
+   * launch after. Removing the CSS is what makes a disable visible; the
+   * backdrop pref does not need to take part, and all three are inert with no
+   * sheets to read anyway.
    *
-   *   - widget.windows.mica needs a RESTART to take effect. Clearing it on
-   *     disable and setting it again on enable means the backdrop is gone for
-   *     the whole session after a re-enable, and comes back only on the launch
-   *     after. Removing the CSS is what makes disable visible; the backdrop
-   *     pref does not need to take part.
-   *   - toolkit.legacyUserProfileCustomizations.stylesheets may not be ours to
-   *     clear. Anyone who wrote their own userChrome.css set it first, and
-   *     turning it off would silently break their sheets, not just ours.
-   *
-   * All four are inert once the CSS is gone: an empty chrome/ folder is
-   * nothing to read, and a backdrop with no theme on it is a supported Gecko
-   * configuration rather than a broken state. It is still visible, though, so
-   * README's uninstall section lists all four for anyone who wants the stock
-   * window back -- keep the two lists in step. */
-  Services.prefs.clearUserPref(PREF_DEPLOYED_FILES);
-  Services.prefs.clearUserPref(PREF_DEPLOYED_VERSION);
+   * On an uninstall there is no next session to protect, and leaving three
+   * about:config entries behind for the user to find and revert by hand is not
+   * a clean uninstall. Only the ones this add-on actually set are cleared --
+   * see WHY THE DEPLOY RECORDS WHICH PREFS WERE ITS OWN above. */
+  if (forGood) {
+    readList(PREF_OWNED_PREFS).forEach(clearPref);
+    clearPref(PREF_OWNED_PREFS);
+  }
+
+  clearPref(PREF_DEPLOYED_FILES);
+  clearPref(PREF_DEPLOYED_VERSION);
   Services.prefs.savePrefFile(null);
 }
+
+/* Tells an uninstall apart from a disable, which onShutdown cannot do on its
+ * own -- both reach it with isAppShutdown false.
+ *
+ * The order this depends on is in XPIInstall.sys.mjs:5066-5130
+ * (XPIInstall.uninstallAddon): the onUninstalling listeners are called BEFORE
+ * bootstrap.shutdown(ADDON_UNINSTALL), so this fires while the add-on is still
+ * running and the flag is already set by the time onShutdown reads it. That is
+ * the whole reason this works where `static onUninstall` did not -- see the
+ * note in onShutdown for why that hook is never dispatched at all.
+ *
+ * Undo needs no handling. about:addons uninstalls with undo (addon.uninstall
+ * (true), addon-card.mjs:396), and cancelling runs bootstrap.startup
+ * (XPIInstall.sys.mjs:5168) -- so onStartup runs again, finds the version gate
+ * cleared, and redeploys both the sheets and the prefs. The flag is reset
+ * there rather than here because that restart is the only thing that can
+ * follow it. */
+const uninstallWatcher = {
+  addonId: null,
+  uninstalling: false,
+
+  onUninstalling(addon) {
+    if (addon.id === this.addonId) {
+      this.uninstalling = true;
+    }
+  },
+};
 
 function isTargetPage(uri) {
   return TRANSPARENT_PAGES.some(page => uri.startsWith(page));
@@ -375,6 +450,11 @@ function sweepOpenTabs() {
 this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
   onStartup() {
     Services.obs.addObserver(documentObserver, "document-element-inserted");
+
+    uninstallWatcher.addonId = this.extension.id;
+    uninstallWatcher.uninstalling = false;
+    AddonManager.addAddonListener(uninstallWatcher);
+
     sweepOpenTabs();
 
     /* Not awaited, and it does not need to be: nothing else here reads the
@@ -388,6 +468,7 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
 
   onShutdown(isAppShutdown) {
     Services.obs.removeObserver(documentObserver, "document-element-inserted");
+    AddonManager.removeAddonListener(uninstallWatcher);
     if (isAppShutdown) {
       return;
     }
@@ -414,17 +495,19 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
      * onShutdown has no such problem: it is an instance method on a live
      * object, and the un-stamping above already depends on it working.
      *
-     * The cost is that this cannot tell a disable from an uninstall -- both
+     * What it cannot do on its own is tell a disable from an uninstall -- both
      * arrive here as isAppShutdown false. So disabling the add-on also removes
-     * the theme, which is coherent rather than merely tolerable: the add-on IS
+     * the sheets, which is coherent rather than merely tolerable: the add-on IS
      * the theme now. The round trip closes because removeStylesheets clears
-     * the version gate, so re-enabling redeploys on the next startup.
+     * the version gate, so re-enabling redeploys on the next startup. The one
+     * thing that does need the distinction is the prefs, and uninstallWatcher
+     * above supplies it.
      *
      * Not awaited -- the caller ignores the return value
      * (ExtensionCommon.sys.mjs:366-371) -- and it does not need to be. The
      * session keeps running, nothing else touches these files, and Gecko only
      * reads them at startup, so the removal lands long before it matters. */
-    removeStylesheets().catch(error => {
+    removeStylesheets(uninstallWatcher.uninstalling).catch(error => {
       console.error("fluent-transparency: stylesheet cleanup failed: " + error);
     });
   }
