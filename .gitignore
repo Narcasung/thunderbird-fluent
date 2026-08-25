@@ -12,3 +12,6 @@ shots/
 # Built add-on. tools/pack-extension.ps1 regenerates it from extension/,
 # which is the source of truth; a zip in history would only ever go stale.
 dist/
+
+# The README screenshots are deliberate and reviewed; capture.ps1 output is not.
+!screenshots/*.png
