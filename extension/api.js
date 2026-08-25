@@ -93,6 +93,17 @@ var { AddonManager } = ChromeUtils.importESModule(
  * so they are not root content documents, so no backstop is composed for them
  * and there is nothing for this to switch off. They stay opaque, which is what
  * a dialog over a page should be.
+ *
+ * Deliberately NOT here either, and for a different reason: the Thundermail
+ * sign-in page. It is a remote document (auth.tb.pro, reached from the
+ * built-in thundermail add-on), so it runs out of process and the
+ * document-element-inserted observer below -- which is a PARENT-process
+ * observer -- never sees it. Listing it would change nothing. Reaching it
+ * needs a different hook, a web progress listener stamping by
+ * browser.currentURI the way sweepOpenTabs already does, and whether Gecko
+ * then honours `transparent` across a process boundary is unmeasured. That is
+ * its own pass; the page's CSS in userContent.css is written to look right
+ * without it.
  */
 const TRANSPARENT_PAGES = [
   "about:addressbook",
@@ -101,6 +112,7 @@ const TRANSPARENT_PAGES = [
   "about:config",
   "about:addons",
   "about:import",
+  "about:downloads",
 ];
 
 const MARKER = "thunderbird-fluent";

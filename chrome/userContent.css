@@ -2,9 +2,16 @@
  * Fluent 2 for Thunderbird -- CONTENT TABS
  *
  * Account Settings, Address Book, Settings and its sub-dialogs, Advanced
- * Preferences and the Add-ons Manager. All of them are content-type docshells,
- * so userChrome.css cannot reach them and none of the theme's chrome modules
- * apply here. This file is the whole theme for these pages.
+ * Preferences, the Add-ons Manager, Import and Saved Files. All of them are
+ * content-type docshells, so userChrome.css cannot reach them and none of the
+ * theme's chrome modules apply here. This file is the whole theme for these
+ * pages.
+ *
+ * One block at the end of the file is not one of Thunderbird's pages at all:
+ * the Thundermail sign-in page, served from auth.tb.pro. It is here because
+ * this is the sheet that reaches content, and it is scoped and reasoned about
+ * separately -- see its own header. It is deliberately NOT enrolled in the
+ * shared block below.
  *
  * WHY THIS FILE EXISTS SEPARATELY FROM THE CHROME MODULES
  * Custom properties do not cross a document boundary. Every one of these pages
@@ -72,6 +79,7 @@
                url-prefix("about:config"),
                url-prefix("about:addons"),
                url-prefix("about:import"),
+               url-prefix("about:downloads"),
                url-prefix("about:preferences"),
                url-prefix("chrome://messenger/content/preferences/"),
                url-prefix("chrome://calendar/content/preferences/"),
@@ -1940,6 +1948,205 @@
 
 
 /* ============================================================================
+ * SAVED FILES -- about:downloads
+ *
+ * The attachment download manager, opened from Tools > Saved Files
+ * (mailCore.js:651, via openContentTab). A content docshell, so this file is
+ * what reaches it, and the about: URI is the scope that fires -- the chrome
+ * path it is served from does not, for the reason the REACHABILITY note at the
+ * top of this file gives.
+ *
+ * The page loads global.css, messenger.css, icons.css AND
+ * in-content/common.css (aboutDownloads.xhtml:24-27), so it is enrolled in the
+ * shared block above and arrives with the whole Acorn layer already mapped:
+ * text, the Clear List button's fill, the row buttons' hover. What is left is
+ * the shape. Stock is a toolbar strip over a list, both edge to edge on one
+ * flat fill; this theme's content tabs are cards on a base.
+ *
+ * TWO CARDS, NOT ONE
+ * body is a XUL box column of exactly two children -- #downloadTopBox and
+ * #downloadBottomBox -- and the list inside the second scrolls itself. That is
+ * the 3-pane window's thread header over its list, so it takes that window's
+ * treatment: fluent-layout.css:349 for the strip, a card for the pane below.
+ * Making body the card instead, the way about:import and about:config do,
+ * would have welded a toolbar into the top edge of a card and put a scroll
+ * container inside it.
+ *
+ * NO OVERFLOW SWAP
+ * Every other page in this file needed one to stop the viewport scrolling the
+ * card away. Not here: aboutDownloads.xhtml:14 carries scrolling="false" on
+ * <html>, so the viewport never scrolls and the richlistbox is the only
+ * scroller on the page.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:downloads") {
+
+  /* The page base. One gutter of it shows as the ring around the two cards.
+   * box-sizing so that gutter comes out of the viewport rather than pushing
+   * past it. */
+  :root {
+    padding: var(--fluent-gutter) !important;
+    box-sizing: border-box !important;
+    background-color: var(--fluent-base) !important;
+  }
+
+  /* body carries no surface of its own. Stock gives it --color-surface-base
+   * (aboutDownloads.css:8), which section 4 maps to --fluent-card -- card
+   * colour spread across the whole page, underneath the cards. */
+  body {
+    background: transparent !important;
+    color: var(--fluent-text-primary) !important;
+  }
+
+  /* MICA. Live rather than inert: "about:downloads" is in the add-on's
+   * TRANSPARENT_PAGES, so the marker does land here. The chrome half and the
+   * whole reasoning are in fluent-layout.css's MICA block.
+   *
+   * No transparent background-image beside it, unlike about:config and
+   * about:import. Those two make BODY the card, so the canvas would be taken
+   * from body and paint the card's fill across the gutter ring; here neither
+   * :root nor body is a card, so clearing the root's colour clears the canvas
+   * with it and there is nothing left to propagate. */
+  @media (-moz-windows-mica) {
+    :root[thunderbird-fluent] {
+      background-color: transparent !important;
+    }
+  }
+
+  /* The command strip -- Clear List, then the search field at the far end.
+   * Same card, same gutter below it, as #threadPaneHeaderBar
+   * (fluent-layout.css:349): one contiguous strip titling the list under it.
+   *
+   * `border` rather than `border: none`. Stock draws a border-block-end in
+   * --chrome-content-separator-color (aboutDownloads.css:14) -- a visible rule
+   * running between what are now two cards. Restating all four sides in the
+   * transparent card stroke replaces it rather than leaving it to be found
+   * again later.
+   *
+   * Padding is the theme's own rather than stock's 10px 18px: the gutter on
+   * both axes, which clears the 8px corner inline and gives the 32px controls
+   * inside it their own breathing room in block. */
+  #downloadTopBox {
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+    margin-block-end: var(--fluent-gutter) !important;
+    padding: var(--fluent-gutter) !important;
+  }
+
+  /* The list card. overflow: clip because the rows run the full width of it
+   * and a square-cornered fill inside a rounded one is the defect this theme
+   * keeps finding -- clip rather than hidden so no scroll container is created
+   * here and the richlistbox stays the only scroller (same shape and the same
+   * reason as fluent-layout.css:553). */
+  #downloadBottomBox {
+    background-color: var(--fluent-card) !important;
+    border: 1px solid var(--fluent-card-stroke) !important;
+    border-radius: var(--fluent-radius-card) !important;
+    box-shadow: var(--fluent-shadow-card) !important;
+    padding: var(--fluent-gutter) !important;
+    overflow: clip !important;
+  }
+
+  /* The list is not a second surface. Every other richlistbox in this file
+   * takes a tertiary fill inside a card, because there it is a block of
+   * content sitting on a pane; here the list IS the card's content, and a fill
+   * of its own would read as a box in a box. */
+  #msgDownloadsRichListBox {
+    background-color: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Rows. Stock rules each one off with 1px of hsla(0, 0%, 50%, .3)
+   * (aboutDownloads.css:33-35) -- one mid-grey at the same weight in both
+   * schemes -- and rounds it 3px. The theme's separator token replaces the
+   * line and the radius joins the row ladder.
+   *
+   * The hover fill is new. Stock has none on this list at all, and every other
+   * row surface in the theme answers the pointer. */
+  #msgDownloadsRichListBox > .download {
+    border-block-end: 1px solid var(--fluent-divider) !important;
+    border-radius: var(--fluent-radius-row) !important;
+  }
+
+  #msgDownloadsRichListBox > .download:hover {
+    background-color: var(--fluent-subtle-hover) !important;
+  }
+
+  /* Selection. Stock gates its own selected colours on :root:not([lwt-tree])
+   * (aboutDownloads.css:41-45), and this theme keeps a built-in Thunderbird
+   * theme enabled at all times, so which branch fires depends on whether that
+   * theme carries tree colours. It does not need settling: this is a USER
+   * sheet and a user !important outranks an author !important, so this rule
+   * wins over either branch.
+   *
+   * --button-text-color-hover comes along for the reason stock sets it here
+   * too -- the row's own button sits inside the accent fill, and its hover
+   * text has to stay legible against that rather than against the card. */
+  #msgDownloadsRichListBox > .download[selected] {
+    background-color: var(--fluent-accent) !important;
+    color: var(--fluent-accent-text) !important;
+    --button-text-color-hover: var(--fluent-accent-text) !important;
+  }
+
+  /* Size and date. Stock dims both with opacity .7 over whatever colour the
+   * row has (aboutDownloads.css:76-79), which on a selected row dims the
+   * accent text as well and leaves two greys where the theme has one. The
+   * token is the theme's own secondary; on the accent fill it steps back to
+   * the accent's text colour so the row reads as one block again. */
+  .size,
+  .startDate {
+    color: var(--fluent-text-secondary) !important;
+    opacity: 1 !important;
+  }
+
+  .download[selected] .size,
+  .download[selected] .startDate {
+    color: var(--fluent-accent-text) !important;
+  }
+
+  /* Clear List. Its fill and text arrive from the shared block's --button-*
+   * mapping; aboutDownloads.css:57-62 sets the radius on the element itself,
+   * which the mapping cannot reach, so it is restated. */
+  #clearDownloads {
+    border-radius: var(--fluent-radius-control) !important;
+    min-block-size: var(--fluent-control-height) !important;
+  }
+
+  /* The search field -- the same tertiary fill, control radius and transparent
+   * stroke every other search box in this file takes. Stock's 22em width
+   * (aboutDownloads.css:65) is deliberately left alone: the strip is a flex
+   * row with a spacer between the two controls, so that width is the only
+   * thing holding the field off the trailing edge. */
+  #searchBox {
+    background-color: var(--fluent-solid-tertiary) !important;
+    border: 1px solid var(--fluent-control-stroke) !important;
+    border-radius: var(--fluent-radius-control) !important;
+    color: var(--fluent-text-primary) !important;
+    min-block-size: var(--fluent-control-height) !important;
+  }
+
+  #searchBox:focus-visible {
+    outline: var(--focus-outline) !important;
+    outline-offset: var(--focus-outline-offset) !important;
+  }
+
+  /* The per-row Show/Open button. Its hover fill is already the theme's --
+   * stock reads --button-hover-background-color (aboutDownloads.css:110) and
+   * section 5 maps that -- but stock also rounds it to a circle, the one
+   * pill-shaped hover target in a window whose every other icon button is a
+   * rounded square. */
+  .downloadButton:hover > .button-box,
+  .downloadButton:hover:active > .button-box {
+    border-radius: var(--fluent-radius-control) !important;
+  }
+
+}
+
+/* ============================================================================
  * ADD-ONS MANAGER -- about:addons
  *
  * Also mostly done by the shared block. Measured on the same capture: canvas
@@ -2837,6 +3044,113 @@
   input:not([type="checkbox"], [type="radio"]):focus-visible {
     outline: var(--focus-outline) !important;
     outline-offset: var(--focus-outline-offset) !important;
+  }
+
+}
+
+
+/* ============================================================================
+ * THUNDERMAIL SIGN-IN -- https://auth.tb.pro/
+ *
+ * The first REMOTE document this theme touches. Everything else in this file
+ * is a page Thunderbird ships; this one is a Keycloak login served over the
+ * network, opened in a content tab by the built-in thundermail add-on
+ * (its background.mjs does tabs.create on <BASE_URL>/login, which redirects
+ * to the OIDC endpoint on auth.tb.pro).
+ *
+ * WHAT THIS BLOCK IS AND IS NOT
+ * The sign-in panel itself -- its fields, its buttons, its type -- is the
+ * site's, and stays the site's. The only thing wrong with this tab was the
+ * surround: a full-bleed navy field, edge to edge, on a tab that every other
+ * tab in the window sits inset from. So this block does one thing, which is
+ * to stop that field painting and put the theme's page base there instead.
+ * The gutter, the radius and the shadow are NOT here -- they are on the stack
+ * that wraps the browser, in fluent-layout.css, because a browser does not
+ * clip its own subdocument to its own border-radius.
+ *
+ * NOT ENROLLED IN THE SHARED BLOCK, ON PURPOSE
+ * Adding this URL to the selector list at the top of the file would have been
+ * one line and would have brought the whole token layer with it. It would also
+ * have brought section 8, which sets font-family on body -- restyling the type
+ * of a third-party page that is not ours to restyle. The site's own vocabulary
+ * is entirely --colour-* (British spelling), --txt-* and --font-sans, so it
+ * collides with nothing this file maps; there is simply nothing to gain and a
+ * panel to lose.
+ *
+ * NO color-scheme DECLARATION, ON PURPOSE
+ * >>> THE SWITCH <<< appears twice in this theme and both copies are listed in
+ * this file's header. This block deliberately does not add a third. Gecko
+ * lets a document's own color-scheme feed back into prefers-color-scheme, and
+ * the site picks its light or dark palette from that -- so declaring one here
+ * would reach past the surround and flip the panel. The pref is read directly
+ * into the one token this block needs instead, which gets the same three
+ * outcomes with none of that reach.
+ *
+ * SELECTORS ARE STRUCTURAL, NEVER HASHED
+ * The page is a Vue build and every one of its own selectors carries a
+ * generated scope id (section[data-v-167dfe44]). Those rotate on the site's
+ * next deploy. #app is the mount point named in the served HTML and section is
+ * its one child; both survive a rebuild.
+ * ========================================================================== */
+
+@-moz-document url-prefix("https://auth.tb.pro/") {
+
+  /* The card fill, restated as a literal pair rather than through light-dark()
+   * -- light-dark() needs a color-scheme to resolve against, and this block
+   * does not declare one (see above). The values are fluent-tokens.css
+   * section 1's, the same two the shared block carries. Dark is the base value
+   * for the same reason it is the base value there. */
+  :root {
+    --fluent-card: #2B2B2B;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --fluent-card: #FFFFFF;
+    }
+  }
+
+  @media -moz-pref("extensions.thunderbird-fluent.colorScheme", "light") {
+    :root {
+      --fluent-card: #FFFFFF;
+    }
+  }
+
+  @media -moz-pref("extensions.thunderbird-fluent.colorScheme", "dark") {
+    :root {
+      --fluent-card: #2B2B2B;
+    }
+  }
+
+  /* The navy. It is painted by the page's outermost section -- measured off
+   * the site's own stylesheet, where that section takes --colour-ti-base,
+   * which is #1A202C in the palette it ships in light. html and body paint
+   * nothing of their own; they are cleared anyway so that nothing in the
+   * chain can put a second opaque sheet over the one below.
+   *
+   * The card rather than the base, which is the opposite of what this block
+   * said on its first pass. The argument then was that a tab is a page, so it
+   * should take --fluent-base like the inside of every other content tab. It
+   * was measured wrong: the gutter that fluent-layout.css:605 opens around
+   * this browser exposes the window veil at #23222B, and a base of #202020
+   * beside it is a seam nobody can see. The card step is what makes the
+   * gutter read as one. The chrome half takes the same token so the browser
+   * and its document never disagree at the edge.
+   *
+   * NOT transparent, which is the obvious thing to write and the wrong one:
+   * under a root content document Gecko composes an opaque backstop below the
+   * cascade, so clearing this would expose that rather than the theme. The
+   * whole mechanism, and the add-on that switches it off for the pages that
+   * can have it switched off, is written out in fluent-layout.css's MICA
+   * block. This page is not one of them -- it runs out of process, where the
+   * add-on's observer cannot see it (extension/api.js, TRANSPARENT_PAGES). */
+  html,
+  body {
+    background: transparent !important;
+  }
+
+  #app section {
+    background-color: var(--fluent-card) !important;
   }
 
 }

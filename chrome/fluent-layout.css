@@ -566,6 +566,76 @@ body#paneLayout {
 }
 
 /* ---------------------------------------------------------------------------
+ * WEB CONTENT TABS -- the Thundermail sign-in page, and anything else remote
+ *
+ * specialTabs.js:794 clones ONE template for every content tab, so Saved Files
+ * and the sign-in page arrive as the same boxes: a .contentTabInstance holding
+ * a .contentTabToolbox over a <stack> with the browser in it. What tells them
+ * apart is remoteness. The template sets maychangeremoteness (:815), and a tab
+ * that navigates to https flips out of process and the browser element carries
+ * a `remote` attribute; the about: pages, which are privileged and stay in
+ * process, do not.
+ *
+ * `[remote]:not([remote="false"])` rather than `[remote="true"]`, which is the
+ * obvious spelling and does not match: this is a BOOLEAN attribute and the
+ * inspector shows it bare, with no value at all. The :not() is there for the
+ * skipLoad path at specialTabs.js:832, which sets it through toggleAttribute
+ * and so can leave a literal "false" behind.
+ *
+ * The card is on a box above the browser, never on the browser, for the reason
+ * the MESSAGE PANE note at :501 gives -- a browser does not reliably clip its
+ * subdocument to its own border-radius, so a radius set there rounds nothing.
+ * On an ancestor with overflow: clip, the corners are cut by an element that
+ * does clip. The gutter is the same one the standalone message tab above
+ * takes, so switching between the two tabs does not move the card edge.
+ *
+ * The fill is the CARD, and the first pass had it wrong. The reasoning then
+ * was that this tab is a page rather than a pane, so it should take
+ * --fluent-base like the inside of every other content tab. What that missed
+ * is what the gutter exposes. Under Mica everything between here and the
+ * window veil is already transparent, so the ring is the veil itself --
+ * measured #23222B, against a base of #202020. Eight pixels of a colour three
+ * levels off the one beside it is not a gutter, it is a seam nobody can see;
+ * the card step is the one that reads. The document inside takes the same
+ * token (userContent.css's auth.tb.pro block) so the two agree edge to edge.
+ *
+ * THE TOOLBOX IS INSIDE THE CARD
+ * The card sits on .contentTabInstance rather than on the stack, so the back,
+ * forward, padlock and URL bar are enclosed by it. The first pass put it on
+ * the stack and left the toolbox full-width above, on the theory that a tab
+ * toolbar is chrome and belongs with the tab strip. On screen it read as a
+ * floating bar with a card sliding under it: the gutter started below the
+ * toolbar, so the card's top edge cut across the tab rather than bounding it.
+ * A web content tab is one object -- address bar and page together, the way
+ * every browser draws it -- and the card is what says so.
+ *
+ * That makes the toolbox a surface inside a surface, so its own fill goes.
+ * fluent-chrome.css:699 paints every .contentTabToolbox --fluent-base-chrome,
+ * which is the right answer for a toolbar that IS the tab's chrome and the
+ * wrong one for a toolbar sitting on a card. Clearing it leaves one card
+ * surface from the URL bar down to the page, which is also why the browser
+ * below keeps the same token.
+ * ------------------------------------------------------------------------- */
+
+#tabpanelcontainer .contentTabInstance:has(> stack > browser[remote]:not([remote="false"])) {
+  margin: var(--fluent-gutter) !important;
+  background-color: var(--fluent-card) !important;
+  border: 1px solid var(--fluent-card-stroke) !important;
+  border-radius: var(--fluent-radius-card) !important;
+  box-shadow: var(--fluent-shadow-card) !important;
+  overflow: clip !important;
+}
+
+#tabpanelcontainer .contentTabInstance:has(> stack > browser[remote]:not([remote="false"])) > .contentTabToolbox,
+#tabpanelcontainer .contentTabInstance:has(> stack > browser[remote]:not([remote="false"])) > .contentTabToolbox > toolbar {
+  background-color: transparent !important;
+}
+
+#tabpanelcontainer .contentTabInstance > stack > browser[remote]:not([remote="false"]) {
+  background-color: var(--fluent-card) !important;
+}
+
+/* ---------------------------------------------------------------------------
  * COLLAPSED PANES
  * A collapsed pane must not leave a floating stroke or shadow behind.
  * #folderPane is not listed: it has neither to leave behind any more.
