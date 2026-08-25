@@ -462,21 +462,35 @@ async function removeStylesheets(forGood) {
   /* The folder itself stays. It is the user's, it may hold their own sheets,
    * and an empty chrome/ costs nothing.
    *
-   * THE THEME PREFS ONLY GO ON THE UNINSTALL PATH. On a disable they stay,
-   * because clearing them there was tried and made the round trip worse than
-   * the problem it solved: widget.windows.mica needs a RESTART to take effect,
-   * so clearing it on disable and setting it again on enable leaves the
-   * backdrop gone for the whole session after a re-enable and back only on the
-   * launch after. Removing the CSS is what makes a disable visible; the
-   * backdrop pref does not need to take part, and all three are inert with no
-   * sheets to read anyway.
+   * THUNDERBIRD'S OWN PREFS GO ON BOTH PATHS. These are the ones this add-on
+   * reached outside its own branch to set -- widget.windows.mica, the backdrop
+   * type, the legacy stylesheet switch -- and a disabled add-on has no business
+   * leaving any of them turned on.
    *
-   * On an uninstall there is no next session to protect, and leaving three
-   * about:config entries behind for the user to find and revert by hand is not
-   * a clean uninstall. Only the ones this add-on actually set are cleared --
-   * see WHY THE DEPLOY RECORDS WHICH PREFS WERE ITS OWN above. */
+   * They used to be held back on a disable, on the belief that
+   * widget.windows.mica needed a restart and that clearing it here would leave
+   * the backdrop missing for a whole session after a re-enable. That belief was
+   * wrong and the same file already says so: see the note on setMica, where the
+   * toggle was measured applying live. Clearing them is visible immediately and
+   * so is setting them again, so the round trip costs nothing and a disable now
+   * stands the whole theme down instead of only its stylesheets.
+   *
+   * Only the ones this add-on actually set are touched -- see WHY THE DEPLOY
+   * RECORDS WHICH PREFS WERE ITS OWN above. The record itself is kept on a
+   * disable: it is the answer to "which of these were ours", and re-enabling
+   * has to be able to hand them back on exactly the same terms. */
+  readList(PREF_OWNED_PREFS).forEach(clearPref);
+
+  /* THE ADD-ON'S OWN SETTINGS ONLY GO ON THE UNINSTALL PATH, and this is the
+   * line the two paths genuinely differ on. They are answers the user gave --
+   * palette, backdrop, transparency -- and a disable is not a decision to
+   * forget them; re-enabling should come back to the theme they had.
+   *
+   * On an uninstall there is nothing to come back to, and leaving a branch of
+   * about:config entries for the user to find and revert by hand is not a
+   * clean uninstall. previousTheme goes with them: it is spent by then, having
+   * already been read to put Thunderbird's own theme back (addonWatcher). */
   if (forGood) {
-    readList(PREF_OWNED_PREFS).forEach(clearPref);
     clearPref(PREF_OWNED_PREFS);
     clearPref(PREF_COLOR_SCHEME);
     clearPref(PREF_MICA);
