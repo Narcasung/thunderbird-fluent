@@ -518,3 +518,110 @@
   --list-container-background-selected-focused: var(--fluent-accent-tint) !important;
   --list-container-background-selected-current-focused: var(--fluent-accent-tint-strong) !important;
 }
+
+/* ---------------------------------------------------------------------------
+ * XUL TREES
+ * The <tree> widget, chrome side: the Task tab's task list, the today pane's
+ * todo list, the Calendar tab's event list, and every tree in every dialog.
+ *
+ * This is the job the GENERIC LIST CONTAINERS block above does for HTML list
+ * containers, but nothing above could reach it. A XUL tree paints no DOM for
+ * its rows -- nsTreeBodyFrame draws them, and the only styling surface is the
+ * ::-moz-tree-* pseudo-element family. No sheet in chrome/ had ever declared
+ * one, which is why these lists were still running on OS system colours
+ * (-moz-ColHeader, -moz-oddtreerow, -moz-cellhighlight, SelectedItem) while
+ * everything around them was Fluent.
+ *
+ * The state ladder is deliberately the same one --list-container-background-*
+ * sets above, so a tree row and a folder row answer the mouse identically.
+ * ------------------------------------------------------------------------- */
+
+/* Stock stripes multi-column trees with -moz-oddtreerow (tree.css:47). Nothing
+ * else in this theme stripes -- the message list, the folder pane and the
+ * address book all read as one unbroken surface -- and a zebra underneath the
+ * translucent hover and selection fills below would show through both. */
+treechildren::-moz-tree-row(multicol, odd) {
+  background-color: transparent !important;
+}
+
+/* Guarded exactly as stock guards it (tree.css:51-55). Under prefers-contrast
+ * a .06 alpha fill is not an affordance, and stock deliberately draws no hover
+ * there; putting one back would be worse than leaving none. */
+@media not (prefers-contrast) {
+  treechildren::-moz-tree-row(hover) {
+    background-color: var(--fluent-subtle-hover) !important;
+  }
+}
+
+treechildren::-moz-tree-row(selected) {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+treechildren::-moz-tree-row(selected, focus) {
+  background-color: var(--fluent-accent-tint) !important;
+}
+
+treechildren::-moz-tree-row(selected, current, focus) {
+  background-color: var(--fluent-accent-tint-strong) !important;
+}
+
+/* Stock flips the row's text and icons to -moz-cellhighlighttext, and to
+ * SelectedItemText once the tree has focus (tree.css:87-95) -- white on a
+ * solid accent. The fills above are translucent TINTS over whatever surface
+ * the tree happens to sit on, not a solid accent, so that flip would put white
+ * text on a near-card background. Hold every state at the primary text colour,
+ * which is what the list-container family above does and for the same reason. */
+treechildren::-moz-tree-cell-text,
+treechildren::-moz-tree-cell-text(selected),
+treechildren::-moz-tree-cell-text(selected, focus),
+treechildren::-moz-tree-image(selected),
+treechildren::-moz-tree-image(selected, focus),
+treechildren::-moz-tree-twisty(selected),
+treechildren::-moz-tree-twisty(selected, focus) {
+  color: var(--fluent-text-primary) !important;
+}
+
+/* The keyboard focus ring. Stock's is SelectedItem, and the selected variant
+ * is a hardcoded #f3d982 (tree.css:65-73) -- a warm yellow belonging to no
+ * palette this theme has. Both become the accent. */
+treechildren::-moz-tree-row(current, focus),
+treechildren::-moz-tree-row(selected, current, focus) {
+  outline-color: var(--fluent-accent) !important;
+}
+
+/* Rows are painted by nsTreeBodyFrame rather than by a real box, so whether it
+ * honours border-radius on the pseudo-element is not something a stylesheet
+ * can guarantee. If it does, tree rows take the same pill every other list in
+ * the theme uses; if it does not, they stay square and nothing else changes. */
+treechildren::-moz-tree-row {
+  border-radius: var(--fluent-radius-control) !important;
+}
+
+/* COLUMN HEADERS
+ * The treatment #threadTree's header row already gets above: no surface of its
+ * own, one rule under it, semibold.
+ *
+ * Stock paints -moz-ColHeader and gives every column a border-inline-start in
+ * ThreeDLightShadow plus an inset bottom shadow (tree.css:133-150). Those
+ * inline-start borders are the vertical ticks between column titles. Dropping
+ * them leaves the labels told apart by their own spacing, which is how the
+ * thread pane's headers already read. */
+treecol:not([hideheader="true"]),
+.tree-columnpicker-button {
+  background-color: transparent !important;
+  color: var(--fluent-text-primary) !important;
+  border-inline-start: none !important;
+  box-shadow: none !important;
+  border-block-end: 1px solid var(--fluent-divider) !important;
+  font-weight: var(--fluent-weight-strong) !important;
+}
+
+treecol:not([hideheader="true"]):hover,
+.tree-columnpicker-button:hover {
+  background-color: var(--fluent-subtle-hover) !important;
+}
+
+treecol:not([hideheader="true"]):hover:active,
+.tree-columnpicker-button:hover:active {
+  background-color: var(--fluent-subtle-pressed) !important;
+}
