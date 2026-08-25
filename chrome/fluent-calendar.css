@@ -171,6 +171,37 @@ calendar-editable-item[selected="true"].calendar-color-box {
   background-color: var(--fluent-base-chrome) !important;
 }
 
+/* Stock makes #calendarDisplayBox a scroll container, with no comment:
+ *
+ *     #calendarDisplayBox { overflow: auto; }     -- shared/calendar.css:38
+ *
+ * The purpose is the flex floor. An overflow other than `visible` collapses a
+ * flex item's min-inline-size: auto to zero, and that is what lets the pane be
+ * dragged narrower than its own contents -- the same mechanism as the note on
+ * #calendar-view-box below, used in the opposite direction. So the overflow
+ * cannot simply be stood down.
+ *
+ * A scroll container clips its descendants to its padding box: square, with no
+ * room outside it. box-shadow paints OUTSIDE the border box, so the cards'
+ * shadows were being cut away in full.
+ *
+ * Measured on a bottom corner, with the overflow on and off: the arc is
+ * pixel-identical either way (edge offsets -1,-1,-1,-1,-2,-3,-4,-8 in both).
+ * The only difference is the shadow's ~5px falloff. Losing it is what made the
+ * corner look wrong -- an 8px radius meeting a bright Mica backdrop with only
+ * one antialiased pixel between them has nothing to separate card from base,
+ * and reads blunt. The radius was never the problem.
+ *
+ * overflow: clip keeps the floor collapsed (clip is not `visible` either) and
+ * creates no scroll container, and overflow-clip-margin then pushes the clip
+ * rect back out far enough for the shadow to paint. --fluent-shadow-card is
+ * 0 2px 4px, which reaches 6px past the border box at the block end; one
+ * gutter clears it. */
+#calendarDisplayBox {
+  overflow: clip !important;
+  overflow-clip-margin: var(--fluent-gutter) !important;
+}
+
 #calSidebar,
 #calendar-view-box,
 #calendar-task-box,
@@ -203,9 +234,88 @@ calendar-editable-item[selected="true"].calendar-color-box {
  * not from flex distribution, so an intrinsic floor does not protect them --
  * it pins them at their content's min-content and the splitter can no longer
  * drag them narrower. */
-#calendar-view-box,
-#calendar-task-box {
+#calendar-view-box {
   min-inline-size: min-content !important;
+}
+
+/* #calendar-task-box used to be in that rule and is deliberately out of it now.
+ *
+ * min-content is a HARD floor, and it propagates: measured in a 1213px window,
+ * #calendar-task-box reported 1303, #calendarDisplayBox 1303, #calendarContent
+ * and #calendarTabPanel 1683. The tab was 470px wider than the window it sat
+ * in, which is why the today pane appeared to cover the task pane rather than
+ * push it, and why a small window cut the pane off at the frame -- nothing was
+ * overlapping, the whole tab simply did not fit and the parts past the frame
+ * were never drawn.
+ *
+ * What sets 1303 is the task tree. A XUL tree's intrinsic width is the sum of
+ * its columns, and those widths are persisted per profile
+ * (messenger.xhtml:6045-6048, persist="... widths"), so the floor is whatever
+ * the user last dragged the columns to. No amount of making the surrounding
+ * furniture shrinkable reaches it -- an earlier attempt at exactly that, on
+ * #calendarViewHeader and the addition bar's fields, changed nothing.
+ *
+ * The floor's documented purpose is entirely about the events view: it keeps
+ * #calendarViewHeader wrapping instead of overflowing. The task box has no
+ * equivalent, and its own overflow: clip already collapses min-inline-size:
+ * auto to zero, so dropping the override lets it shrink and clip its contents
+ * inside a correctly sized card instead of running the whole tab off-screen. */
+#calendar-task-box {
+  min-inline-size: auto !important;
+}
+
+/* The same column-width floor, at its source. A tree that cannot shrink below
+ * its persisted columns hands that number to every ancestor, so the Calendar
+ * tab's event list would do to #calendar-view-box exactly what the task tree
+ * did to the task box. Zero lets the tree squeeze its own columns, which is
+ * what it does natively when the pane is dragged narrower. */
+#calendar-task-tree,
+#unifinder-todo-tree,
+#unifinder-search-results-tree {
+  min-inline-size: 0 !important;
+}
+
+/* That floor is min-content, so whatever refuses to shrink inside these panes
+ * is what sets it. Three stock elements do, and all three for the same reason:
+ * they never got a min-inline-size of their own, so each reports its full
+ * laid-out width as its minimum and the floor inherits the sum.
+ *
+ *   #calendarViewHeader   the Calendar tab's navigation bar. The note above
+ *                         already named it -- with no floor of its own it
+ *                         overflows instead of wrapping. Stock's own design
+ *                         wraps it onto two lines and abbreviates the day
+ *                         labels; it only needs to be allowed to.
+ *   #other-actions-box    the Task tab's Category / Mark Completed / Priority
+ *                         / Delete row, right-aligned and never wrapping
+ *                         (shared/calendar-task-view.css:79-83).
+ *   the two fields in #task-addition-box, each pinned at inline-size: 15em
+ *                         (calendar-task-view.css:25-27), so the bar alone
+ *                         claims 30em before the New Task button.
+ *
+ * Letting each shrink or wrap drops the panes' min-content to something a
+ * narrow window can hold, which is not cosmetic: with the panes unable to
+ * shrink, opening the today pane covered the task pane's contents instead of
+ * pushing them, and a small enough window cut the pane off at the frame.
+ *
+ * Worth being explicit about what this does NOT restore. Stock's
+ * `#calendarDisplayBox { overflow: auto }` put a scrollbar under any overflow
+ * that did happen; the overflow: clip above replaced it, and clip is required
+ * -- overflow-clip-margin only applies to clip, and without it the cards lose
+ * their shadow again. So this raises the width at which the panes stop fitting
+ * rather than making an unfittable width scrollable. If a real one turns up,
+ * the fix is another element that will not shrink, not the overflow. */
+#calendarViewHeader {
+  min-inline-size: 0 !important;
+}
+
+#other-actions-box,
+#task-actions-toolbar {
+  flex-wrap: wrap !important;
+}
+
+#view-task-edit-field,
+#task-text-filter-field {
+  min-inline-size: 0 !important;
 }
 
 /* One padding on the container supplies every gutter inside the tab. XUL
@@ -279,11 +389,241 @@ calendar-editable-item[selected="true"].calendar-color-box {
   border-inline-end-color: transparent !important;
 }
 
-/* Hover is deliberately excluded. Stock draws a 4px accent border on a
- * collapsed splitter's hover, and that is the only affordance for reopening a
- * collapsed today pane or sidebar -- a blanket border-color override would
- * make it unreopenable by mouse. */
-#calsidebar_splitter:not(:hover),
-#today-splitter:not(:hover) {
+/* The collapsed splitter's hover accent is deliberately preserved. Stock draws
+ * a 4px accent border on a collapsed #calsidebar_splitter's hover
+ * (shared/calendar.css:285), and that is the only affordance for reopening a
+ * collapsed sidebar by mouse -- a blanket border-color override would make it
+ * unreopenable.
+ *
+ * The guard was :not(:hover), which was too wide, because an EXPANDED splitter
+ * carries a border too. shared/calendar.css:270 zeroes the toolkit border with
+ * `border-width: 0`, but the Windows sheet that @imports it re-adds one
+ * unconditionally at calendar.css:7:
+ *
+ *     #calsidebar_splitter { border-inline-start: 1px solid var(--sidebar-border); }
+ *
+ * Same specificity, later in the cascade, so it wins. Hovering or dragging an
+ * expanded splitter therefore dropped the transparent override and painted
+ * stock's 1px divider straight down the gutter -- the vertical bar that showed
+ * up while dragging.
+ *
+ * :not([state="collapsed"]:hover) narrows the exception to exactly the state
+ * stock paints the accent for. Dragging an expanded splitter never matches, so
+ * the gutter stays clean; dragging a collapsed one to reopen it still shows
+ * the accent, which is stock behaviour and is the affordance being kept.
+ *
+ * #today-splitter has no collapsed-hover accent in stock and its inline-start
+ * border width stays 0, so this is a no-op for it. It is listed to keep the
+ * two splitters governed by one rule. */
+#calsidebar_splitter:not([state="collapsed"]:hover),
+#today-splitter:not([state="collapsed"]:hover) {
   border-inline-start-color: transparent !important;
+}
+
+/* #calendar-task-view-splitter divides the task tree from the task details
+ * pane inside #calendar-task-box. Stock gives it the same "occupy no track,
+ * show only the border" treatment the sidebar splitters get
+ * (calendar-task-view.css:30-38): block-size 5px, margin-block-start -5px, and
+ * a 1px border-block-end in --sidebar-border, which this theme maps to
+ * --fluent-divider.
+ *
+ * That divider is real while the details pane is open. It is not when the pane
+ * is closed, and stock leaves the splitter showing in that case:
+ *
+ *     if (
+ *       displayElement("calendar-task-details-container", item != null) &&
+ *       displayElement("calendar-task-view-splitter", item != null)
+ *     ) {                                 -- calendar-task-view.js:35-38
+ *
+ * && short-circuits. With no task selected the first call returns false, so
+ * the second never runs: the container is hidden and the splitter is not. The
+ * splitter falls to the bottom of the pane and paints its 1px divider on the
+ * card's last content row, one pixel inside the card's own stroke.
+ *
+ * Against stock's flat pane edge that line is invisible. Against a rounded
+ * card it is not -- it spans the full content box and the radius cuts it at
+ * both ends, filling in the corner curve. That is what read as "the card does
+ * not round at the bottom corners" and as the horizontal line above the status
+ * bar; one border, three reports.
+ *
+ * Gate on the pane the splitter divides, not on the splitter, which carries no
+ * state of its own here. */
+#calendar-task-view-splitter:has(+ #calendar-task-details-container[hidden]) {
+  border-block-end-color: transparent !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. TASK PANE (#calendar-task-box)
+ *
+ * The Task tab's own pane. Its interior carried no rules at all: the addition
+ * bar ran on stock's ThreeDShadow border and a light-mode-only fill, and its
+ * two fields are plain html:input, which no chrome sheet here had ever styled
+ * -- fluent-chrome.css themes <search-bar>, a different widget entirely.
+ *
+ * The task list itself is a XUL tree. Its rows and column headers are handled
+ * app-wide in fluent-lists.css, since every other tree in the chrome window
+ * was equally unthemed; only the pane's own furniture is below.
+ * ------------------------------------------------------------------------- */
+
+/* The strip along the top: New Task, the add field, the filter field.
+ *
+ * Stock rules it off with a border-block-end in ThreeDShadow
+ * (shared/calendar-task-view.css:86) and fills it #f8f8f8 in light mode only
+ * (calendar-task-view.css:45-51) -- a fill that exists in one scheme and not
+ * the other. Both go: the pane is already a card and the bar sits on it.
+ *
+ * Transparent rather than removed, so the 1px stays in the box model and
+ * nothing shifts -- the same treatment every other stock border in this theme
+ * gets. With it gone the column-header rule from fluent-lists is the only line
+ * in the pane, and it falls where the list actually starts.
+ *
+ * Height moves to --fluent-header-height, which #threadPaneHeaderBar and the
+ * folder pane buttons already take, so the three read as one row of furniture
+ * across the window. Stock's 35px min-block-size has to move with it or it
+ * wins whenever the bar would otherwise be taller. */
+#task-addition-box {
+  background-color: transparent !important;
+  border-block-end-color: transparent !important;
+  box-sizing: border-box !important;
+  block-size: var(--fluent-header-height) !important;
+  min-block-size: var(--fluent-header-height) !important;
+  padding-inline: var(--fluent-gutter) !important;
+}
+
+/* #view-task-edit-field ("Click here to add a new task") and
+ * #task-text-filter-field (the filter box beside it). Both are plain
+ * html:input carrying stock's .themeableSearchBox -- not the <search-bar>
+ * custom element fluent-chrome.css styles -- so nothing in the theme reached
+ * them and they were still drawing stock's field outline.
+ *
+ * Fill, not stroke. Every box outline in this theme is transparent by
+ * instruction (see the stroke block in fluent-tokens.css) and surfaces are
+ * told apart by fill alone, so the field needs a fill the card underneath does
+ * not have. --fluent-solid-quart is the controls step and is the one that
+ * registers: --fluent-solid-tertiary at #303030 against the card's #2B2B2B is
+ * too close to read as a control at all.
+ *
+ * The border is restated in --fluent-control-stroke rather than dropped, so
+ * these fields come back with the rest of the theme if those strokes are ever
+ * restored -- that token block is the single point that does it.
+ *
+ * Focus is deliberately left alone. The theme's inputs do not change on focus
+ * (see FOCUS in fluent-chrome.css); adding a state here would make these two
+ * fields the only ones in the window that do. */
+#view-task-edit-field,
+#task-text-filter-field {
+  background-color: var(--fluent-solid-quart) !important;
+  color: var(--fluent-text-primary) !important;
+  border: 1px solid var(--fluent-control-stroke) !important;
+  border-radius: var(--fluent-radius-control) !important;
+}
+
+/* "New Task". Its hover reads --toolbarbutton-background-color-hover
+ * (shared/calendar-task-view.css:181), which stock only ever defines under
+ * :root[lwt-tree-brighttext] (:6-33) and this theme never maps. On this theme
+ * the declaration resolves to nothing, so the button had no hover state at
+ * all. Same subtle ladder every other chrome button here uses. */
+#calendar-add-task-button:not([disabled]):hover {
+  background: var(--fluent-subtle-hover) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#calendar-add-task-button:not([disabled]):hover:active {
+  background: var(--fluent-subtle-pressed) !important;
+}
+
+/* Stock rules the list off from the addition bar a second time
+ * (shared/calendar-task-view.css:160-166), one row above the column headers'
+ * own rule. Two parallel hairlines a row apart; the headers' one is the real
+ * boundary, so this one goes. */
+#calendar-task-tree-detail {
+  border-block-start-color: transparent !important;
+}
+
+/* Two surfaces in this pane were still painting the platform's own field
+ * colour, because stock never names one for them and nothing in this theme
+ * reached them either. Sampled against the card's #2B2B2B:
+ *
+ *   #2B2A33   the today pane's todo tree. Stock gives a background only to
+ *             #calendar-task-tree by id (shared/calendar-task-view.css:169),
+ *             so #unifinder-todo-tree -- the same widget, same class -- falls
+ *             through to the platform default.
+ *   #2A2A2E   the task details pane under the task list.
+ *
+ * Both are cool greys. Either one alone would pass unnoticed; sitting on a
+ * neutral card, the blue channel is the only one that differs and the panel
+ * reads as tinted blue.
+ *
+ * Scoped to the calendar's own trees rather than added to the app-wide XUL
+ * TREE block in fluent-lists.css. That block sets STATE colours, which are
+ * translucent and safe on any surface; a background is an assertion about what
+ * the tree sits on, and a tree in a dialog does not sit on a card. */
+#unifinder-todo-tree,
+#calendar-task-tree,
+#calendar-task-details-container,
+#calendar-task-details,
+#calendar-task-details-box,
+#calendar-task-details-description {
+  background-color: var(--fluent-card) !important;
+}
+
+/* The today pane's own add-task field, which is the same widget as the two in
+ * #task-addition-box and was left drawing stock's bright #939398 outline. Same
+ * rule, three feet away. */
+#unifinder-task-edit-field {
+  background-color: var(--fluent-solid-quart) !important;
+  color: var(--fluent-text-primary) !important;
+  border: 1px solid var(--fluent-control-stroke) !important;
+  border-radius: var(--fluent-radius-control) !important;
+  min-inline-size: 0 !important;
+}
+
+/* The Category and Priority buttons carry wantdropmarker="true", which is not
+ * a child element -- stock paints the arrow as a BACKGROUND on the button and
+ * reserves room for it with padding:
+ *
+ *     .toolbarbutton-1[wantdropmarker="true"] {
+ *       background-image: var(--icon-nav-down-sm);
+ *       background-position: calc(100% - 6px) center;
+ *       padding-inline-end: 22px;      -- shared/messenger.css:354-365
+ *     }
+ *
+ * That reservation is intact here (0,2,0 beats .message-header-view-button's
+ * padding-inline: 3px at 0,1,0), so the arrow is not being moved onto the
+ * label. The label is being pushed under the ARROW: these buttons sit in a
+ * flex row that does not wrap, at flex-shrink's default of 1, so as soon as
+ * the row is narrower than the buttons want they are squeezed below their
+ * content width and the text spills into the padding the arrow occupies.
+ *
+ * flex-shrink: 0 stops the squeeze; the flex-wrap added further up gives the
+ * row somewhere to put the overflow instead.
+ *
+ * The shrink was inferred from the geometry rather than observed, and on test
+ * it did NOT fix the collision -- so squeezing was not the cause. The rule
+ * stays because not shrinking these buttons is right regardless: with the wrap
+ * above, a narrow row now breaks onto a second line instead of compressing.
+ * The collision is handled separately, below. */
+#task-actions-toolbar > toolbarbutton,
+#other-actions-box > * {
+  flex-shrink: 0 !important;
+}
+
+/* So the reservation IS being lost. On paper it should not be:
+ * .toolbarbutton-1[wantdropmarker="true"] is 0,2,0 and the only competing
+ * declaration, .message-header-view-button { padding-inline: 3px }, is 0,1,0,
+ * so the 22px ought to win on specificity alone whatever the sheet order.
+ *
+ * The rendering says otherwise, and it says it precisely: the arrow sits at
+ * background-position calc(100% - 6px), which lands exactly on the label's
+ * last glyph if -- and only if -- the end padding is 3px rather than 22px.
+ * That is the 0,1,0 declaration winning, for a reason not visible in the
+ * sheets. Rather than keep hunting for it, restate the reservation at a
+ * specificity nothing in stock can reach and mark it !important, which settles
+ * it whatever the cause.
+ *
+ * 22px is stock's own number, not a guess: 12px of icon, 6px from the edge,
+ * and the remainder as the gap to the text. */
+#task-actions-toolbar toolbarbutton[wantdropmarker="true"] {
+  padding-inline-end: 22px !important;
 }
