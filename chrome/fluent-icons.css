@@ -128,3 +128,175 @@ toolbarbutton .toolbarbutton-icon,
 #spacesToolbar #tasksButton::before       { content: "\e9d5" !important; }  /* Checklist */
 #spacesToolbar #chatButton::before        { content: "\e8bd" !important; }  /* Chat */
 #spacesToolbar #settingsButton::before    { content: "\e713" !important; }  /* Settings */
+
+/* ---------------------------------------------------------------------------
+ * 3. MICROSOFT FLUENT UI SYSTEM ICONS
+ *
+ * Twenty-four of Thunderbird's highest-traffic icons, swapped for the filled
+ * variants of microsoft/fluentui-system-icons (MIT). A staging post, not the
+ * finished set: 198 --icon-* tokens carry images and the skin reads them 891
+ * times, so this is the mechanism proven on a sample before the rest follow.
+ *
+ * WHY THE TOKENS AND NOT THE BUTTONS
+ * messenger's icons.css declares every icon as a custom property on :root.
+ * Overriding the property reaches all 891 use sites at once. It does not reach
+ * the 49 places that hardcode a chrome:// URL -- the compose window's
+ * formatting toolbar, mostly -- which are their own pass.
+ *
+ * !important IS REQUIRED. Stock sets these on :root as an AUTHOR rule, and
+ * author-normal beats user-normal, the same cascade problem documented at the
+ * top of userContent.css.
+ *
+ * WHY resource:// AND NOT data:
+ * The short answer is that data: does not work; the long one, with the
+ * measurement behind it, is in THE ICON SET in extension/api.js. Gecko refuses
+ * context-paint to an image loaded from a data: URI, so `fill="context-fill"`
+ * never resolves and every glyph renders solid black. The add-on registers
+ * resource://thunderbird-fluent/ against <profile>/chrome/icons/ to give the
+ * files a privileged URL instead.
+ *
+ * THIS BLOCK DEPENDS ON THE ADD-ON. Without it the substitution does not exist,
+ * these URLs resolve to nothing, and the icons fall back to Thunderbird's own
+ * -- which is the correct degradation and the same bargain the Mica gate in
+ * fluent-layout.css already makes.
+ *
+ * NOT DONE HERE, AND DELIBERATELY
+ * The fill. Thunderbird's own art is OUTLINE art: about3Pane.css:259-261 hands
+ * the full-strength colour to `stroke` and makes `fill` a 20%-alpha wash, and
+ * ~86 sites across the skin repeat that pattern. A filled icon is all fill and
+ * no stroke, so on those surfaces it renders at 20% and reads as a faint
+ * smudge. Correcting it means giving fill the full-strength colour wherever
+ * OUR art is used, without touching the sites still showing THEIRS -- a
+ * per-consumer pass that has to come after this one, because until the URLs
+ * resolve there is nothing to judge it against.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --icon-add: url("resource://thunderbird-fluent/add.svg") !important;
+  --icon-address-book: url("resource://thunderbird-fluent/address-book.svg") !important;
+  --icon-archive: url("resource://thunderbird-fluent/archive.svg") !important;
+  --icon-calendar: url("resource://thunderbird-fluent/calendar.svg") !important;
+  --icon-chat: url("resource://thunderbird-fluent/chat.svg") !important;
+  --icon-check: url("resource://thunderbird-fluent/check.svg") !important;
+  --icon-close: url("resource://thunderbird-fluent/close.svg") !important;
+  --icon-filter: url("resource://thunderbird-fluent/filter.svg") !important;
+  --icon-folder: url("resource://thunderbird-fluent/folder.svg") !important;
+  --icon-globe: url("resource://thunderbird-fluent/globe.svg") !important;
+  --icon-mail: url("resource://thunderbird-fluent/mail.svg") !important;
+  --icon-more: url("resource://thunderbird-fluent/more.svg") !important;
+  --icon-nav-down-sm: url("resource://thunderbird-fluent/nav-down-sm.svg") !important;
+  --icon-nav-left-sm: url("resource://thunderbird-fluent/nav-left-sm.svg") !important;
+  --icon-nav-right-sm: url("resource://thunderbird-fluent/nav-right-sm.svg") !important;
+  --icon-nav-up-sm: url("resource://thunderbird-fluent/nav-up-sm.svg") !important;
+  --icon-pencil: url("resource://thunderbird-fluent/pencil.svg") !important;
+  --icon-print: url("resource://thunderbird-fluent/print.svg") !important;
+  --icon-search: url("resource://thunderbird-fluent/search.svg") !important;
+  --icon-spam: url("resource://thunderbird-fluent/spam.svg") !important;
+  --icon-sync: url("resource://thunderbird-fluent/sync.svg") !important;
+  --icon-tag: url("resource://thunderbird-fluent/tag.svg") !important;
+  --icon-tasks: url("resource://thunderbird-fluent/tasks.svg") !important;
+  --icon-trash: url("resource://thunderbird-fluent/trash.svg") !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. FILLED ART NEEDS A FILLED PAINT
+ *
+ * Thunderbird's own icons are OUTLINE art, and its rules are written for that:
+ * the full-strength colour goes on `stroke` and `fill` gets a 10-20% alpha
+ * wash, which is the soft tint inside the outline. 86 declarations across 37
+ * files repeat that pattern.
+ *
+ * Microsoft's art is FILLED -- one path, all fill, no stroke geometry. On a
+ * wash site the whole glyph therefore renders at 20% and reads as a smudge.
+ * Measured on the folder pane before this block existed: Spam came out
+ * #513234 against a #292B2D background, which back-solves to the right red at
+ * exactly one fifth strength.
+ *
+ * THE RULE THIS BLOCK APPLIES, EVERYWHERE, WITHOUT EXCEPTION:
+ *   give `fill` whatever stock gives `stroke`.
+ * Not currentColor by default, not a value of our own choosing -- stock's own
+ * stroke value, whatever it is at that site. That keeps the per-folder tinting
+ * (spam red, archive olive), and it keeps the deliberately-dimmed thread-tree
+ * columns dim rather than promoting them to full strength.
+ *
+ * WHY NOT IN THE SVG INSTEAD -- three variants were built and measured:
+ *   fill="context-stroke"          full strength on the ~86 wash sites, and
+ *                                  BLACK on the ~64 that export fill only.
+ *   both paths, stroke over fill   same black, painted over a correct glyph.
+ *   fill="context-fill" (kept)     correct wherever stock sets fill to a real
+ *                                  colour; faint on the wash sites, which is
+ *                                  what this block is for.
+ * The finding underneath all three: an unresolved context-stroke paints BLACK,
+ * not nothing. There is no SVG-side trick, so the fix is CSS.
+ *
+ * >>> THIS BLOCK GROWS WITH THE ICON SET. <<<
+ * Every selector below is a site where one of OUR icons is shown. A wash site
+ * still showing THEIR outline art must not be touched -- full-strength fill
+ * would turn a stock outline icon into a solid blob. So this cannot be done
+ * once, globally; it is per-consumer, and each icon added to block 3 means
+ * checking whether its consumers wash.
+ *
+ * CHROME ONLY, and that is not an oversight. userContent.css carries no icon
+ * overrides yet, so every content document -- Settings, Account Settings, the
+ * Add-ons Manager -- is still showing stock art. Six wash sites there consume
+ * tokens this theme replaces in chrome, and "fixing" them now would break the
+ * stock icons they are currently drawing. They land when the content-side
+ * token block does.
+ *
+ * DEFERRED: infobar.css:188, the notification close button. Its rule is
+ * `moz-button::part(button)` inside a shadow tree (the sheet is written with
+ * :host(), so it belongs to <notification-message>), and reaching a ::part
+ * from a user sheet is a different problem from the rest of this block. One
+ * low-traffic site; it can wait for its own look.
+ * ------------------------------------------------------------------------- */
+
+/* THE FOLDER PANE -- about3Pane.css:259-261.
+ *
+ * Scoped per folder type rather than to `#folderTree .icon`, because that one
+ * selector serves every folder icon there is: four of them are ours and the
+ * rest -- inbox, drafts, sent, templates, outbox, rss -- are still stock. A
+ * blanket rule here is exactly the mistake the block header warns about.
+ *
+ * The last two selectors are the generic folder icon: a mail folder carries
+ * neither attribute, and Local Folders is the account row whose server type
+ * is "none" (about3Pane.css:297-299). Account rows for real servers are NOT
+ * included -- they draw --icon-mail and friends, which are still stock. */
+#folderTree li[data-folder-type="junk"] > .container > .icon,
+#folderTree li[data-folder-type="trash"] > .container > .icon,
+#folderTree li[data-folder-type="archive"] > .container > .icon,
+#folderTree li[data-server-type="none"] > .container > .icon,
+#folderTree li:not([data-folder-type]):not([data-server-type]) > .container > .icon {
+  fill: var(--icon-color, var(--folder-color-folder)) !important;
+}
+
+/* THE THREAD TREE COLUMNS -- shared/messageIcons.css:77 and :186.
+ *
+ * 10% fill under a 30% stroke, not the usual 20/100: these two columns are
+ * meant to read as quiet status marks rather than as buttons. 30% is what
+ * stock puts on the stroke, so 30% is what goes on the fill -- promoting them
+ * to currentColor would make the delete and junk columns shout across every
+ * row in the list, which is not what stock was saying. */
+treechildren::-moz-tree-image(deleteCol),
+treechildren::-moz-tree-image(junkStatusCol) {
+  fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+}
+
+/* The spam mark and its button in the card/table views -- shared/threadPane.css:514.
+ * Same intent and the same 30% as the columns above. */
+:is(.tree-view-row-spam img, .button-spam) {
+  fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+}
+
+/* SEARCH FIELDS -- shared/common.css:159 and :177, shared/searchBox.css:11 and
+ * :29, shared/search-bar.css:50. Four sheets, two icons: the magnifier inside
+ * the field and the clear button at its end. Every one of them pairs the wash
+ * with `stroke: currentColor`, so all five collapse into one rule. */
+input[type="search"],
+input::-moz-search-clear-button {
+  fill: currentColor !important;
+}
+
+/* The all-tabs dropdown, for tabs with no favicon -- shared/tabmail.css:373. */
+.alltabs-item > .menu-icon[srcset="null"] {
+  fill: currentColor !important;
+}

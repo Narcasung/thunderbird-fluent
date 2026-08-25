@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Thunderbird Fluent",
   "description": "The Fluent 2 theme for Thunderbird",
-  "version": "3.2.0",
+  "version": "3.6.0",
   "author": "Narcasung",
   "browser_specific_settings": {
     "gecko": {

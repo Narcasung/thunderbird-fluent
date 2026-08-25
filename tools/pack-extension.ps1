@@ -46,6 +46,8 @@ $id       = $manifest.browser_specific_settings.gecko.id
 $chrome = Join-Path (Split-Path $PSScriptRoot -Parent) 'chrome'
 if (-not (Test-Path $chrome)) { throw "Chrome folder not found: $chrome" }
 
+$icons = Join-Path (Split-Path $PSScriptRoot -Parent) 'icons\fluent'
+
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
 $xpi = Join-Path $OutDir 'thunderbird-fluent.xpi'
 if (Test-Path $xpi) { Remove-Item $xpi -Force }
@@ -70,6 +72,27 @@ try {
   if (-not $cssNames) { throw "No .css files in $chrome" }
   ConvertTo-Json @($cssNames) |
     Set-Content (Join-Path $stage 'chrome-files.json') -Encoding utf8NoBOM
+
+  # The icon set, staged and indexed the same way. Vendored from
+  # microsoft/fluentui-system-icons at authoring time; icons\README.md records
+  # where each one came from. Nothing is downloaded here or at runtime.
+  #
+  # These CANNOT ride in as data: URIs inside the CSS -- measured, see the
+  # ICONS block in chrome\fluent-icons.css. Gecko refuses context-paint to an
+  # SVG loaded from a data: URI, so the glyphs come out solid black instead of
+  # following the theme colour. They have to be real files behind a privileged
+  # URL, which is what the resource:// substitution in api.js gives them.
+  if (Test-Path $icons) {
+    Copy-Item $icons (Join-Path $stage 'icons') -Recurse -Force
+    $iconNames = Get-ChildItem $icons -Filter *.svg |
+                 Sort-Object Name |
+                 Select-Object -ExpandProperty Name
+    ConvertTo-Json @($iconNames) |
+      Set-Content (Join-Path $stage 'icon-files.json') -Encoding utf8NoBOM
+  } else {
+    ConvertTo-Json @() |
+      Set-Content (Join-Path $stage 'icon-files.json') -Encoding utf8NoBOM
+  }
 
   # Compress-Archive on the folder itself would nest everything one level down.
   # The wildcard keeps the manifest at the archive root, where the loader wants it.

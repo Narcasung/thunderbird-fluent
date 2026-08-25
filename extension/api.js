@@ -173,6 +173,7 @@ const XUL_NS =
 const PREF_BRANCH = "extensions.thunderbird-fluent.";
 const PREF_DEPLOYED_VERSION = PREF_BRANCH + "deployedVersion";
 const PREF_DEPLOYED_FILES = PREF_BRANCH + "deployedFiles";
+const PREF_DEPLOYED_ICONS = PREF_BRANCH + "deployedIcons";
 const PREF_OWNED_PREFS = PREF_BRANCH + "ownedPrefs";
 
 /* THE TWO SETTINGS, and the only two. They are prefs rather than
@@ -380,6 +381,117 @@ async function bundledFileNames(extension) {
   return JSON.parse(await readFromArchive(extension, "chrome-files.json"));
 }
 
+/* Same index, for the icon set. */
+async function bundledIconNames(extension) {
+  return JSON.parse(await readFromArchive(extension, "icon-files.json"));
+}
+
+/* ---------------------------------------------------------------------------
+ * THE ICON SET, AND WHY IT NEEDS A PROTOCOL HANDLER
+ *
+ * The theme replaces Thunderbird's icons by overriding the --icon-* custom
+ * properties messenger's icons.css declares on :root -- 198 of them, read 891
+ * times across the skin, so one override reaches every use site at once. The
+ * art is Microsoft's Fluent UI System Icons, vendored under icons/ at
+ * authoring time. Nothing is fetched at runtime, ever.
+ *
+ * THE OBVIOUS WAY DOES NOT WORK, AND THIS IS MEASURED.
+ * Inlining each SVG into the CSS as a data: URI needs no files and no code --
+ * and produces solid black glyphs. Thunderbird's icons take their colour from
+ * Gecko's context-paint: the SVG says fill="context-fill" and the consuming
+ * element supplies the value. Gecko refuses context-paint to an image loaded
+ * from a data: URI, so the keyword never resolves and the path falls back to
+ * its initial value, black.
+ *
+ * Proven rather than reasoned: with `fill: currentColor` forced on the folder
+ * pane, a STOCK chrome:// icon on that same element turned white while ours
+ * stayed solid black. Same element, same declaration, different result -- the
+ * only variable was where the image came from. Stock also never pairs data:
+ * with context-fill anywhere in the shipped tree, which is the corroborating
+ * absence: there was no precedent because it does not work.
+ *
+ * So the icons have to be real files behind a privileged URL. resource:// is
+ * the one an add-on can mint: nsISubstitutingProtocolHandler maps a host of
+ * our choosing onto a directory. Stock does exactly this for langpacks
+ * (Extension.sys.mjs:4686) and devtools serves its own SVGs this way
+ * (resource://devtools-shared-images/).
+ *
+ * WHY THE PROFILE FOLDER AND NOT THE .xpi.
+ * The substitution points at <profile>/chrome/icons/, which the add-on already
+ * owns and already writes to. Two reasons over pointing at the archive root:
+ * a jar: URI behind resource:// is an extra unknown on a path that already had
+ * one, and iterating on the art then needs a repack instead of a file copy --
+ * tools/sync.ps1 can push icons the same way it pushes CSS.
+ *
+ * The flags argument is deliberately omitted, which means NO content access.
+ * These icons are chrome furniture; a web page has no business loading them,
+ * and ALLOW_CONTENT_ACCESS is the flag that would weaken exactly the privilege
+ * this whole mechanism exists to obtain.
+ * ------------------------------------------------------------------------- */
+
+const RESOURCE_HOST = "thunderbird-fluent";
+
+function iconDirectory() {
+  return PathUtils.join(PathUtils.profileDir, "chrome", "icons");
+}
+
+/* Components rather than Ci, and no FileUtils: this sandbox's globals are an
+ * explicit allowlist (see the note on readFromArchive above) and Components is
+ * the one of the three already proven reachable from here. */
+function substitutingProtocol() {
+  return Services.io
+    .getProtocolHandler("resource")
+    .QueryInterface(Components.interfaces.nsISubstitutingProtocolHandler);
+}
+
+/* Registered on every startup, not only on a deploy: the mapping lives in
+ * memory and dies with the session, while the files on disk outlast it.
+ *
+ * The trailing slash is not cosmetic. A substitution root is resolved against,
+ * so without it resource://thunderbird-fluent/trash.svg would resolve beside
+ * the icons folder rather than inside it. */
+async function registerIconRoot() {
+  try {
+    const dir = iconDirectory();
+    if (!(await IOUtils.exists(dir))) {
+      return;
+    }
+    substitutingProtocol().setSubstitution(
+      RESOURCE_HOST,
+      Services.io.newURI(PathUtils.toFileURI(dir) + "/")
+    );
+  } catch (error) {
+    console.error("thunderbird-fluent: icon root registration failed: " + error);
+  }
+}
+
+/* Passing null is how a substitution is removed -- same call stock uses to
+ * retire a langpack's root (Extension.sys.mjs:4725). */
+function unregisterIconRoot() {
+  try {
+    substitutingProtocol().setSubstitution(RESOURCE_HOST, null);
+  } catch (error) {
+    console.error("thunderbird-fluent: icon root removal failed: " + error);
+  }
+}
+
+async function deployIcons(extension) {
+  const names = await bundledIconNames(extension);
+  if (!names.length) {
+    return;
+  }
+
+  const target = iconDirectory();
+  await IOUtils.makeDirectory(target, { ignoreExisting: true });
+
+  for (const name of names) {
+    const svg = await readFromArchive(extension, `icons/${name}`);
+    await IOUtils.writeUTF8(PathUtils.join(target, name), svg);
+  }
+
+  Services.prefs.setCharPref(PREF_DEPLOYED_ICONS, names.join(","));
+}
+
 /* Copy the archive's CSS into <profile>/chrome/. */
 async function deployStylesheets(extension) {
   const version = extension.version;
@@ -395,6 +507,8 @@ async function deployStylesheets(extension) {
     const css = await readFromArchive(extension, `chrome/${name}`);
     await IOUtils.writeUTF8(PathUtils.join(target, name), css);
   }
+
+  await deployIcons(extension);
 
   /* A redeploy (version bump, or re-enable after a disable) finds its own
    * values already in prefs.js, so prefHasUserValue says "not ours" for every
@@ -471,8 +585,20 @@ async function removeStylesheets(forGood) {
     await IOUtils.remove(PathUtils.join(target, name), { ignoreAbsent: true });
   }
 
-  /* The folder itself stays. It is the user's, it may hold their own sheets,
-   * and an empty chrome/ costs nothing.
+  /* The icons, and then the folder that held them. This one IS ours -- the
+   * add-on created it and nothing else writes there -- so unlike chrome/ below
+   * it does not survive. Removing it also un-breaks the resource:// mapping
+   * for good rather than leaving it pointed at an empty directory. */
+  const iconTarget = iconDirectory();
+  for (const name of readList(PREF_DEPLOYED_ICONS)) {
+    await IOUtils.remove(PathUtils.join(iconTarget, name), {
+      ignoreAbsent: true,
+    });
+  }
+  await IOUtils.remove(iconTarget, { ignoreAbsent: true, recursive: false });
+
+  /* The chrome folder itself stays. It is the user's, it may hold their own
+   * sheets, and an empty chrome/ costs nothing.
    *
    * THUNDERBIRD'S OWN PREFS GO ON BOTH PATHS. These are the ones this add-on
    * reached outside its own branch to set -- widget.windows.mica, the backdrop
@@ -512,6 +638,7 @@ async function removeStylesheets(forGood) {
   }
 
   clearPref(PREF_DEPLOYED_FILES);
+  clearPref(PREF_DEPLOYED_ICONS);
   clearPref(PREF_DEPLOYED_VERSION);
   Services.prefs.savePrefFile(null);
 }
@@ -670,14 +797,28 @@ this.thunderbirdFluent = class extends ExtensionCommon.ExtensionAPI {
      * files, and Gecko only looks at the profile's chrome/ folder during
      * startup, so a deploy always takes effect at the NEXT launch. That is why
      * installing this add-on ends with a restart. */
-    deployStylesheets(this.extension).catch(error => {
-      console.error("thunderbird-fluent: stylesheet deploy failed: " + error);
-    });
+    /* Chained rather than called alongside: on a first install the icons
+     * folder does not exist until the deploy has written it, and registering a
+     * substitution for a directory that is not there yet silently maps
+     * nothing. On every later startup the deploy returns at its version gate
+     * and this still runs, which is what re-registers the mapping for the new
+     * session. */
+    deployStylesheets(this.extension)
+      .then(registerIconRoot)
+      .catch(error => {
+        console.error("thunderbird-fluent: stylesheet deploy failed: " + error);
+      });
   }
 
   onShutdown(isAppShutdown) {
     Services.obs.removeObserver(documentObserver, "document-element-inserted");
     AddonManager.removeAddonListener(addonWatcher);
+
+    /* Before the isAppShutdown bail, unlike the cleanup below it. The mapping
+     * is process state rather than disk state, so it has to come off on every
+     * path -- including the one where the files are deliberately left alone. */
+    unregisterIconRoot();
+
     if (isAppShutdown) {
       return;
     }
