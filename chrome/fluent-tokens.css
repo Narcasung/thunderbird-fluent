@@ -315,6 +315,36 @@
   }
 }
 
+/* THE SAME TOKEN, FOR THE MAIN WINDOW'S SUB-DOCUMENTS.
+ *
+ * Custom properties inherit through a DOM, not across a document boundary.
+ * The block above sets --fluent-base-chrome on #messengerWindow, so it reaches
+ * everything drawn in messenger.xhtml itself and stops dead at every <browser>
+ * inside it -- and two of those documents paint their own backdrop from this
+ * token: body#paneLayout in about:3pane (fluent-layout.css) and the root, body
+ * and #gloda-facet-view of the search results (fluent-search-results.css).
+ * Without this block they fall back to the opaque value and the Mail tab goes
+ * solid while every other tab stays glass, which is exactly what scoping the
+ * block above to a selector did on its own.
+ *
+ * :root is safe HERE where it was not safe there: @-moz-document names the
+ * documents, and neither of these ever loads as a standalone window. That is
+ * the whole distinction the dialogs turn on -- transparency is legal in the
+ * main window and in what it embeds, not in a window with a native frame.
+ *
+ * glodaFacetViewWrapper.xhtml is absent on purpose: it paints `transparent`
+ * literally rather than through this token (fluent-search-results.css:113-121),
+ * so it needs nothing here. A document added to either sheet that reads
+ * --fluent-base-chrome has to be added to this list too. */
+@-moz-document url("about:3pane"),
+               url("chrome://messenger/content/glodaFacetView.xhtml") {
+  @media (-moz-windows-mica) {
+    :root {
+      --fluent-base-chrome: transparent;
+    }
+  }
+}
+
 /* There is NO (-moz-windows-mica-popups) block here, and that is deliberate.
  *
  * There used to be one, blanking --fluent-flyout to transparent so the DWM
