@@ -191,9 +191,32 @@
  * Gating on them rather than on the pref means the theme cannot end up
  * transparent with no backdrop behind it: if Mica is off, unsupported, or
  * dropped by DWM at runtime (battery saver, transparency disabled), the query
- * stops matching and the opaque colours come back by themselves. */
+ * stops matching and the opaque colours come back by themselves.
+ *
+ * >>> WHY #messengerWindow[customtitlebar] AND NOT :root <<<
+ * The media query says the APP has a backdrop. It does not say THIS WINDOW is
+ * allowed to be transparent, and every chrome window in the profile matches
+ * it -- userChrome.css is scoped to no document, so a bare :root here reaches
+ * the New Task dialog, the recurrence dialog, the remote-debugging prompt,
+ * every one of them.
+ *
+ * Those windows keep the NATIVE Windows title bar, and a native frame wants an
+ * opaque client area. Made transparent it composites to a solid black band
+ * across the title row instead -- reported on the New Task dialog and on the
+ * debugger's Incoming Connection prompt, both a 30px black strip.
+ *
+ * Stock draws the same line in messenger.css:47-56 and this copies it: the
+ * main window, and only while Gecko owns the title bar. [customtitlebar] is
+ * absent when "Hide system window titlebar" is off, which turns the main
+ * window into that same native-frame case.
+ *
+ * Stock's third gate, :not([lwtheme]), is deliberately NOT copied. It exists
+ * so an active lightweight theme's --lwt-accent-color still paints; this
+ * theme overrides that fill with !important on purpose, and the add-on keeps
+ * a built-in theme enabled at all times, so copying it would switch Mica off
+ * permanently. */
 @media (-moz-windows-mica) {
-  :root {
+  #messengerWindow[customtitlebar] {
     --fluent-base-chrome: transparent;
 
     /* The veil's own token, and NOT --fluent-base-chrome. That one is read by
@@ -238,55 +261,55 @@
    * options page names it, while --fluent-veil is the opacity of what covers
    * the backdrop. Each step below pairs a transparency with its complement. */
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 90) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 10%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 80) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 20%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 70) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 30%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 60) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 40%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 50) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 50%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 40) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 60%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 30) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 70%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 20) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 80%, transparent);
     }
   }
 
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 10) {
-    :root {
+    #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 90%, transparent);
     }
   }

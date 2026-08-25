@@ -729,8 +729,13 @@ body#paneLayout {
    * of glass and this is the one layer of tint on it -- see the note on
    * --fluent-veil in fluent-tokens.css for why it cannot ride on
    * --fluent-base-chrome with the rest. At the default 0 this is transparent
-   * and the rule costs nothing. */
-  :root {
+   * and the rule costs nothing.
+   *
+   * Scoped to the main window for the reason the token block in
+   * fluent-tokens.css spells out: as a bare :root this made the root of EVERY
+   * chrome window transparent, and the dialogs that keep the native Windows
+   * title bar answered with a black band across the title row. */
+  #messengerWindow[customtitlebar] {
     background-color: var(--fluent-veil) !important;
   }
 
