@@ -237,55 +237,55 @@
    * THE PREF COUNTS THE OPPOSITE WAY TO THE TOKEN. It is transparency, as the
    * options page names it, while --fluent-veil is the opacity of what covers
    * the backdrop. Each step below pairs a transparency with its complement. */
-  @media -moz-pref("extensions.fluent-transparency.transparency", 90) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 90) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 10%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 80) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 80) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 20%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 70) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 70) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 30%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 60) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 60) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 40%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 50) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 50) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 50%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 40) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 40) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 60%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 30) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 30) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 70%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 20) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 20) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 80%, transparent);
     }
   }
 
-  @media -moz-pref("extensions.fluent-transparency.transparency", 10) {
+  @media -moz-pref("extensions.thunderbird-fluent.transparency", 10) {
     :root {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 90%, transparent);
     }

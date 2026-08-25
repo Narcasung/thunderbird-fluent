@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Build the Fluent 2 Transparency Bridge into an installable .xpi.
+  Build the Thunderbird Fluent add-on into an installable .xpi.
 
 .DESCRIPTION
   Builds the whole theme into one file. The archive is ..\extension plus a
@@ -47,7 +47,7 @@ $chrome = Join-Path (Split-Path $PSScriptRoot -Parent) 'chrome'
 if (-not (Test-Path $chrome)) { throw "Chrome folder not found: $chrome" }
 
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
-$xpi = Join-Path $OutDir 'fluent-transparency.xpi'
+$xpi = Join-Path $OutDir 'thunderbird-fluent.xpi'
 if (Test-Path $xpi) { Remove-Item $xpi -Force }
 
 # The archive is extension\ plus a copy of chrome\, staged rather than zipped

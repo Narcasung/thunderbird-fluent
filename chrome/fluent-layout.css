@@ -745,7 +745,7 @@ body#paneLayout {
 
   /* --- CONTENT TABS: THE CHROME SIDE ------------------------------------
    * Gated twice: on Mica, like everything in this block, and on a marker
-   * attribute that only the Fluent Transparency Bridge add-on sets. Without
+   * attribute that only the Thunderbird Fluent add-on sets. Without
    * the add-on installed and enabled these rules match nothing and the pages
    * stay on --fluent-base, which is the whole point of gating them -- see
    * below.
@@ -778,8 +778,8 @@ body#paneLayout {
    *
    * The :has() is bounded to #tabpanelcontainer's subtree, which is a handful
    * of boxes per open tab. */
-  #tabpanelcontainer browser[fluent-transparency],
-  #tabpanelcontainer :has(browser[fluent-transparency]) {
+  #tabpanelcontainer browser[thunderbird-fluent],
+  #tabpanelcontainer :has(browser[thunderbird-fluent]) {
     background-color: transparent !important;
   }
 }

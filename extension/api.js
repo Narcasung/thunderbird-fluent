@@ -36,7 +36,7 @@
  * The CSS half and this half are useless apart, and worse than that: the CSS
  * half alone leaves the pages on the backstop, which looks worse than stock.
  * So every rule the theme adds for this is gated on a marker this script
- * sets -- `fluent-transparency` on the browser and on the content document's
+ * sets -- `thunderbird-fluent` on the browser and on the content document's
  * root. Disable or remove this add-on and the pages go back to --fluent-base
  * with no other change needed. The gate is also what keeps the chrome-side
  * rules free of per-tab id lists: they key on :has(browser[transparent]).
@@ -103,7 +103,7 @@ const TRANSPARENT_PAGES = [
   "about:import",
 ];
 
-const MARKER = "fluent-transparency";
+const MARKER = "thunderbird-fluent";
 const XUL_NS =
   "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -158,22 +158,22 @@ const XUL_NS =
  * had no user value, and uninstall clears only that list.
  * ------------------------------------------------------------------------- */
 
-const PREF_BRANCH = "extensions.fluent-transparency.";
+const PREF_BRANCH = "extensions.thunderbird-fluent.";
 const PREF_DEPLOYED_VERSION = PREF_BRANCH + "deployedVersion";
 const PREF_DEPLOYED_FILES = PREF_BRANCH + "deployedFiles";
 const PREF_OWNED_PREFS = PREF_BRANCH + "ownedPrefs";
 
 /* THE TWO SETTINGS, and the only two. They are prefs rather than
- * browser.storage because both have to be readable outside JavaScript: `light`
- * is read by the stylesheets themselves through @media -moz-pref (the >>> THE
- * SWITCH <<< blocks in userChrome.css and userContent.css), and both are
- * reachable in about:config for anyone who would rather not open a UI.
+ * browser.storage because both have to be readable outside JavaScript:
+ * `colorScheme` is read by the stylesheets themselves through @media -moz-pref
+ * (the >>> THE SWITCH <<< blocks in userChrome.css and userContent.css), and
+ * both are reachable in about:config for anyone who would rather not open a UI.
  *
  * `mica` holds INTENT, not state; widget.windows.mica is what Gecko reads.
  * Keeping the two apart is what stops a redeploy from undoing the setting: a
  * version bump re-applies the theme prefs, and if the list held a hardcoded
  * true it would turn Mica back on under a user who had switched it off. */
-const PREF_LIGHT = PREF_BRANCH + "light";
+const PREF_COLOR_SCHEME = PREF_BRANCH + "colorScheme";
 const PREF_MICA = PREF_BRANCH + "mica";
 const PREF_WIDGET_MICA = "widget.windows.mica";
 
@@ -210,7 +210,7 @@ function backdropValue() {
   return BACKDROPS.includes(stored) ? stored : 2;
 }
 
-/* WHY THE LIGHT SWITCH ALSO SWITCHES THUNDERBIRD'S OWN THEME
+/* WHY THE COLOUR SWITCH ALSO SWITCHES THUNDERBIRD'S OWN THEME
  * color-scheme moves every light-dark() pair this theme writes, and moves
  * nothing that Thunderbird paints from its built-in theme. Those colours
  * arrive as --lwt-* custom properties injected on the chrome root by
@@ -221,27 +221,46 @@ function backdropValue() {
  *
  * So the setting changes both. The theme the user had is recorded the first
  * time this runs, and put back on uninstall (addonWatcher below), because
- * this is a visible Thunderbird setting the add-on did not own. */
-const THEME_LIGHT = "thunderbird-compact-light@mozilla.org";
-const THEME_DARK = "thunderbird-compact-dark@mozilla.org";
+ * this is a visible Thunderbird setting the add-on did not own.
+ *
+ * Three values, and the three built-in themes line up with them one to one --
+ * these are the same three rows the Add-ons Manager shows under Themes.
+ * `system` maps to the stock default theme, whose manifest is `"theme": {}`:
+ * it forces no scheme, so Thunderbird's own colours follow the OS the same way
+ * `color-scheme: light dark` makes this theme's light-dark() pairs follow it
+ * (BuiltInThemeConfig.sys.mjs:23-41, default-theme/manifest.json). */
+const COLOR_SCHEMES = ["system", "light", "dark"];
+const THEMES = {
+  system: "default-theme@mozilla.org",
+  light: "thunderbird-compact-light@mozilla.org",
+  dark: "thunderbird-compact-dark@mozilla.org",
+};
 const PREF_PREVIOUS_THEME = PREF_BRANCH + "previousTheme";
+
+/* Anything unknown reads as `system`, for the same reason backdropValue()
+ * falls back: an unrecognised string would leave the select blank and the
+ * sheets on their base rule, which disagree about what is showing. */
+function colorSchemeValue() {
+  const stored = Services.prefs.getCharPref(PREF_COLOR_SCHEME, "system");
+  return COLOR_SCHEMES.includes(stored) ? stored : "system";
+}
 
 async function enableTheme(id) {
   const theme = await AddonManager.getAddonByID(id);
   if (!theme) {
-    console.error(`fluent-transparency: no built-in theme ${id}`);
+    console.error(`thunderbird-fluent: no built-in theme ${id}`);
     return;
   }
   await theme.enable();
 }
 
-async function applyBuiltInTheme(light) {
+async function applyBuiltInTheme(scheme) {
   if (!Services.prefs.prefHasUserValue(PREF_PREVIOUS_THEME)) {
     const themes = await AddonManager.getAddonsByTypes(["theme"]);
     const active = themes.find(theme => theme.isActive);
     Services.prefs.setCharPref(PREF_PREVIOUS_THEME, active ? active.id : "");
   }
-  await enableTheme(light ? THEME_LIGHT : THEME_DARK);
+  await enableTheme(THEMES[scheme]);
 }
 
 /* deployedFiles and ownedPrefs are comma-joined lists. */
@@ -293,7 +312,7 @@ function setPref([name, value]) {
       Services.prefs.setIntPref(name, value);
     }
   } catch (error) {
-    console.error(`fluent-transparency: could not set ${name}: ${error}`);
+    console.error(`thunderbird-fluent: could not set ${name}: ${error}`);
     return false;
   }
   return ours;
@@ -303,7 +322,7 @@ function clearPref(name) {
   try {
     Services.prefs.clearUserPref(name);
   } catch (error) {
-    console.error(`fluent-transparency: could not clear ${name}: ${error}`);
+    console.error(`thunderbird-fluent: could not clear ${name}: ${error}`);
   }
 }
 
@@ -370,11 +389,13 @@ async function deployStylesheets(extension) {
    * one of them. Carrying the previous list forward is what stops a bump from
    * quietly disowning the prefs this add-on set on first install. */
   /* Written out rather than left to default, so both settings exist in
-   * about:config the moment the theme does. The stylesheets read `light`
-   * through @media -moz-pref, which treats a missing pref as false -- the same
+   * about:config the moment the theme does. The stylesheets read `colorScheme`
+   * through @media -moz-pref, and a missing pref matches no value literal, so
+   * they would land on their base rule -- which is `system` and the same
    * answer, but only one of the two is visible to someone looking for it. */
-  if (!Services.prefs.prefHasUserValue(PREF_LIGHT)) {
-    Services.prefs.setBoolPref(PREF_LIGHT, false);
+  const firstColorScheme = !Services.prefs.prefHasUserValue(PREF_COLOR_SCHEME);
+  if (firstColorScheme) {
+    Services.prefs.setCharPref(PREF_COLOR_SCHEME, "system");
   }
   if (!Services.prefs.prefHasUserValue(PREF_MICA)) {
     Services.prefs.setBoolPref(PREF_MICA, true);
@@ -407,6 +428,24 @@ async function deployStylesheets(extension) {
    * ended badly would redeploy on the next launch and take any un-pushed
    * tools/sync.ps1 edit with it. */
   Services.prefs.savePrefFile(null);
+
+  /* FIRST RUN ONLY, and this is the whole reason the flag above exists.
+   * `system` is the default, and it means "follow the OS" on both halves of
+   * the switch -- but only the stylesheet half follows a pref. Thunderbird's
+   * own surfaces follow whichever built-in theme is enabled, and on a fresh
+   * install that is whatever the user already had. Left alone, a profile
+   * sitting on the Dark theme would get OS-coloured tokens against permanently
+   * dark chrome, which is the setting not working rather than a mismatch the
+   * user chose.
+   *
+   * Deliberately not done on every startup. Re-applying it each launch would
+   * mean the add-on quietly reverting any theme change made from the Add-ons
+   * Manager, and the theme is Thunderbird's setting, not this add-on's -- see
+   * the note on PREF_PREVIOUS_THEME. Once is enough to start in step; after
+   * that the user's last action wins. */
+  if (firstColorScheme) {
+    await applyBuiltInTheme("system");
+  }
 }
 
 /* Called from onShutdown for both disable and uninstall -- see the note there
@@ -439,7 +478,7 @@ async function removeStylesheets(forGood) {
   if (forGood) {
     readList(PREF_OWNED_PREFS).forEach(clearPref);
     clearPref(PREF_OWNED_PREFS);
-    clearPref(PREF_LIGHT);
+    clearPref(PREF_COLOR_SCHEME);
     clearPref(PREF_MICA);
     clearPref(PREF_BACKDROP);
     clearPref(PREF_TRANSPARENCY);
@@ -506,7 +545,7 @@ const addonWatcher = {
     const previous = Services.prefs.getCharPref(PREF_PREVIOUS_THEME, "");
     if (previous) {
       enableTheme(previous).catch(error => {
-        console.error("fluent-transparency: theme restore failed: " + error);
+        console.error("thunderbird-fluent: theme restore failed: " + error);
       });
     }
   },
@@ -560,7 +599,7 @@ const documentObserver = {
       stamp(browser, doc);
       stamped.add(browser);
     } catch (error) {
-      console.error("fluent-transparency: " + error);
+      console.error("thunderbird-fluent: " + error);
     }
   },
 };
@@ -590,7 +629,7 @@ function sweepOpenTabs() {
   }
 }
 
-this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
+this.thunderbirdFluent = class extends ExtensionCommon.ExtensionAPI {
   onStartup() {
     Services.obs.addObserver(documentObserver, "document-element-inserted");
 
@@ -606,7 +645,7 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
      * startup, so a deploy always takes effect at the NEXT launch. That is why
      * installing this add-on ends with a restart. */
     deployStylesheets(this.extension).catch(error => {
-      console.error("fluent-transparency: stylesheet deploy failed: " + error);
+      console.error("thunderbird-fluent: stylesheet deploy failed: " + error);
     });
   }
 
@@ -620,7 +659,7 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
       try {
         unstamp(browser);
       } catch (error) {
-        console.error("fluent-transparency: " + error);
+        console.error("thunderbird-fluent: " + error);
       }
     }
     stamped.clear();
@@ -656,12 +695,12 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
     }
 
     removeStylesheets(addonWatcher.uninstalling).catch(error => {
-      console.error("fluent-transparency: stylesheet cleanup failed: " + error);
+      console.error("thunderbird-fluent: stylesheet cleanup failed: " + error);
     });
   }
 
   /* What options.html talks to. An addon_parent experiment is reachable from
-   * the add-on's own extension pages as browser.fluentTransparency.*, so the
+   * the add-on's own extension pages as browser.thunderbirdFluent.*, so the
    * options page needs no background script and no messaging -- it calls
    * straight into this.
    *
@@ -669,7 +708,7 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
    * `paths` feed two different registries: events gets the module loaded at
    * startup (Extension.sys.mjs:2128 moduleData, ExtensionCommon:1545), paths
    * is what findAPIPath walks to decide which module owns
-   * fluentTransparency.getSettings (ExtensionCommon:1322-1335, and the
+   * thunderbirdFluent.getSettings (ExtensionCommon:1322-1335, and the
    * registration at :1565 is a plain `details.paths || []`). Declaring only
    * events gives an add-on that starts up correctly and answers no calls at
    * all: the path resolves to undefined and the child sees "fun is not a
@@ -677,10 +716,10 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
    * manifest. */
   getAPI() {
     return {
-      fluentTransparency: {
+      thunderbirdFluent: {
         async getSettings() {
           return {
-            light: Services.prefs.getBoolPref(PREF_LIGHT, false),
+            colorScheme: colorSchemeValue(),
             mica: Services.prefs.getBoolPref(PREF_MICA, true),
             backdrop: backdropValue(),
             transparency: Services.prefs.getIntPref(PREF_TRANSPARENCY, 100),
@@ -689,11 +728,19 @@ this.fluentTransparency = class extends ExtensionCommon.ExtensionAPI {
 
         /* Applies live. The sheets read this pref through @media -moz-pref and
          * Gecko re-evaluates pref media queries when the pref changes; the
-         * built-in theme swap is live too. */
-        async setLight(enabled) {
-          Services.prefs.setBoolPref(PREF_LIGHT, enabled);
+         * built-in theme swap is live too.
+         *
+         * Validated against the list rather than trusted, like setBackdrop and
+         * setTransparency below: a string that reaches the pref without a
+         * matching @media block behind it leaves the sheets on their base rule
+         * while the built-in theme lookup comes back undefined. */
+        async setColorScheme(value) {
+          if (!COLOR_SCHEMES.includes(value)) {
+            throw new Error(`thunderbird-fluent: bad colour scheme ${value}`);
+          }
+          Services.prefs.setCharPref(PREF_COLOR_SCHEME, value);
           Services.prefs.savePrefFile(null);
-          await applyBuiltInTheme(enabled);
+          await applyBuiltInTheme(value);
         },
 
         /* Applies live, which was not the expectation: widget.windows.mica is

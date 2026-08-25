@@ -26,7 +26,7 @@
  * CONSEQUENCE: NO ADD-ON WORK. A chrome docshell in the same process
  * composites into its parent's layer tree, so there is no opaque canvas
  * backstop between these documents and the window -- the thing that forced the
- * Fluent Transparency Bridge on the five content tabs (see the MICA block in
+ * Thunderbird Fluent add-on on the five content tabs (see the MICA block in
  * fluent-layout.css). extension/api.js is untouched and its allowlist stays at
  * five pages.
  *

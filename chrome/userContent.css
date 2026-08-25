@@ -88,15 +88,20 @@
    * deliberately absent: these pages sit inside a tab, on the card surface,
    * with the window backdrop already resolved behind them. --- */
   :root {
-    /* >>> THE SWITCH <<<  see the light override below.
+    /* >>> THE SWITCH <<<  see the two overrides below.
      * !important is NOT optional here, for the reason this file's header
      * gives about every other declaration: in-content/common-shared.css:32
      * sets `color-scheme: light dark` on :root, that is an AUTHOR rule, and
      * author-normal beats user-normal. Without it this line loses -- which
      * went unnoticed for as long as the answer was dark either way, since
      * `light dark` under a dark OS resolves to exactly what we asked for.
-     * Asking for light is what made the loss visible. */
-    color-scheme: dark !important;
+     * Asking for light is what made the loss visible.
+     *
+     * That the base value now MATCHES the stock author rule does not make the
+     * !important redundant: it is what the overrides below need in order to
+     * beat that same author rule, and not every page this sheet reaches loads
+     * common-shared.css to inherit `light dark` from in the first place. */
+    color-scheme: light dark !important;
 
     --fluent-base:              light-dark(#F3F3F3, #202020);
     --fluent-card:              light-dark(#FFFFFF, #2B2B2B);
@@ -198,15 +203,24 @@
     --fluent-weight-strong:     600;
   }
 
-  /* >>> THE SWITCH <<<  the light half, kept equal to userChrome.css's.
+  /* >>> THE SWITCH <<<  the two fixed halves, kept equal to userChrome.css's.
    * These documents cannot see userChrome.css, so the pref has to be read
    * again here. -moz-pref is chrome-only syntax allowed by the sheet's USER
    * origin rather than by the document's, which is why it can be used on
    * content pages at all -- the same distinction that decides which sheet
-   * reaches these pages in the first place. */
-  @media -moz-pref("extensions.fluent-transparency.light") {
+   * reaches these pages in the first place.
+   *
+   * No block for `system`: that is the base value above, so the pref being
+   * absent and the pref reading "system" land on the same rule. */
+  @media -moz-pref("extensions.thunderbird-fluent.colorScheme", "light") {
     :root {
       color-scheme: light !important;
+    }
+  }
+
+  @media -moz-pref("extensions.thunderbird-fluent.colorScheme", "dark") {
+    :root {
+      color-scheme: dark !important;
     }
   }
 
@@ -629,8 +643,8 @@
    * --fluent-base. So the root paints, propagation never happens, and a
    * transparent body just uncovers an opaque html. */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency],
-    :root[fluent-transparency] body {
+    :root[thunderbird-fluent],
+    :root[thunderbird-fluent] body {
       background-color: transparent !important;
     }
   }
@@ -976,7 +990,7 @@
   /* MICA. The chrome half of this and the whole reasoning are in the CONTENT
    * TABS note inside fluent-layout.css's MICA block; the ceiling it clears is
    * the NO MICA note at the end of this block. Short version: a content tab
-   * cannot reach the backdrop by CSS alone, so the Fluent Transparency Bridge
+   * cannot reach the backdrop by CSS alone, so the Thunderbird Fluent add-on
    * add-on sets one attribute, and this is gated on a marker only that add-on
    * sets. No add-on, no match, page stays --fluent-base.
    *
@@ -992,8 +1006,8 @@
    * thread panes are transparent and only the message pane is a card
    * (fluent-layout.css:266, 289, 307). */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency],
-    :root[fluent-transparency] body {
+    :root[thunderbird-fluent],
+    :root[thunderbird-fluent] body {
       background-color: transparent !important;
     }
   }
@@ -1705,7 +1719,7 @@
    * paints is nothing. A background-color cannot do this job: any value that
    * stops propagation is by definition opaque. */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency] {
+    :root[thunderbird-fluent] {
       background-color: transparent !important;
       background-image: linear-gradient(transparent, transparent) !important;
     }
@@ -1860,7 +1874,7 @@
    * across the whole viewport, gutter ring and square corners included. The
    * full mechanism is written out in the about:config block. */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency] {
+    :root[thunderbird-fluent] {
       background-color: transparent !important;
       background-image: linear-gradient(transparent, transparent) !important;
     }
@@ -2054,7 +2068,7 @@
    * theme does in the 3-pane window and on all three other nav panes; see the
    * note at fluent-layout.css's #folderPane block. */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency] {
+    :root[thunderbird-fluent] {
       background-color: transparent !important;
     }
   }
@@ -2287,8 +2301,8 @@
    * they are opaque because the block further down paints them, which is what
    * a dialog over a page should be. */
   @media (-moz-windows-mica) {
-    :root[fluent-transparency],
-    :root[fluent-transparency] body {
+    :root[thunderbird-fluent],
+    :root[thunderbird-fluent] body {
       background-color: transparent !important;
     }
   }
@@ -2539,7 +2553,7 @@
   /* MICA IS ON FOR THIS PAGE. This comment used to say the opposite; it
    * predates the add-on and contradicted the working gate at the top of this
    * block. about:preferences is in TRANSPARENT_PAGES (extension/api.js:75-81),
-   * so the document is stamped [fluent-transparency] and :root and body reach
+   * so the document is stamped [thunderbird-fluent] and :root and body reach
    * the backdrop -- which is what carries the rail above, at no extra cost.
    *
    * The sub-dialogs stay opaque, and that is the point rather than a ceiling:

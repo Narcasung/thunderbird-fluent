@@ -78,7 +78,10 @@ calendar-minimonth {
 /* prefers-color-scheme in the stock sheet reads the OS scheme, not the
  * light-dark() switch at the top of userChrome.css -- if the two disagree
  * (theme forced dark on a light-OS machine, or vice versa) that rule never
- * fires and this hover falls back to unstyled. Restate unconditionally. */
+ * fires and this hover falls back to unstyled. Restate unconditionally.
+ *
+ * The switch's `system` setting is the case where the two cannot disagree,
+ * since it is the OS that answers both. This stays for the other two. */
 .minimonth-header button:is(:hover, :active),
 .minimonth-header-btn:is(:hover, :active) {
   background-color: var(--fluent-subtle-hover) !important;

@@ -1,6 +1,6 @@
 [
   {
-    "namespace": "fluentTransparency",
+    "namespace": "thunderbirdFluent",
     "description": "The theme's two settings. The rest of the add-on's work happens in api.js's onStartup and needs no callable surface; these exist only so options.html can read and write the prefs, which an extension page cannot do on its own.",
     "functions": [
       {
@@ -11,14 +11,19 @@
         "parameters": []
       },
       {
-        "name": "setLight",
+        "name": "setColorScheme",
         "type": "function",
         "async": true,
-        "description": "Switch the palette between light and dark. Applies without a restart.",
+        "description": "Pick the palette: \"system\" follows the OS, \"light\" and \"dark\" force one. Switches Thunderbird's own built-in theme to match. Applies without a restart.",
         "parameters": [
           {
-            "name": "enabled",
-            "type": "boolean"
+            "name": "value",
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
           }
         ]
       },

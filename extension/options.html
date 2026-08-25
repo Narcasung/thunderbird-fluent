@@ -36,6 +36,17 @@
         border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
       }
 
+      /* A row whose control is not a checkbox. The two-column grid exists to
+         hang a label block off a checkbox; with nothing in the first column
+         there is nothing to hang, and the .sub inside brings its own grid. */
+      .row.solo {
+        display: block;
+      }
+
+      .row.solo .sub {
+        margin-top: 0;
+      }
+
       input {
         margin: 2px 0 0;
       }
@@ -80,13 +91,20 @@
   </head>
 
   <body>
-    <div class="row">
-      <input id="light" type="checkbox" />
-      <div>
-        <label for="light">Light mode</label>
+    <!-- .solo, not the checkbox grid: this row's control IS the select, so
+         there is no checkbox to sit in the first column and a lone child
+         would otherwise be squeezed into that auto-width track. -->
+    <div class="row solo">
+      <div class="sub">
+        <label for="color-scheme">Appearance</label>
+        <select id="color-scheme">
+          <option value="system">Follow system</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
         <p class="hint">
-          Switches the whole theme between the light and dark palettes, and
-          Thunderbird's own theme with it.
+          Picks the palette, and switches Thunderbird's own theme to match.
+          Follow system tracks the Windows light/dark setting.
         </p>
       </div>
     </div>
@@ -107,9 +125,6 @@
           </select>
           <label for="transparency">Transparency</label>
           <input id="transparency" type="range" min="10" max="100" step="10" />
-          <p class="hint">
-            How much of the backdrop shows through.
-          </p>
         </div>
       </div>
     </div>

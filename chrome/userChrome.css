@@ -28,27 +28,41 @@
 @import url("fluent-account-central.css");
 @import url("fluent-search-results.css");
 
-/* >>> THE SWITCH <<<  light | dark
+/* >>> THE SWITCH <<<  system | light | dark
  * Drives every light-dark() pair in fluent-tokens.css, and tells Gecko how to
  * render native widgets (scrollbars, checkboxes) so they cannot desync.
  *
- * Dark is the value in the sheet and light is an override, so a profile with
- * no pref set renders the theme this was designed in. The add-on's options
- * page writes the pref; nothing here needs editing to change mode, which is
- * the whole point -- an edit made in the profile survives only until the next
- * version bump redeploys the folder over it.
+ * `light dark` is the value in the sheet and the two fixed schemes are
+ * overrides, so system is what a profile with no pref set gets: light-dark()
+ * resolves against the used color-scheme, and a root that accepts both hands
+ * that decision to the OS. The add-on's options page writes the pref; nothing
+ * here needs editing to change mode, which is the whole point -- an edit made
+ * in the profile survives only until the next version bump redeploys the
+ * folder over it.
  *
  * -moz-pref is a chrome-only media feature, and a user sheet is allowed to use
  * it: stock reads widget.windows.mica.toplevel-backdrop the same way in
- * messenger.css:52. Gecko re-evaluates pref media queries when the pref
- * changes, so this applies live. */
+ * messenger.css:52, and matches a STRING pref the same way this does in
+ * variables.css:352-396. Gecko re-evaluates pref media queries when the pref
+ * changes, so this applies live.
+ *
+ * The colour scheme is only half of it. Thunderbird's own surfaces come from
+ * whichever built-in theme is enabled, which no media query can reach -- the
+ * add-on swaps that in step with this pref, see WHY THE COLOUR SWITCH ALSO
+ * SWITCHES THUNDERBIRD'S OWN THEME in api.js. */
 :root {
-  color-scheme: dark !important;
+  color-scheme: light dark !important;
 }
 
-@media -moz-pref("extensions.fluent-transparency.light") {
+@media -moz-pref("extensions.thunderbird-fluent.colorScheme", "light") {
   :root {
     color-scheme: light !important;
+  }
+}
+
+@media -moz-pref("extensions.thunderbird-fluent.colorScheme", "dark") {
+  :root {
+    color-scheme: dark !important;
   }
 }
 
