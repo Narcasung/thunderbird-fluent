@@ -20,19 +20,19 @@
 
 <details>
    <summary>Calendar</summary>
-   <img style="border-radius:15px" src="screenshots/calendar.png"/>
+   <img src="screenshots/calendar.png"/>
 </details>
 <details>
    <summary>Address Book</summary>
-   <img style="border-radius:15px" src="screenshots/address.png"/>
+   <img src="screenshots/address.png"/>
 </details>
 <details>
    <summary>Settings</summary>
-   <img style="border-radius:15px" src="screenshots/settings.png"/>
+   <img src="screenshots/settings.png"/>
 </details>
 <details>
    <summary>Add-ons Manager with Spaces toolbar</summary>
-   <img style="border-radius:15px" src="screenshots/spaces.png"/>
+   <img src="screenshots/spaces.png"/>
 </details>
 
 ## Install
