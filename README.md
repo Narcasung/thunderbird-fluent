@@ -1,6 +1,13 @@
-# thunderbird-fluent
-
-A Fluent theme for Thunderbird.
+<h1 align="center">
+	<img src="screenshots/icon.svg" width="100" alt="Logo"/>
+   <br/><br/>
+	thunderbird-fluent
+</h1>
+<p align="center">A Fluent theme for Thunderbird.</p>
+<br/>
+<p align="center">
+	<img style="border-radius:15px" src="screenshots/inbox.png"/>
+</p>
 
 ## Features
 
@@ -8,9 +15,7 @@ A Fluent theme for Thunderbird.
 - Light, Dark, or follow system mode option.
 - Toggleable mica background with transparency control.
 
-## Preview
-
-![inbox](screenshots/inbox.png)
+## Previews
 
 ## Install
 
@@ -71,7 +76,7 @@ it up before installing.**
 
 Remove the extension from the Add-ons Manager and restart.
 
-- Removing/disabling the extension should reset the aforementionned prefs. If you still notice undesired transparency, reset them yourself. (Settings > General > Config Editor at the bottom)
-- Removing/disabling the extension should delete the aforementionned files. If you still notice theme leftovers, verify in your profile folder if the files are still present and delete them.
-- Removing the extension also puts back whichever Thunderbird theme you were using before you installed it.
-- Disabling keeps your extension options, so re-enabling brings back the theme you had. Removing forgets them.
+- Removing/disabling the extension should reset the aforementionned prefs.\
+If you still notice undesired transparency, reset them yourself. (Settings > General > Config Editor at the bottom)
+- Removing/disabling the extension should delete the aforementionned files.\
+If you still notice theme leftovers, check your profile\chrome folder manually for remaining files.
