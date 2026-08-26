@@ -217,6 +217,51 @@ MAP = {
     "guest-declined": "Dismiss Circle",
     "guest-maybe": "Question Circle",
     "tentative": "Question Circle",
+
+    # ---- The 25 tokens the first survey missed --------------------------
+    # icons.css declares 223 image-valued --icon-* tokens, not the 198 that
+    # earlier passes assumed. The shortfall was invisible until light mode:
+    # part 3 pours a 72% fill into whatever art a rule points at, and on
+    # OUTLINE art that reads as a dark ring around a filled body, because the
+    # stroke stays at full strength. Filled art has no such edge. So every
+    # token the fill pass can reach has to BE filled -- leaving one behind is
+    # not neutral, it actively breaks it.
+    "bell-disabled": "Alert Off",
+    "calendar-empty": "Calendar Empty",
+    "calendar-invite": "Calendar Mail",           # check
+    "clear": "Dismiss Circle",
+    "compress": "Arrow Minimize",                 # check
+    "download-md": "Arrow Download",
+    "event-continue": "Arrow Right",              # check
+    "event-end": "Arrow Export",                  # check
+    "event-start": "Arrow Import",                # check
+    "features": "Sparkle",
+    "fingerprint": "Fingerprint",
+    "folder-save": "Folder Arrow Right",          # check
+    "get-mail": "Arrow Download",                 # check
+    "mobile-export-lg": "Phone Arrow Right",
+    "new-indicator": "Circle Small",              # check
+    "notify": "Alert",
+    "paint-brush": "Paint Brush",
+    "recurrence-exception": "Arrow Repeat All Off",
+    "recurrence-sm": "Arrow Repeat All",
+    "remove": "Subtract",                         # check
+    "sort": "Arrow Sort",
+    "status-away-sm": "Presence Away",
+    "status-idle-sm": "Presence Away",
+    "status-offline-sm": "Presence Offline",
+    "status-online-sm": "Presence Available",
+    "upload-sm": "Arrow Upload",
+
+    # ---- Not --icon-* tokens at all -------------------------------------
+    # The four --addons-manager-* names with no --icon-* twin. They are given
+    # files of their own here so the alias block in fluent-icons.css has
+    # something to point at; the Add-ons Manager sidebar is where the dark
+    # ring was first spotted, and these were three of the four icons in it.
+    "dictionary": "Book Letter",                  # check
+    "language": "Local Language",                 # check
+    "extension-update-available": "Arrow Sync Circle",   # check
+    "extension-update-recent": "History",         # check
 }
 
 # Deliberately NOT replaced -- these keep Thunderbird's own art.

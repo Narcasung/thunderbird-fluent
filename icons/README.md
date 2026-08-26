@@ -1,12 +1,12 @@
 # Icons
 
-186 SVGs vendored from [microsoft/fluentui-system-icons][repo] (MIT). Filled
+216 SVGs vendored from [microsoft/fluentui-system-icons][repo] (MIT). Filled
 variants, 16px where upstream has one, 20px otherwise.
 
 Nothing here is fetched at runtime, and nothing is fetched at build time
 either. `tools/vendor-icons.py` downloads and rewrites them once, on demand;
 the results are committed and are the source of truth from then on. That script
-also holds the mapping — `MAP` for the 186 replaced, `KEEP_STOCK` for the 12
+also holds the mapping — `MAP` for the 216 replaced, `KEEP_STOCK` for the 12
 that keep Thunderbird's art and why — and regenerates `MAPPING.md` from it.
 
 ## The one edit made to each file
@@ -48,7 +48,7 @@ because nothing there provides a paint context.
 ## Mapping
 
 `<token>.svg` is the file that overrides Thunderbird's `--icon-<token>`.
-[`MAPPING.md`](MAPPING.md) is the generated table of all 198 tokens — what each
+[`MAPPING.md`](MAPPING.md) is the generated table of every token — what each
 one became, or why it stayed.
 
 [repo]: https://github.com/microsoft/fluentui-system-icons

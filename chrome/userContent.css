@@ -3168,7 +3168,7 @@
  * showed Microsoft's. That is the seam the Settings sidebar, the Add-ons
  * Manager sidebar and the Address Book tabs were sitting on.
  *
- * Cheap to duplicate now and it was not before: these are 186 URLs, where the
+ * Cheap to duplicate now and it was not before: these are 211 URLs, where the
  * first working version of the icon mechanism was a 143 KB inline blob.
  *
  * --button-icon-fill IS THE ONE THAT MATTERS MOST HERE. aboutExtra.css sets it
@@ -3220,9 +3220,12 @@
     --icon-attachment: url("resource://thunderbird-fluent/attachment.svg") !important;
     --icon-attachment-sm: url("resource://thunderbird-fluent/attachment-sm.svg") !important;
     --icon-bell: url("resource://thunderbird-fluent/bell.svg") !important;
+    --icon-bell-disabled: url("resource://thunderbird-fluent/bell-disabled.svg") !important;
     --icon-bell-ring: url("resource://thunderbird-fluent/bell-ring.svg") !important;
     --icon-calendar: url("resource://thunderbird-fluent/calendar.svg") !important;
+    --icon-calendar-empty: url("resource://thunderbird-fluent/calendar-empty.svg") !important;
     --icon-calendar-imip: url("resource://thunderbird-fluent/calendar-imip.svg") !important;
+    --icon-calendar-invite: url("resource://thunderbird-fluent/calendar-invite.svg") !important;
     --icon-calendar-lg: url("resource://thunderbird-fluent/calendar-lg.svg") !important;
     --icon-calendar-today: url("resource://thunderbird-fluent/calendar-today.svg") !important;
     --icon-chat: url("resource://thunderbird-fluent/chat.svg") !important;
@@ -3231,6 +3234,7 @@
     --icon-checkbox: url("resource://thunderbird-fluent/checkbox.svg") !important;
     --icon-circle-add-sm: url("resource://thunderbird-fluent/circle-add-sm.svg") !important;
     --icon-circle-small: url("resource://thunderbird-fluent/circle-small.svg") !important;
+    --icon-clear: url("resource://thunderbird-fluent/clear.svg") !important;
     --icon-clock: url("resource://thunderbird-fluent/clock.svg") !important;
     --icon-close: url("resource://thunderbird-fluent/close.svg") !important;
     --icon-close-lg: url("resource://thunderbird-fluent/close-lg.svg") !important;
@@ -3239,6 +3243,7 @@
     --icon-cloud-download-md: url("resource://thunderbird-fluent/cloud-download-md.svg") !important;
     --icon-collapse: url("resource://thunderbird-fluent/collapse.svg") !important;
     --icon-column-menu: url("resource://thunderbird-fluent/column-menu.svg") !important;
+    --icon-compress: url("resource://thunderbird-fluent/compress.svg") !important;
     --icon-contact: url("resource://thunderbird-fluent/contact.svg") !important;
     --icon-conversation: url("resource://thunderbird-fluent/conversation.svg") !important;
     --icon-copy: url("resource://thunderbird-fluent/copy.svg") !important;
@@ -3252,22 +3257,30 @@
     --icon-dot: url("resource://thunderbird-fluent/dot.svg") !important;
     --icon-dot-xs: url("resource://thunderbird-fluent/dot-xs.svg") !important;
     --icon-download: url("resource://thunderbird-fluent/download.svg") !important;
+    --icon-download-md: url("resource://thunderbird-fluent/download-md.svg") !important;
     --icon-draft: url("resource://thunderbird-fluent/draft.svg") !important;
     --icon-error-circle: url("resource://thunderbird-fluent/error-circle.svg") !important;
+    --icon-event-continue: url("resource://thunderbird-fluent/event-continue.svg") !important;
+    --icon-event-end: url("resource://thunderbird-fluent/event-end.svg") !important;
+    --icon-event-start: url("resource://thunderbird-fluent/event-start.svg") !important;
     --icon-export: url("resource://thunderbird-fluent/export.svg") !important;
     --icon-export-lg: url("resource://thunderbird-fluent/export-lg.svg") !important;
     --icon-extension: url("resource://thunderbird-fluent/extension.svg") !important;
     --icon-eye: url("resource://thunderbird-fluent/eye.svg") !important;
+    --icon-features: url("resource://thunderbird-fluent/features.svg") !important;
     --icon-file: url("resource://thunderbird-fluent/file.svg") !important;
     --icon-file-draft: url("resource://thunderbird-fluent/file-draft.svg") !important;
     --icon-filter: url("resource://thunderbird-fluent/filter.svg") !important;
+    --icon-fingerprint: url("resource://thunderbird-fluent/fingerprint.svg") !important;
     --icon-flexible-space: url("resource://thunderbird-fluent/flexible-space.svg") !important;
     --icon-folder: url("resource://thunderbird-fluent/folder.svg") !important;
     --icon-folder-compact-sm: url("resource://thunderbird-fluent/folder-compact-sm.svg") !important;
     --icon-folder-filter: url("resource://thunderbird-fluent/folder-filter.svg") !important;
     --icon-folder-rss: url("resource://thunderbird-fluent/folder-rss.svg") !important;
+    --icon-folder-save: url("resource://thunderbird-fluent/folder-save.svg") !important;
     --icon-font: url("resource://thunderbird-fluent/font.svg") !important;
     --icon-forward: url("resource://thunderbird-fluent/forward.svg") !important;
+    --icon-get-mail: url("resource://thunderbird-fluent/get-mail.svg") !important;
     --icon-globe: url("resource://thunderbird-fluent/globe.svg") !important;
     --icon-globe-secure: url("resource://thunderbird-fluent/globe-secure.svg") !important;
     --icon-guest-attending: url("resource://thunderbird-fluent/guest-attending.svg") !important;
@@ -3296,6 +3309,7 @@
     --icon-mail-sm: url("resource://thunderbird-fluent/mail-sm.svg") !important;
     --icon-maximize-sm: url("resource://thunderbird-fluent/maximize-sm.svg") !important;
     --icon-minimize-sm: url("resource://thunderbird-fluent/minimize-sm.svg") !important;
+    --icon-mobile-export-lg: url("resource://thunderbird-fluent/mobile-export-lg.svg") !important;
     --icon-mobile-export-sm: url("resource://thunderbird-fluent/mobile-export-sm.svg") !important;
     --icon-moon-xs: url("resource://thunderbird-fluent/moon-xs.svg") !important;
     --icon-more: url("resource://thunderbird-fluent/more.svg") !important;
@@ -3317,16 +3331,19 @@
     --icon-new-chat: url("resource://thunderbird-fluent/new-chat.svg") !important;
     --icon-new-contact: url("resource://thunderbird-fluent/new-contact.svg") !important;
     --icon-new-event: url("resource://thunderbird-fluent/new-event.svg") !important;
+    --icon-new-indicator: url("resource://thunderbird-fluent/new-indicator.svg") !important;
     --icon-new-key: url("resource://thunderbird-fluent/new-key.svg") !important;
     --icon-new-mail: url("resource://thunderbird-fluent/new-mail.svg") !important;
     --icon-new-task: url("resource://thunderbird-fluent/new-task.svg") !important;
     --icon-new-user-list: url("resource://thunderbird-fluent/new-user-list.svg") !important;
     --icon-newsletter: url("resource://thunderbird-fluent/newsletter.svg") !important;
     --icon-notification-sm: url("resource://thunderbird-fluent/notification-sm.svg") !important;
+    --icon-notify: url("resource://thunderbird-fluent/notify.svg") !important;
     --icon-offline: url("resource://thunderbird-fluent/offline.svg") !important;
     --icon-online: url("resource://thunderbird-fluent/online.svg") !important;
     --icon-outbox: url("resource://thunderbird-fluent/outbox.svg") !important;
     --icon-overflow: url("resource://thunderbird-fluent/overflow.svg") !important;
+    --icon-paint-brush: url("resource://thunderbird-fluent/paint-brush.svg") !important;
     --icon-paste: url("resource://thunderbird-fluent/paste.svg") !important;
     --icon-pencil: url("resource://thunderbird-fluent/pencil.svg") !important;
     --icon-photo-ban: url("resource://thunderbird-fluent/photo-ban.svg") !important;
@@ -3340,7 +3357,10 @@
     --icon-quote: url("resource://thunderbird-fluent/quote.svg") !important;
     --icon-receipt: url("resource://thunderbird-fluent/receipt.svg") !important;
     --icon-recurrence: url("resource://thunderbird-fluent/recurrence.svg") !important;
+    --icon-recurrence-exception: url("resource://thunderbird-fluent/recurrence-exception.svg") !important;
+    --icon-recurrence-sm: url("resource://thunderbird-fluent/recurrence-sm.svg") !important;
     --icon-redirect: url("resource://thunderbird-fluent/redirect.svg") !important;
+    --icon-remove: url("resource://thunderbird-fluent/remove.svg") !important;
     --icon-replies-xs: url("resource://thunderbird-fluent/replies-xs.svg") !important;
     --icon-reply: url("resource://thunderbird-fluent/reply.svg") !important;
     --icon-reply-all: url("resource://thunderbird-fluent/reply-all.svg") !important;
@@ -3353,6 +3373,7 @@
     --icon-settings: url("resource://thunderbird-fluent/settings.svg") !important;
     --icon-shield: url("resource://thunderbird-fluent/shield.svg") !important;
     --icon-shortcut: url("resource://thunderbird-fluent/shortcut.svg") !important;
+    --icon-sort: url("resource://thunderbird-fluent/sort.svg") !important;
     --icon-spaces-menu: url("resource://thunderbird-fluent/spaces-menu.svg") !important;
     --icon-spam: url("resource://thunderbird-fluent/spam.svg") !important;
     --icon-spam-sm: url("resource://thunderbird-fluent/spam-sm.svg") !important;
@@ -3362,9 +3383,13 @@
     --icon-star: url("resource://thunderbird-fluent/star.svg") !important;
     --icon-star-sm: url("resource://thunderbird-fluent/star-sm.svg") !important;
     --icon-status-away: url("resource://thunderbird-fluent/status-away.svg") !important;
+    --icon-status-away-sm: url("resource://thunderbird-fluent/status-away-sm.svg") !important;
     --icon-status-idle: url("resource://thunderbird-fluent/status-idle.svg") !important;
+    --icon-status-idle-sm: url("resource://thunderbird-fluent/status-idle-sm.svg") !important;
     --icon-status-offline: url("resource://thunderbird-fluent/status-offline.svg") !important;
+    --icon-status-offline-sm: url("resource://thunderbird-fluent/status-offline-sm.svg") !important;
     --icon-status-online: url("resource://thunderbird-fluent/status-online.svg") !important;
+    --icon-status-online-sm: url("resource://thunderbird-fluent/status-online-sm.svg") !important;
     --icon-subthread-ignored: url("resource://thunderbird-fluent/subthread-ignored.svg") !important;
     --icon-subtract-circle-sm: url("resource://thunderbird-fluent/subtract-circle-sm.svg") !important;
     --icon-success: url("resource://thunderbird-fluent/success.svg") !important;
@@ -3384,7 +3409,7 @@
     --icon-trash-sm: url("resource://thunderbird-fluent/trash-sm.svg") !important;
     --icon-unread: url("resource://thunderbird-fluent/unread.svg") !important;
     --icon-unread-sm: url("resource://thunderbird-fluent/unread-sm.svg") !important;
-    --icon-url: url("resource://thunderbird-fluent/url.svg") !important;
+    --icon-upload-sm: url("resource://thunderbird-fluent/upload-sm.svg") !important;
     --icon-user: url("resource://thunderbird-fluent/user.svg") !important;
     --icon-user-list: url("resource://thunderbird-fluent/user-list.svg") !important;
     --icon-video-sm: url("resource://thunderbird-fluent/video-sm.svg") !important;
@@ -3403,7 +3428,11 @@
     --account-central-mail: var(--icon-mail) !important;
     --account-central-newsletter: var(--icon-newsletter) !important;
     --account-central-rss: var(--icon-rss) !important;
+    --addons-manager-available-updates: url("resource://thunderbird-fluent/extension-update-available.svg") !important;
+    --addons-manager-dictionaries: url("resource://thunderbird-fluent/dictionary.svg") !important;
     --addons-manager-extensions: var(--icon-extension) !important;
+    --addons-manager-languages: url("resource://thunderbird-fluent/language.svg") !important;
+    --addons-manager-recent-updates: url("resource://thunderbird-fluent/extension-update-recent.svg") !important;
     --addons-manager-recommendations: var(--icon-features) !important;
     --addons-manager-site-permissions: var(--icon-globe) !important;
     --addons-manager-themes: var(--icon-paint-brush) !important;
@@ -3861,6 +3890,69 @@
   .contact-photo[src=""] {
     -moz-context-properties: fill, stroke !important;
     fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+  }
+
+  /* SETTINGS DRAWS ITS SIDEBAR FROM HARDCODED URLS, NOT TOKENS.
+   * preferences.xhtml puts the path straight in the markup
+   * (`<html:img class="category-icon" src="chrome://...">`), so nothing in the
+   * token layer reaches these and they stayed on Thunderbird's outline art.
+   * That is worse than merely unthemed: `.category-icon` and
+   * `.sidebar-footer-icon` are in the fill pass, so each one rendered as a
+   * full-strength outline around a softened body -- a dark ring, obvious in
+   * light mode. Same defect the Add-ons Manager sidebar had.
+   *
+   * Matching the src and replacing the rendered image is the same move part 2c
+   * makes for tab icons, and stock's own idiom on this kind of element. The
+   * attribute itself is left alone. */
+
+  /* General */
+  img[src="chrome://messenger/skin/icons/new/touch/settings.svg"] {
+    content: var(--icon-settings) !important;
+  }
+
+  /* Appearance -- upstream draws a palette, the set has no palette */
+  img[src="chrome://messenger/skin/icons/new/touch/paint-palette.svg"] {
+    content: var(--icon-paint-brush) !important;
+  }
+
+  /* Composition */
+  img[src="chrome://messenger/skin/icons/new/touch/pencil.svg"] {
+    content: var(--icon-pencil) !important;
+  }
+
+  /* Privacy & Security */
+  img[src="chrome://messenger/skin/icons/new/touch/lock.svg"] {
+    content: var(--icon-lock) !important;
+  }
+
+  /* Chat */
+  img[src="chrome://messenger/skin/icons/new/touch/chat.svg"] {
+    content: var(--icon-chat) !important;
+  }
+
+  /* Calendar */
+  img[src="chrome://messenger/skin/icons/new/touch/calendar.svg"] {
+    content: var(--icon-calendar) !important;
+  }
+
+  /* Export for Mobile */
+  img[src="chrome://messenger/skin/icons/lg/mobile-export.svg"] {
+    content: var(--icon-mobile-export-lg) !important;
+  }
+
+  /* Account Settings, in the sidebar footer */
+  img[src="chrome://messenger/skin/icons/new/compact/account-settings.svg"] {
+    content: var(--icon-account-settings) !important;
+  }
+
+  /* Add-ons and Themes, in the sidebar footer */
+  img[src="chrome://messenger/skin/icons/new/compact/extension.svg"] {
+    content: var(--icon-extension) !important;
+  }
+
+  /* the update / info notices */
+  img[src="chrome://global/skin/icons/info.svg"] {
+    content: var(--icon-info) !important;
   }
 
 }

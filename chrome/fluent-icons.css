@@ -3,7 +3,7 @@
  *
  * Five parts:
  *   1. Retune what is left of Thunderbird's own SVG set.
- *   2. Point 186 of its 198 --icon-* tokens at Microsoft's Fluent UI System
+ *   2. Point 211 of its 223 --icon-* tokens at Microsoft's Fluent UI System
  *      Icons, served over resource:// by the add-on.
  *  2b. Alias the three token families that name the same art under other
  *      names, so a button and the menu that opens it cannot disagree.
@@ -46,11 +46,19 @@ toolbarbutton .toolbarbutton-icon,
 /* ---------------------------------------------------------------------------
  * 2. THE ICON SET
  *
- * 186 of Thunderbird's 198 image-valued --icon-* tokens. The skin reads them
+ * 211 of Thunderbird's 223 image-valued --icon-* tokens. The skin reads them
  * 891 times, so overriding the property reaches every use site at once -- with
  * one exception, the 49 places that hardcode a chrome:// URL instead of going
  * through a token. Those are the compose window's formatting toolbar, mostly,
  * and they are their own pass.
+ *
+ * THE COUNT WAS 186 OF 198 AND BOTH NUMBERS WERE WRONG. The first survey
+ * missed 25 tokens outright. That is not a cosmetic shortfall: part 3 pours a
+ * fill into whatever art a rule points at, and on OUTLINE art the result is a
+ * dark ring around a filled body, because the stroke keeps full strength while
+ * the fill is softened. Filled art has no such edge. Light mode shows it
+ * plainly, dark mode barely. So a token left behind is not neutral -- the pass
+ * actively breaks it, and the set has to be complete for the pass to be right.
  *
  * The twelve tokens NOT here keep Thunderbird's art on purpose; tools/
  * vendor-icons.py lists them with reasons, and icons/MAPPING.md is the
@@ -87,9 +95,12 @@ toolbarbutton .toolbarbutton-icon,
   --icon-attachment: url("resource://thunderbird-fluent/attachment.svg") !important;
   --icon-attachment-sm: url("resource://thunderbird-fluent/attachment-sm.svg") !important;
   --icon-bell: url("resource://thunderbird-fluent/bell.svg") !important;
+  --icon-bell-disabled: url("resource://thunderbird-fluent/bell-disabled.svg") !important;
   --icon-bell-ring: url("resource://thunderbird-fluent/bell-ring.svg") !important;
   --icon-calendar: url("resource://thunderbird-fluent/calendar.svg") !important;
+  --icon-calendar-empty: url("resource://thunderbird-fluent/calendar-empty.svg") !important;
   --icon-calendar-imip: url("resource://thunderbird-fluent/calendar-imip.svg") !important;
+  --icon-calendar-invite: url("resource://thunderbird-fluent/calendar-invite.svg") !important;
   --icon-calendar-lg: url("resource://thunderbird-fluent/calendar-lg.svg") !important;
   --icon-calendar-today: url("resource://thunderbird-fluent/calendar-today.svg") !important;
   --icon-chat: url("resource://thunderbird-fluent/chat.svg") !important;
@@ -98,6 +109,7 @@ toolbarbutton .toolbarbutton-icon,
   --icon-checkbox: url("resource://thunderbird-fluent/checkbox.svg") !important;
   --icon-circle-add-sm: url("resource://thunderbird-fluent/circle-add-sm.svg") !important;
   --icon-circle-small: url("resource://thunderbird-fluent/circle-small.svg") !important;
+  --icon-clear: url("resource://thunderbird-fluent/clear.svg") !important;
   --icon-clock: url("resource://thunderbird-fluent/clock.svg") !important;
   --icon-close: url("resource://thunderbird-fluent/close.svg") !important;
   --icon-close-lg: url("resource://thunderbird-fluent/close-lg.svg") !important;
@@ -106,6 +118,7 @@ toolbarbutton .toolbarbutton-icon,
   --icon-cloud-download-md: url("resource://thunderbird-fluent/cloud-download-md.svg") !important;
   --icon-collapse: url("resource://thunderbird-fluent/collapse.svg") !important;
   --icon-column-menu: url("resource://thunderbird-fluent/column-menu.svg") !important;
+  --icon-compress: url("resource://thunderbird-fluent/compress.svg") !important;
   --icon-contact: url("resource://thunderbird-fluent/contact.svg") !important;
   --icon-conversation: url("resource://thunderbird-fluent/conversation.svg") !important;
   --icon-copy: url("resource://thunderbird-fluent/copy.svg") !important;
@@ -119,22 +132,30 @@ toolbarbutton .toolbarbutton-icon,
   --icon-dot: url("resource://thunderbird-fluent/dot.svg") !important;
   --icon-dot-xs: url("resource://thunderbird-fluent/dot-xs.svg") !important;
   --icon-download: url("resource://thunderbird-fluent/download.svg") !important;
+  --icon-download-md: url("resource://thunderbird-fluent/download-md.svg") !important;
   --icon-draft: url("resource://thunderbird-fluent/draft.svg") !important;
   --icon-error-circle: url("resource://thunderbird-fluent/error-circle.svg") !important;
+  --icon-event-continue: url("resource://thunderbird-fluent/event-continue.svg") !important;
+  --icon-event-end: url("resource://thunderbird-fluent/event-end.svg") !important;
+  --icon-event-start: url("resource://thunderbird-fluent/event-start.svg") !important;
   --icon-export: url("resource://thunderbird-fluent/export.svg") !important;
   --icon-export-lg: url("resource://thunderbird-fluent/export-lg.svg") !important;
   --icon-extension: url("resource://thunderbird-fluent/extension.svg") !important;
   --icon-eye: url("resource://thunderbird-fluent/eye.svg") !important;
+  --icon-features: url("resource://thunderbird-fluent/features.svg") !important;
   --icon-file: url("resource://thunderbird-fluent/file.svg") !important;
   --icon-file-draft: url("resource://thunderbird-fluent/file-draft.svg") !important;
   --icon-filter: url("resource://thunderbird-fluent/filter.svg") !important;
+  --icon-fingerprint: url("resource://thunderbird-fluent/fingerprint.svg") !important;
   --icon-flexible-space: url("resource://thunderbird-fluent/flexible-space.svg") !important;
   --icon-folder: url("resource://thunderbird-fluent/folder.svg") !important;
   --icon-folder-compact-sm: url("resource://thunderbird-fluent/folder-compact-sm.svg") !important;
   --icon-folder-filter: url("resource://thunderbird-fluent/folder-filter.svg") !important;
   --icon-folder-rss: url("resource://thunderbird-fluent/folder-rss.svg") !important;
+  --icon-folder-save: url("resource://thunderbird-fluent/folder-save.svg") !important;
   --icon-font: url("resource://thunderbird-fluent/font.svg") !important;
   --icon-forward: url("resource://thunderbird-fluent/forward.svg") !important;
+  --icon-get-mail: url("resource://thunderbird-fluent/get-mail.svg") !important;
   --icon-globe: url("resource://thunderbird-fluent/globe.svg") !important;
   --icon-globe-secure: url("resource://thunderbird-fluent/globe-secure.svg") !important;
   --icon-guest-attending: url("resource://thunderbird-fluent/guest-attending.svg") !important;
@@ -163,6 +184,7 @@ toolbarbutton .toolbarbutton-icon,
   --icon-mail-sm: url("resource://thunderbird-fluent/mail-sm.svg") !important;
   --icon-maximize-sm: url("resource://thunderbird-fluent/maximize-sm.svg") !important;
   --icon-minimize-sm: url("resource://thunderbird-fluent/minimize-sm.svg") !important;
+  --icon-mobile-export-lg: url("resource://thunderbird-fluent/mobile-export-lg.svg") !important;
   --icon-mobile-export-sm: url("resource://thunderbird-fluent/mobile-export-sm.svg") !important;
   --icon-moon-xs: url("resource://thunderbird-fluent/moon-xs.svg") !important;
   --icon-more: url("resource://thunderbird-fluent/more.svg") !important;
@@ -184,16 +206,19 @@ toolbarbutton .toolbarbutton-icon,
   --icon-new-chat: url("resource://thunderbird-fluent/new-chat.svg") !important;
   --icon-new-contact: url("resource://thunderbird-fluent/new-contact.svg") !important;
   --icon-new-event: url("resource://thunderbird-fluent/new-event.svg") !important;
+  --icon-new-indicator: url("resource://thunderbird-fluent/new-indicator.svg") !important;
   --icon-new-key: url("resource://thunderbird-fluent/new-key.svg") !important;
   --icon-new-mail: url("resource://thunderbird-fluent/new-mail.svg") !important;
   --icon-new-task: url("resource://thunderbird-fluent/new-task.svg") !important;
   --icon-new-user-list: url("resource://thunderbird-fluent/new-user-list.svg") !important;
   --icon-newsletter: url("resource://thunderbird-fluent/newsletter.svg") !important;
   --icon-notification-sm: url("resource://thunderbird-fluent/notification-sm.svg") !important;
+  --icon-notify: url("resource://thunderbird-fluent/notify.svg") !important;
   --icon-offline: url("resource://thunderbird-fluent/offline.svg") !important;
   --icon-online: url("resource://thunderbird-fluent/online.svg") !important;
   --icon-outbox: url("resource://thunderbird-fluent/outbox.svg") !important;
   --icon-overflow: url("resource://thunderbird-fluent/overflow.svg") !important;
+  --icon-paint-brush: url("resource://thunderbird-fluent/paint-brush.svg") !important;
   --icon-paste: url("resource://thunderbird-fluent/paste.svg") !important;
   --icon-pencil: url("resource://thunderbird-fluent/pencil.svg") !important;
   --icon-photo-ban: url("resource://thunderbird-fluent/photo-ban.svg") !important;
@@ -207,7 +232,10 @@ toolbarbutton .toolbarbutton-icon,
   --icon-quote: url("resource://thunderbird-fluent/quote.svg") !important;
   --icon-receipt: url("resource://thunderbird-fluent/receipt.svg") !important;
   --icon-recurrence: url("resource://thunderbird-fluent/recurrence.svg") !important;
+  --icon-recurrence-exception: url("resource://thunderbird-fluent/recurrence-exception.svg") !important;
+  --icon-recurrence-sm: url("resource://thunderbird-fluent/recurrence-sm.svg") !important;
   --icon-redirect: url("resource://thunderbird-fluent/redirect.svg") !important;
+  --icon-remove: url("resource://thunderbird-fluent/remove.svg") !important;
   --icon-replies-xs: url("resource://thunderbird-fluent/replies-xs.svg") !important;
   --icon-reply: url("resource://thunderbird-fluent/reply.svg") !important;
   --icon-reply-all: url("resource://thunderbird-fluent/reply-all.svg") !important;
@@ -220,6 +248,7 @@ toolbarbutton .toolbarbutton-icon,
   --icon-settings: url("resource://thunderbird-fluent/settings.svg") !important;
   --icon-shield: url("resource://thunderbird-fluent/shield.svg") !important;
   --icon-shortcut: url("resource://thunderbird-fluent/shortcut.svg") !important;
+  --icon-sort: url("resource://thunderbird-fluent/sort.svg") !important;
   --icon-spaces-menu: url("resource://thunderbird-fluent/spaces-menu.svg") !important;
   --icon-spam: url("resource://thunderbird-fluent/spam.svg") !important;
   --icon-spam-sm: url("resource://thunderbird-fluent/spam-sm.svg") !important;
@@ -229,9 +258,13 @@ toolbarbutton .toolbarbutton-icon,
   --icon-star: url("resource://thunderbird-fluent/star.svg") !important;
   --icon-star-sm: url("resource://thunderbird-fluent/star-sm.svg") !important;
   --icon-status-away: url("resource://thunderbird-fluent/status-away.svg") !important;
+  --icon-status-away-sm: url("resource://thunderbird-fluent/status-away-sm.svg") !important;
   --icon-status-idle: url("resource://thunderbird-fluent/status-idle.svg") !important;
+  --icon-status-idle-sm: url("resource://thunderbird-fluent/status-idle-sm.svg") !important;
   --icon-status-offline: url("resource://thunderbird-fluent/status-offline.svg") !important;
+  --icon-status-offline-sm: url("resource://thunderbird-fluent/status-offline-sm.svg") !important;
   --icon-status-online: url("resource://thunderbird-fluent/status-online.svg") !important;
+  --icon-status-online-sm: url("resource://thunderbird-fluent/status-online-sm.svg") !important;
   --icon-subthread-ignored: url("resource://thunderbird-fluent/subthread-ignored.svg") !important;
   --icon-subtract-circle-sm: url("resource://thunderbird-fluent/subtract-circle-sm.svg") !important;
   --icon-success: url("resource://thunderbird-fluent/success.svg") !important;
@@ -251,7 +284,7 @@ toolbarbutton .toolbarbutton-icon,
   --icon-trash-sm: url("resource://thunderbird-fluent/trash-sm.svg") !important;
   --icon-unread: url("resource://thunderbird-fluent/unread.svg") !important;
   --icon-unread-sm: url("resource://thunderbird-fluent/unread-sm.svg") !important;
-  --icon-url: url("resource://thunderbird-fluent/url.svg") !important;
+  --icon-upload-sm: url("resource://thunderbird-fluent/upload-sm.svg") !important;
   --icon-user: url("resource://thunderbird-fluent/user.svg") !important;
   --icon-user-list: url("resource://thunderbird-fluent/user-list.svg") !important;
   --icon-video-sm: url("resource://thunderbird-fluent/video-sm.svg") !important;
@@ -293,7 +326,11 @@ toolbarbutton .toolbarbutton-icon,
   --account-central-mail: var(--icon-mail) !important;
   --account-central-newsletter: var(--icon-newsletter) !important;
   --account-central-rss: var(--icon-rss) !important;
+  --addons-manager-available-updates: url("resource://thunderbird-fluent/extension-update-available.svg") !important;
+  --addons-manager-dictionaries: url("resource://thunderbird-fluent/dictionary.svg") !important;
   --addons-manager-extensions: var(--icon-extension) !important;
+  --addons-manager-languages: url("resource://thunderbird-fluent/language.svg") !important;
+  --addons-manager-recent-updates: url("resource://thunderbird-fluent/extension-update-recent.svg") !important;
   --addons-manager-recommendations: var(--icon-features) !important;
   --addons-manager-site-permissions: var(--icon-globe) !important;
   --addons-manager-themes: var(--icon-paint-brush) !important;
@@ -377,8 +414,16 @@ toolbarbutton .toolbarbutton-icon,
  * SAFE TO APPLY BROADLY ONLY BECAUSE THE SET IS NEARLY COMPLETE. While most
  * icons were still Thunderbird's, a rule like this turned THEIR outline art
  * into solid blobs, so the first version of this block had to name consumers
- * one at a time. The twelve tokens still on stock art were checked: every one
- * is drawn by its own dedicated selector, none of which appears below.
+ * one at a time.
+ *
+ * THE TWELVE STILL ON STOCK ART ARE NOT ALL OUT OF REACH. The thread-list
+ * column marks are safe -- treechildren::-moz-tree-image(subjectCol, ...) is
+ * not in this block. But #button-nextUnread and #button-previousUnread are
+ * .toolbarbutton-1, the card-view column marks are matched by
+ * `[is="tree-view-table"] img`, and the app-menu badge rides a toolbar button
+ * too. Those can still show the ring described above. Replacing them would
+ * throw away the encoding that is the whole reason they were kept, so the fix
+ * is to hand those consumers stock's 20% wash back, not to redraw them.
  * ------------------------------------------------------------------------- */
 
 /* LIGHT MODE GETS A SOFTER ICON.
@@ -881,6 +926,13 @@ tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img 
   content: var(--icon-info) !important;
 }
 
+/* The Add-ons Manager tab. about:addons is a toolkit page and its favicon comes
+ * from mozapps, not messenger, so it is the one tab icon whose URL is outside
+ * the skin the rest of this file reads. */
+.tab-icon-image[src="chrome://mozapps/skin/extensions/extension.svg"] {
+  content: var(--icon-extension) !important;
+}
+
 /* ---------------------------------------------------------------------------
  * 4. THE SITES THAT NEVER OPTED INTO fill AT ALL
  *
@@ -1016,4 +1068,30 @@ treechildren::-moz-tree-image(correspondentCol) {
 .contact-photo[src=""] {
   -moz-context-properties: fill, stroke !important;
   fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. THE PLACES A `fill` IS SUPPOSED TO DISAPPEAR
+ *
+ * Parts 3 and 4 both assume stock's fill value is a colour worth keeping. In a
+ * few places it is `transparent`, and it means "draw nothing" -- a real state,
+ * not a wash to be corrected. A user-origin !important beats author at any
+ * specificity, so the broad rules above overrode the disappearing act and made
+ * a permanent marker out of a conditional one.
+ *
+ * The read-status dot is the one that showed. threadCard.css:12 points it at
+ * --icon-dot and then drives it entirely through two custom properties:
+ * transparent for a read message (line 32), green for unread (81), yellow and
+ * a different glyph for new (90). Part 3's `[is="tree-view-table"] img` caught
+ * it and pinned fill to a visible colour, so every row wore the unread dot.
+ *
+ * Handing the two properties back is enough -- all three states come with
+ * them, and the sizing and glyph choice were never ours. The selector needs
+ * `[is="tree-view-table"]` in front only to outrank part 3's, which is one
+ * class heavier than a bare `.read-status`.
+ * ------------------------------------------------------------------------- */
+
+[is="tree-view-table"] img.read-status {
+  fill: var(--read-status-fill) !important;
+  stroke: var(--read-status-stroke) !important;
 }
