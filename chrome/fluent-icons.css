@@ -1,16 +1,31 @@
 /* ============================================================================
  * Fluent 2 for Thunderbird -- ICONS
  *
- * Two parts:
- *   1. Retune Thunderbird's own SVG set (full-strength, consistent sizing).
- *      Its "new" icons are already thin-outline 16px and context-coloured --
- *      close cousins of Fluent, so this is the bulk of the win for no assets.
- *   2. Swap the highest-visibility actions to real Segoe Fluent Icons glyphs,
- *      so those silhouettes match Windows exactly.
+ * Five parts:
+ *   1. Retune what is left of Thunderbird's own SVG set.
+ *   2. Point 186 of its 198 --icon-* tokens at Microsoft's Fluent UI System
+ *      Icons, served over resource:// by the add-on.
+ *  2b. Alias the three token families that name the same art under other
+ *      names, so a button and the menu that opens it cannot disagree.
+ *  2c. Match tab icons by their favicon URL, the one place the icon is not
+ *      addressable as a token at all.
+ *   3. Give `fill` the full-strength colour on every rule written for outline
+ *      art, because the new art is filled.
+ *   4. Turn `fill` ON at the 62 sites that never exported it, where the
+ *      keyword falls back to its initial value and paints black.
  *
- * All codepoints below were verified by rendering SegoeIcons.ttf, not from
- * memory -- several plausible-looking guesses (E901, E8A8, E11B) turned out
- * to be blanks or unrelated shapes.
+ * ALL OF IT IS RESTATED IN userContent.css. Settings, the Add-ons Manager and
+ * the Address Book are content docshells; this sheet does not reach them, and
+ * a custom property does not cross a document boundary.
+ *
+ * SEGOE FLUENT ICONS USED TO BE PART 2 AND ARE GONE.
+ * An earlier pass swapped fourteen buttons -- the message-header actions and
+ * the spaces rail -- to Segoe glyphs injected as ::before, because there was
+ * no way to ship real assets at the time. There is now, and two icon sets
+ * side by side is how silhouettes drift apart: the same action drawn one way
+ * in the header and another in a menu. The glyph blocks are removed and those
+ * buttons take their icons from the token layer like everything else.
+ * The codepoints are in git history if they are ever wanted back.
  * ========================================================================== */
 
 /* ---------------------------------------------------------------------------
@@ -29,274 +44,976 @@ toolbarbutton .toolbarbutton-icon,
 }
 
 /* ---------------------------------------------------------------------------
- * 2. SEGOE FLUENT ICONS -- MESSAGE HEADER ACTIONS
+ * 2. THE ICON SET
  *
- * These buttons carry their icon via `list-style-image`, which cannot hold a
- * font glyph. So the image is suppressed and the glyph injected as ::before.
+ * 186 of Thunderbird's 198 image-valued --icon-* tokens. The skin reads them
+ * 891 times, so overriding the property reaches every use site at once -- with
+ * one exception, the 49 places that hardcode a chrome:// URL instead of going
+ * through a token. Those are the compose window's formatting toolbar, mostly,
+ * and they are their own pass.
  *
- * This is the alignment-sensitive part of the theme. If any glyph sits high,
- * low, or clipped, adjust --fluent-glyph-size / the translate below rather
- * than per-button.
- * ------------------------------------------------------------------------- */
-
-:root {
-  --fluent-glyph-size: 16px;
-  --fluent-glyph-font: "Segoe Fluent Icons";
-}
-
-.hdrReplyButton,
-.hdrReplyToSenderButton,
-.hdrDummyReplyButton,
-.hdrReplyAllButton,
-.hdrForwardButton,
-.hdrArchiveButton,
-.hdrJunkButton,
-.hdrTrashButton {
-  list-style-image: none !important;
-}
-
-.hdrReplyButton > .toolbarbutton-icon,
-.hdrReplyToSenderButton > .toolbarbutton-icon,
-.hdrDummyReplyButton > .toolbarbutton-icon,
-.hdrReplyAllButton > .toolbarbutton-icon,
-.hdrForwardButton > .toolbarbutton-icon,
-.hdrArchiveButton > .toolbarbutton-icon,
-.hdrJunkButton > .toolbarbutton-icon,
-.hdrTrashButton > .toolbarbutton-icon {
-  display: none !important;
-}
-
-.hdrReplyButton::before,
-.hdrReplyToSenderButton::before,
-.hdrDummyReplyButton::before,
-.hdrReplyAllButton::before,
-.hdrForwardButton::before,
-.hdrArchiveButton::before,
-.hdrJunkButton::before,
-.hdrTrashButton::before {
-  font-family: var(--fluent-glyph-font) !important;
-  font-size: var(--fluent-glyph-size) !important;
-  font-weight: normal !important;
-  line-height: 1 !important;
-  margin-inline-end: 6px !important;
-  color: currentColor !important;
-  -moz-context-properties: none !important;
-}
-
-/* Verified codepoints */
-.hdrReplyButton::before,
-.hdrReplyToSenderButton::before,
-.hdrDummyReplyButton::before { content: "\e8ca" !important; }  /* MailReply */
-.hdrReplyAllButton::before   { content: "\e8c2" !important; }  /* MailReplyAll */
-.hdrForwardButton::before    { content: "\e89c" !important; }  /* MailForward */
-.hdrArchiveButton::before    { content: "\e7b8" !important; }  /* Archive */
-.hdrJunkButton::before       { content: "\e733" !important; }  /* Blocked */
-.hdrTrashButton::before      { content: "\e74d" !important; }  /* Delete */
-
-/* ---------------------------------------------------------------------------
- * SPACES RAIL GLYPHS
- *
- * These render. This block used to say the opposite -- dormant, because
- * xulstore had "spacesToolbar":{"hidden":"true"} -- and that was true when it
- * was written. The rail has since been unhidden, and xulstore keeps saying
- * hidden until Thunderbird next flushes it, so do not read that file as the
- * current answer. The status-bar variant shares these class names and is the
- * fallback shown while the rail IS hidden.
- * ------------------------------------------------------------------------- */
-
-/* The <img> is hidden ONLY for buttons that have a verified glyph below.
- * A blanket hide turns any wrong or missing mapping into an empty square;
- * scoping it means an unmapped button simply keeps Thunderbird's own icon.
- * IDs read from messenger.xhtml, not guessed -- the address book button is
- * #addressBookButton, not #contactsButton. */
-#spacesToolbar :is(#mailButton, #addressBookButton, #calendarButton,
-                   #tasksButton, #chatButton, #settingsButton) > img {
-  display: none !important;
-}
-
-#spacesToolbar :is(#mailButton, #addressBookButton, #calendarButton,
-                   #tasksButton, #chatButton, #settingsButton)::before {
-  font-family: var(--fluent-glyph-font) !important;
-  font-size: 20px !important;
-  line-height: 1 !important;
-  color: currentColor !important;
-}
-
-#spacesToolbar #mailButton::before        { content: "\e715" !important; }  /* Mail */
-#spacesToolbar #addressBookButton::before { content: "\e77b" !important; }  /* Contact */
-#spacesToolbar #calendarButton::before    { content: "\e787" !important; }  /* Calendar */
-#spacesToolbar #tasksButton::before       { content: "\e9d5" !important; }  /* Checklist */
-#spacesToolbar #chatButton::before        { content: "\e8bd" !important; }  /* Chat */
-#spacesToolbar #settingsButton::before    { content: "\e713" !important; }  /* Settings */
-
-/* ---------------------------------------------------------------------------
- * 3. MICROSOFT FLUENT UI SYSTEM ICONS
- *
- * Twenty-four of Thunderbird's highest-traffic icons, swapped for the filled
- * variants of microsoft/fluentui-system-icons (MIT). A staging post, not the
- * finished set: 198 --icon-* tokens carry images and the skin reads them 891
- * times, so this is the mechanism proven on a sample before the rest follow.
- *
- * WHY THE TOKENS AND NOT THE BUTTONS
- * messenger's icons.css declares every icon as a custom property on :root.
- * Overriding the property reaches all 891 use sites at once. It does not reach
- * the 49 places that hardcode a chrome:// URL -- the compose window's
- * formatting toolbar, mostly -- which are their own pass.
+ * The twelve tokens NOT here keep Thunderbird's art on purpose; tools/
+ * vendor-icons.py lists them with reasons, and icons/MAPPING.md is the
+ * generated table of what became what.
  *
  * !important IS REQUIRED. Stock sets these on :root as an AUTHOR rule, and
- * author-normal beats user-normal, the same cascade problem documented at the
- * top of userContent.css.
+ * author-normal beats user-normal -- the same cascade problem documented at
+ * the top of userContent.css.
  *
- * WHY resource:// AND NOT data:
- * The short answer is that data: does not work; the long one, with the
- * measurement behind it, is in THE ICON SET in extension/api.js. Gecko refuses
- * context-paint to an image loaded from a data: URI, so `fill="context-fill"`
- * never resolves and every glyph renders solid black. The add-on registers
- * resource://thunderbird-fluent/ against <profile>/chrome/icons/ to give the
- * files a privileged URL instead.
+ * WHY resource:// AND NOT data:. Gecko refuses context-paint to an image
+ * loaded from a data: URI, so fill="context-fill" never resolves and every
+ * glyph renders solid black. Measured; the full account is in THE ICON SET in
+ * extension/api.js. The add-on registers resource://thunderbird-fluent/
+ * against <profile>/chrome/icons/ to give these files a privileged URL.
  *
- * THIS BLOCK DEPENDS ON THE ADD-ON. Without it the substitution does not exist,
- * these URLs resolve to nothing, and the icons fall back to Thunderbird's own
- * -- which is the correct degradation and the same bargain the Mica gate in
- * fluent-layout.css already makes.
- *
- * NOT DONE HERE, AND DELIBERATELY
- * The fill. Thunderbird's own art is OUTLINE art: about3Pane.css:259-261 hands
- * the full-strength colour to `stroke` and makes `fill` a 20%-alpha wash, and
- * ~86 sites across the skin repeat that pattern. A filled icon is all fill and
- * no stroke, so on those surfaces it renders at 20% and reads as a faint
- * smudge. Correcting it means giving fill the full-strength colour wherever
- * OUR art is used, without touching the sites still showing THEIRS -- a
- * per-consumer pass that has to come after this one, because until the URLs
- * resolve there is nothing to judge it against.
+ * WITHOUT THE ADD-ON these URLs resolve to nothing and Thunderbird's own icons
+ * come back -- the correct degradation, and the same bargain the Mica gate in
+ * fluent-layout.css makes.
  * ------------------------------------------------------------------------- */
 
 :root {
+  --icon-account-settings: url("resource://thunderbird-fluent/account-settings.svg") !important;
+  --icon-account-sync: url("resource://thunderbird-fluent/account-sync.svg") !important;
   --icon-add: url("resource://thunderbird-fluent/add.svg") !important;
+  --icon-add-md: url("resource://thunderbird-fluent/add-md.svg") !important;
   --icon-address-book: url("resource://thunderbird-fluent/address-book.svg") !important;
+  --icon-address-book-lg: url("resource://thunderbird-fluent/address-book-lg.svg") !important;
+  --icon-address-book-new-lg: url("resource://thunderbird-fluent/address-book-new-lg.svg") !important;
+  --icon-address-book-remote-lg: url("resource://thunderbird-fluent/address-book-remote-lg.svg") !important;
+  --icon-app-menu: url("resource://thunderbird-fluent/app-menu.svg") !important;
+  --icon-app-menu-addon: url("resource://thunderbird-fluent/app-menu-addon.svg") !important;
   --icon-archive: url("resource://thunderbird-fluent/archive.svg") !important;
+  --icon-ascending-xs: url("resource://thunderbird-fluent/ascending-xs.svg") !important;
+  --icon-attachment: url("resource://thunderbird-fluent/attachment.svg") !important;
+  --icon-attachment-sm: url("resource://thunderbird-fluent/attachment-sm.svg") !important;
+  --icon-bell: url("resource://thunderbird-fluent/bell.svg") !important;
+  --icon-bell-ring: url("resource://thunderbird-fluent/bell-ring.svg") !important;
   --icon-calendar: url("resource://thunderbird-fluent/calendar.svg") !important;
+  --icon-calendar-imip: url("resource://thunderbird-fluent/calendar-imip.svg") !important;
+  --icon-calendar-lg: url("resource://thunderbird-fluent/calendar-lg.svg") !important;
+  --icon-calendar-today: url("resource://thunderbird-fluent/calendar-today.svg") !important;
   --icon-chat: url("resource://thunderbird-fluent/chat.svg") !important;
+  --icon-chat-lg: url("resource://thunderbird-fluent/chat-lg.svg") !important;
   --icon-check: url("resource://thunderbird-fluent/check.svg") !important;
+  --icon-checkbox: url("resource://thunderbird-fluent/checkbox.svg") !important;
+  --icon-circle-add-sm: url("resource://thunderbird-fluent/circle-add-sm.svg") !important;
+  --icon-circle-small: url("resource://thunderbird-fluent/circle-small.svg") !important;
+  --icon-clock: url("resource://thunderbird-fluent/clock.svg") !important;
   --icon-close: url("resource://thunderbird-fluent/close.svg") !important;
+  --icon-close-lg: url("resource://thunderbird-fluent/close-lg.svg") !important;
+  --icon-close-xs: url("resource://thunderbird-fluent/close-xs.svg") !important;
+  --icon-cloud-download: url("resource://thunderbird-fluent/cloud-download.svg") !important;
+  --icon-cloud-download-md: url("resource://thunderbird-fluent/cloud-download-md.svg") !important;
+  --icon-collapse: url("resource://thunderbird-fluent/collapse.svg") !important;
+  --icon-column-menu: url("resource://thunderbird-fluent/column-menu.svg") !important;
+  --icon-contact: url("resource://thunderbird-fluent/contact.svg") !important;
+  --icon-conversation: url("resource://thunderbird-fluent/conversation.svg") !important;
+  --icon-copy: url("resource://thunderbird-fluent/copy.svg") !important;
+  --icon-cut: url("resource://thunderbird-fluent/cut.svg") !important;
+  --icon-date-time-sm: url("resource://thunderbird-fluent/date-time-sm.svg") !important;
+  --icon-density-compact: url("resource://thunderbird-fluent/density-compact.svg") !important;
+  --icon-density-default: url("resource://thunderbird-fluent/density-default.svg") !important;
+  --icon-density-relaxed: url("resource://thunderbird-fluent/density-relaxed.svg") !important;
+  --icon-descending-xs: url("resource://thunderbird-fluent/descending-xs.svg") !important;
+  --icon-display-options: url("resource://thunderbird-fluent/display-options.svg") !important;
+  --icon-dot: url("resource://thunderbird-fluent/dot.svg") !important;
+  --icon-dot-xs: url("resource://thunderbird-fluent/dot-xs.svg") !important;
+  --icon-download: url("resource://thunderbird-fluent/download.svg") !important;
+  --icon-draft: url("resource://thunderbird-fluent/draft.svg") !important;
+  --icon-error-circle: url("resource://thunderbird-fluent/error-circle.svg") !important;
+  --icon-export: url("resource://thunderbird-fluent/export.svg") !important;
+  --icon-export-lg: url("resource://thunderbird-fluent/export-lg.svg") !important;
+  --icon-extension: url("resource://thunderbird-fluent/extension.svg") !important;
+  --icon-eye: url("resource://thunderbird-fluent/eye.svg") !important;
+  --icon-file: url("resource://thunderbird-fluent/file.svg") !important;
+  --icon-file-draft: url("resource://thunderbird-fluent/file-draft.svg") !important;
   --icon-filter: url("resource://thunderbird-fluent/filter.svg") !important;
+  --icon-flexible-space: url("resource://thunderbird-fluent/flexible-space.svg") !important;
   --icon-folder: url("resource://thunderbird-fluent/folder.svg") !important;
+  --icon-folder-compact-sm: url("resource://thunderbird-fluent/folder-compact-sm.svg") !important;
+  --icon-folder-filter: url("resource://thunderbird-fluent/folder-filter.svg") !important;
+  --icon-folder-rss: url("resource://thunderbird-fluent/folder-rss.svg") !important;
+  --icon-font: url("resource://thunderbird-fluent/font.svg") !important;
+  --icon-forward: url("resource://thunderbird-fluent/forward.svg") !important;
   --icon-globe: url("resource://thunderbird-fluent/globe.svg") !important;
+  --icon-globe-secure: url("resource://thunderbird-fluent/globe-secure.svg") !important;
+  --icon-guest-attending: url("resource://thunderbird-fluent/guest-attending.svg") !important;
+  --icon-guest-declined: url("resource://thunderbird-fluent/guest-declined.svg") !important;
+  --icon-guest-maybe: url("resource://thunderbird-fluent/guest-maybe.svg") !important;
+  --icon-handshake: url("resource://thunderbird-fluent/handshake.svg") !important;
+  --icon-heart: url("resource://thunderbird-fluent/heart.svg") !important;
+  --icon-hidden: url("resource://thunderbird-fluent/hidden.svg") !important;
+  --icon-id: url("resource://thunderbird-fluent/id.svg") !important;
+  --icon-import: url("resource://thunderbird-fluent/import.svg") !important;
+  --icon-import-lg: url("resource://thunderbird-fluent/import-lg.svg") !important;
+  --icon-inbox: url("resource://thunderbird-fluent/inbox.svg") !important;
+  --icon-info: url("resource://thunderbird-fluent/info.svg") !important;
+  --icon-kebab: url("resource://thunderbird-fluent/kebab.svg") !important;
+  --icon-key: url("resource://thunderbird-fluent/key.svg") !important;
+  --icon-layout: url("resource://thunderbird-fluent/layout.svg") !important;
+  --icon-link: url("resource://thunderbird-fluent/link.svg") !important;
+  --icon-loading: url("resource://thunderbird-fluent/loading.svg") !important;
+  --icon-lock: url("resource://thunderbird-fluent/lock.svg") !important;
+  --icon-lock-disabled: url("resource://thunderbird-fluent/lock-disabled.svg") !important;
   --icon-mail: url("resource://thunderbird-fluent/mail.svg") !important;
+  --icon-mail-lg: url("resource://thunderbird-fluent/mail-lg.svg") !important;
+  --icon-mail-list: url("resource://thunderbird-fluent/mail-list.svg") !important;
+  --icon-mail-lock-lg: url("resource://thunderbird-fluent/mail-lock-lg.svg") !important;
+  --icon-mail-secure: url("resource://thunderbird-fluent/mail-secure.svg") !important;
+  --icon-mail-sm: url("resource://thunderbird-fluent/mail-sm.svg") !important;
+  --icon-maximize-sm: url("resource://thunderbird-fluent/maximize-sm.svg") !important;
+  --icon-minimize-sm: url("resource://thunderbird-fluent/minimize-sm.svg") !important;
+  --icon-mobile-export-sm: url("resource://thunderbird-fluent/mobile-export-sm.svg") !important;
+  --icon-moon-xs: url("resource://thunderbird-fluent/moon-xs.svg") !important;
   --icon-more: url("resource://thunderbird-fluent/more.svg") !important;
+  --icon-more-md: url("resource://thunderbird-fluent/more-md.svg") !important;
+  --icon-nav-back: url("resource://thunderbird-fluent/nav-back.svg") !important;
+  --icon-nav-down: url("resource://thunderbird-fluent/nav-down.svg") !important;
   --icon-nav-down-sm: url("resource://thunderbird-fluent/nav-down-sm.svg") !important;
+  --icon-nav-down-xs: url("resource://thunderbird-fluent/nav-down-xs.svg") !important;
+  --icon-nav-forward: url("resource://thunderbird-fluent/nav-forward.svg") !important;
+  --icon-nav-left: url("resource://thunderbird-fluent/nav-left.svg") !important;
   --icon-nav-left-sm: url("resource://thunderbird-fluent/nav-left-sm.svg") !important;
+  --icon-nav-right: url("resource://thunderbird-fluent/nav-right.svg") !important;
   --icon-nav-right-sm: url("resource://thunderbird-fluent/nav-right-sm.svg") !important;
+  --icon-nav-today: url("resource://thunderbird-fluent/nav-today.svg") !important;
+  --icon-nav-up: url("resource://thunderbird-fluent/nav-up.svg") !important;
   --icon-nav-up-sm: url("resource://thunderbird-fluent/nav-up-sm.svg") !important;
+  --icon-nav-up-xs: url("resource://thunderbird-fluent/nav-up-xs.svg") !important;
+  --icon-new-address-book: url("resource://thunderbird-fluent/new-address-book.svg") !important;
+  --icon-new-chat: url("resource://thunderbird-fluent/new-chat.svg") !important;
+  --icon-new-contact: url("resource://thunderbird-fluent/new-contact.svg") !important;
+  --icon-new-event: url("resource://thunderbird-fluent/new-event.svg") !important;
+  --icon-new-key: url("resource://thunderbird-fluent/new-key.svg") !important;
+  --icon-new-mail: url("resource://thunderbird-fluent/new-mail.svg") !important;
+  --icon-new-task: url("resource://thunderbird-fluent/new-task.svg") !important;
+  --icon-new-user-list: url("resource://thunderbird-fluent/new-user-list.svg") !important;
+  --icon-newsletter: url("resource://thunderbird-fluent/newsletter.svg") !important;
+  --icon-notification-sm: url("resource://thunderbird-fluent/notification-sm.svg") !important;
+  --icon-offline: url("resource://thunderbird-fluent/offline.svg") !important;
+  --icon-online: url("resource://thunderbird-fluent/online.svg") !important;
+  --icon-outbox: url("resource://thunderbird-fluent/outbox.svg") !important;
+  --icon-overflow: url("resource://thunderbird-fluent/overflow.svg") !important;
+  --icon-paste: url("resource://thunderbird-fluent/paste.svg") !important;
   --icon-pencil: url("resource://thunderbird-fluent/pencil.svg") !important;
+  --icon-photo-ban: url("resource://thunderbird-fluent/photo-ban.svg") !important;
+  --icon-pin: url("resource://thunderbird-fluent/pin.svg") !important;
   --icon-print: url("resource://thunderbird-fluent/print.svg") !important;
+  --icon-priority: url("resource://thunderbird-fluent/priority.svg") !important;
+  --icon-priority-low: url("resource://thunderbird-fluent/priority-low.svg") !important;
+  --icon-question: url("resource://thunderbird-fluent/question.svg") !important;
+  --icon-question-dialog: url("resource://thunderbird-fluent/question-dialog.svg") !important;
+  --icon-quit: url("resource://thunderbird-fluent/quit.svg") !important;
+  --icon-quote: url("resource://thunderbird-fluent/quote.svg") !important;
+  --icon-receipt: url("resource://thunderbird-fluent/receipt.svg") !important;
+  --icon-recurrence: url("resource://thunderbird-fluent/recurrence.svg") !important;
+  --icon-redirect: url("resource://thunderbird-fluent/redirect.svg") !important;
+  --icon-replies-xs: url("resource://thunderbird-fluent/replies-xs.svg") !important;
+  --icon-reply: url("resource://thunderbird-fluent/reply.svg") !important;
+  --icon-reply-all: url("resource://thunderbird-fluent/reply-all.svg") !important;
+  --icon-reply-list: url("resource://thunderbird-fluent/reply-list.svg") !important;
+  --icon-restore: url("resource://thunderbird-fluent/restore.svg") !important;
+  --icon-ribbon: url("resource://thunderbird-fluent/ribbon.svg") !important;
+  --icon-rss: url("resource://thunderbird-fluent/rss.svg") !important;
   --icon-search: url("resource://thunderbird-fluent/search.svg") !important;
+  --icon-sent: url("resource://thunderbird-fluent/sent.svg") !important;
+  --icon-settings: url("resource://thunderbird-fluent/settings.svg") !important;
+  --icon-shield: url("resource://thunderbird-fluent/shield.svg") !important;
+  --icon-shortcut: url("resource://thunderbird-fluent/shortcut.svg") !important;
+  --icon-spaces-menu: url("resource://thunderbird-fluent/spaces-menu.svg") !important;
   --icon-spam: url("resource://thunderbird-fluent/spam.svg") !important;
+  --icon-spam-sm: url("resource://thunderbird-fluent/spam-sm.svg") !important;
+  --icon-sparkle-star-sm: url("resource://thunderbird-fluent/sparkle-star-sm.svg") !important;
+  --icon-sparkle-star-xs: url("resource://thunderbird-fluent/sparkle-star-xs.svg") !important;
+  --icon-spelling: url("resource://thunderbird-fluent/spelling.svg") !important;
+  --icon-star: url("resource://thunderbird-fluent/star.svg") !important;
+  --icon-star-sm: url("resource://thunderbird-fluent/star-sm.svg") !important;
+  --icon-status-away: url("resource://thunderbird-fluent/status-away.svg") !important;
+  --icon-status-idle: url("resource://thunderbird-fluent/status-idle.svg") !important;
+  --icon-status-offline: url("resource://thunderbird-fluent/status-offline.svg") !important;
+  --icon-status-online: url("resource://thunderbird-fluent/status-online.svg") !important;
+  --icon-subthread-ignored: url("resource://thunderbird-fluent/subthread-ignored.svg") !important;
+  --icon-subtract-circle-sm: url("resource://thunderbird-fluent/subtract-circle-sm.svg") !important;
+  --icon-success: url("resource://thunderbird-fluent/success.svg") !important;
+  --icon-sun-xs: url("resource://thunderbird-fluent/sun-xs.svg") !important;
   --icon-sync: url("resource://thunderbird-fluent/sync.svg") !important;
+  --icon-sync-lg: url("resource://thunderbird-fluent/sync-lg.svg") !important;
   --icon-tag: url("resource://thunderbird-fluent/tag.svg") !important;
+  --icon-tag-sm: url("resource://thunderbird-fluent/tag-sm.svg") !important;
   --icon-tasks: url("resource://thunderbird-fluent/tasks.svg") !important;
+  --icon-template: url("resource://thunderbird-fluent/template.svg") !important;
+  --icon-tentative: url("resource://thunderbird-fluent/tentative.svg") !important;
+  --icon-thread: url("resource://thunderbird-fluent/thread.svg") !important;
+  --icon-thread-ignored: url("resource://thunderbird-fluent/thread-ignored.svg") !important;
+  --icon-thread-sm: url("resource://thunderbird-fluent/thread-sm.svg") !important;
+  --icon-tools: url("resource://thunderbird-fluent/tools.svg") !important;
   --icon-trash: url("resource://thunderbird-fluent/trash.svg") !important;
+  --icon-trash-sm: url("resource://thunderbird-fluent/trash-sm.svg") !important;
+  --icon-unread: url("resource://thunderbird-fluent/unread.svg") !important;
+  --icon-unread-sm: url("resource://thunderbird-fluent/unread-sm.svg") !important;
+  --icon-url: url("resource://thunderbird-fluent/url.svg") !important;
+  --icon-user: url("resource://thunderbird-fluent/user.svg") !important;
+  --icon-user-list: url("resource://thunderbird-fluent/user-list.svg") !important;
+  --icon-video-sm: url("resource://thunderbird-fluent/video-sm.svg") !important;
+  --icon-warning: url("resource://thunderbird-fluent/warning.svg") !important;
+  --icon-warning-dialog: url("resource://thunderbird-fluent/warning-dialog.svg") !important;
+  --icon-warning-sm: url("resource://thunderbird-fluent/warning-sm.svg") !important;
 }
 
 /* ---------------------------------------------------------------------------
- * 4. FILLED ART NEEDS A FILLED PAINT
+ * 2b. THE ALIAS FAMILIES
  *
- * Thunderbird's own icons are OUTLINE art, and its rules are written for that:
- * the full-strength colour goes on `stroke` and `fill` gets a 10-20% alpha
- * wash, which is the soft tint inside the outline. 86 declarations across 37
- * files repeat that pattern.
+ * --icon-* is not the whole token layer. Three more families name the very
+ * same art under different tokens, and each is read by a different part of the
+ * UI: --spaces-icon-* by the spaces rail and its overflow menu, --folder-pane-*
+ * by the special-folder rows, --account-central-* by the start page. Override
+ * --icon-address-book alone and the spaces menu gets Microsoft's book while
+ * the tab it opens keeps Thunderbird's -- the same action drawn two ways, one
+ * click apart.
  *
- * Microsoft's art is FILLED -- one path, all fill, no stroke geometry. On a
- * wash site the whole glyph therefore renders at 20% and reads as a smudge.
- * Measured on the folder pane before this block existed: Spam came out
- * #513234 against a #292B2D background, which back-solves to the right red at
- * exactly one fifth strength.
+ * Each line below was derived by matching target FILES, not names: two tokens
+ * that resolve to the same .svg get the same answer by construction. The
+ * families differ only in which density folder they point at, which is why
+ * they alias to the token rather than to a resource:// URL -- the --icon-*
+ * line above stays the single place any of this is decided.
  *
- * THE RULE THIS BLOCK APPLIES, EVERYWHERE, WITHOUT EXCEPTION:
- *   give `fill` whatever stock gives `stroke`.
- * Not currentColor by default, not a value of our own choosing -- stock's own
- * stroke value, whatever it is at that site. That keeps the per-folder tinting
- * (spam red, archive olive), and it keeps the deliberately-dimmed thread-tree
- * columns dim rather than promoting them to full strength.
- *
- * WHY NOT IN THE SVG INSTEAD -- three variants were built and measured:
- *   fill="context-stroke"          full strength on the ~86 wash sites, and
- *                                  BLACK on the ~64 that export fill only.
- *   both paths, stroke over fill   same black, painted over a correct glyph.
- *   fill="context-fill" (kept)     correct wherever stock sets fill to a real
- *                                  colour; faint on the wash sites, which is
- *                                  what this block is for.
- * The finding underneath all three: an unresolved context-stroke paints BLACK,
- * not nothing. There is no SVG-side trick, so the fix is CSS.
- *
- * >>> THIS BLOCK GROWS WITH THE ICON SET. <<<
- * Every selector below is a site where one of OUR icons is shown. A wash site
- * still showing THEIR outline art must not be touched -- full-strength fill
- * would turn a stock outline icon into a solid blob. So this cannot be done
- * once, globally; it is per-consumer, and each icon added to block 3 means
- * checking whether its consumers wash.
- *
- * CHROME ONLY, and that is not an oversight. userContent.css carries no icon
- * overrides yet, so every content document -- Settings, Account Settings, the
- * Add-ons Manager -- is still showing stock art. Six wash sites there consume
- * tokens this theme replaces in chrome, and "fixing" them now would break the
- * stock icons they are currently drawing. They land when the content-side
- * token block does.
- *
- * DEFERRED: infobar.css:188, the notification close button. Its rule is
- * `moz-button::part(button)` inside a shadow tree (the sheet is written with
- * :host(), so it belongs to <notification-message>), and reaching a ::part
- * from a user sheet is a different problem from the rest of this block. One
- * low-traffic site; it can wait for its own look.
+ * ELEVEN TOKENS ARE DELIBERATELY NOT HERE. The five --*-illustration
+ * pictographs are large empty-state drawings with no icon counterpart;
+ * --font-size-increase/decrease and the four remaining --addons-manager-*
+ * tokens have no twin in the --icon-* set at all.
  * ------------------------------------------------------------------------- */
 
-/* THE FOLDER PANE -- about3Pane.css:259-261.
+:root {
+  --account-central-address-book: var(--icon-address-book) !important;
+  --account-central-calendar: var(--icon-calendar) !important;
+  --account-central-chat: var(--icon-chat) !important;
+  --account-central-folder: var(--icon-folder) !important;
+  --account-central-globe: var(--icon-globe) !important;
+  --account-central-link: var(--icon-link) !important;
+  --account-central-mail: var(--icon-mail) !important;
+  --account-central-newsletter: var(--icon-newsletter) !important;
+  --account-central-rss: var(--icon-rss) !important;
+  --addons-manager-extensions: var(--icon-extension) !important;
+  --addons-manager-recommendations: var(--icon-features) !important;
+  --addons-manager-site-permissions: var(--icon-globe) !important;
+  --addons-manager-themes: var(--icon-paint-brush) !important;
+  --folder-pane-archive: var(--icon-archive) !important;
+  --folder-pane-draft: var(--icon-draft) !important;
+  --folder-pane-folder: var(--icon-folder) !important;
+  --folder-pane-folder-filter: var(--icon-folder-filter) !important;
+  --folder-pane-folder-rss: var(--icon-folder-rss) !important;
+  --folder-pane-globe: var(--icon-globe) !important;
+  --folder-pane-globe-secure: var(--icon-globe-secure) !important;
+  --folder-pane-inbox: var(--icon-inbox) !important;
+  --folder-pane-mail: var(--icon-mail) !important;
+  --folder-pane-mail-secure: var(--icon-mail-secure) !important;
+  --folder-pane-newsletter: var(--icon-newsletter) !important;
+  --folder-pane-outbox: var(--icon-outbox) !important;
+  --folder-pane-rss: var(--icon-rss) !important;
+  --folder-pane-sent: var(--icon-sent) !important;
+  --folder-pane-spam: var(--icon-spam) !important;
+  --folder-pane-template: var(--icon-template) !important;
+  --folder-pane-trash: var(--icon-trash) !important;
+  --spaces-icon-address-book: var(--icon-address-book) !important;
+  --spaces-icon-calendar: var(--icon-calendar) !important;
+  --spaces-icon-chat: var(--icon-chat) !important;
+  --spaces-icon-collapse: var(--icon-collapse) !important;
+  --spaces-icon-mail: var(--icon-mail) !important;
+  --spaces-icon-overflow: var(--icon-overflow) !important;
+  --spaces-icon-settings: var(--icon-settings) !important;
+  --spaces-icon-tasks: var(--icon-tasks) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. FILLED ART NEEDS A FILLED PAINT
  *
- * Scoped per folder type rather than to `#folderTree .icon`, because that one
- * selector serves every folder icon there is: four of them are ours and the
- * rest -- inbox, drafts, sent, templates, outbox, rss -- are still stock. A
- * blanket rule here is exactly the mistake the block header warns about.
+ * Thunderbird's own icons are OUTLINE art and its rules are written for that:
+ * the full-strength colour goes on `stroke`, and `fill` gets a 10-20% alpha
+ * wash -- the soft tint inside the outline. Microsoft's art is FILLED: one
+ * path, all fill, no stroke geometry. On a wash site the whole glyph therefore
+ * renders at one fifth strength and reads as a smudge. Measured before this
+ * block existed: folder-pane Spam came out #513234 against a #292B2D
+ * background, which back-solves to the right red at exactly 20%.
  *
- * The last two selectors are the generic folder icon: a mail folder carries
- * neither attribute, and Local Folders is the account row whose server type
- * is "none" (about3Pane.css:297-299). Account rows for real servers are NOT
- * included -- they draw --icon-mail and friends, which are still stock. */
-#folderTree li[data-folder-type="junk"] > .container > .icon,
-#folderTree li[data-folder-type="trash"] > .container > .icon,
-#folderTree li[data-folder-type="archive"] > .container > .icon,
-#folderTree li[data-server-type="none"] > .container > .icon,
-#folderTree li:not([data-folder-type]):not([data-server-type]) > .container > .icon {
+ * THE RULE, APPLIED WITHOUT EXCEPTION:
+ *   give `fill` whatever stock gives `stroke`.
+ * Not currentColor everywhere -- stock's own stroke value at that site. That
+ * is what keeps the per-folder tinting (spam red, archive olive, inbox blue),
+ * keeps selected rows using the selection colour, and keeps the deliberately
+ * quiet thread-tree columns quiet instead of promoting them to full strength.
+ * The rules below are grouped by that value, which is why there are 47 of them
+ * for 161 selectors rather than one blanket rule.
+ *
+ * Extracted from the shipped skin rather than written by hand: every selector
+ * here encloses a `fill: color-mix(...)` in Thunderbird's own CSS, with the
+ * nesting resolved. That is also why some will look redundant -- they are
+ * stock's shape, not ours.
+ *
+ * TWO WAYS THE FIRST VERSION OF THIS BLOCK MISSED, both now fixed. It ran at
+ * 127 selectors and left most of the visible chrome faint -- the message
+ * header actions, the calendar and chat toolbars, the folder-pane header, the
+ * search field's magnifier.
+ *   1. The extractor discarded a rule's declarations when a nested rule opened
+ *      inside it. `.button`, `.toolbarbutton-1` and
+ *      `.message-header-view-button` all declare their wash before their first
+ *      `&:hover`, so all three vanished -- 38 selectors in total.
+ *   2. It only looked for a literal `fill: color-mix(...)`. Three custom
+ *      properties carry the wash indirectly, and a rule reading
+ *      `fill: var(--button-icon-fill)` names no color-mix at all. They are
+ *      redefined in the first rule below.
+ * Both were bugs in the tooling, not judgement calls, which is why the block
+ * grew by a quarter without any new decision behind it.
+ *
+ * WHY NOT IN THE SVG INSTEAD -- three variants were built and measured:
+ *   fill="context-stroke"          full strength on the wash sites, and BLACK
+ *                                  on the ~64 that export fill only.
+ *   both paths, stroke over fill   the same black, painted over a good glyph.
+ *   fill="context-fill"  (kept)    correct wherever stock sets fill to a real
+ *                                  colour; faint on the wash sites, which is
+ *                                  what this block is for.
+ * The finding under all three: an unresolved context-stroke paints BLACK, not
+ * nothing. There is no SVG-side trick.
+ *
+ * SAFE TO APPLY BROADLY ONLY BECAUSE THE SET IS NEARLY COMPLETE. While most
+ * icons were still Thunderbird's, a rule like this turned THEIR outline art
+ * into solid blobs, so the first version of this block had to name consumers
+ * one at a time. The twelve tokens still on stock art were checked: every one
+ * is drawn by its own dedicated selector, none of which appears below.
+ * ------------------------------------------------------------------------- */
+
+/* LIGHT MODE GETS A SOFTER ICON.
+ *
+ * "Give fill whatever stock gives stroke" is right about WHICH colour, and on
+ * dark chrome it is right about the strength too. On light chrome it is not:
+ * an outline glyph at full text colour is a thin line, and the same colour
+ * poured through a filled silhouette is a solid black shape. Same value, much
+ * more of it, and the icons end up heavier than the text they sit beside.
+ *
+ * Fluent 2's own answer is to draw icons one step down the neutral ramp --
+ * NeutralForeground3 #616161 against NeutralForeground1 #242424 for text. 72%
+ * of the text colour over white lands on #616161, so that is the ratio.
+ *
+ * Dark mode is deliberately left at full strength: there the glyph is lighter
+ * than its ground, so thinning it toward the background only makes it muddy --
+ * which is the exact failure the 20% wash produced before part 3 existed.
+ *
+ * light-dark() and not a media query, because the theme's light/dark switch is
+ * a pref that drives `color-scheme` (see userChrome.css), and light-dark()
+ * follows color-scheme. A prefers-color-scheme query would follow the OS and
+ * desync the moment the two disagree. Same idiom as fluent-tokens.css. */
+:root {
+  --fluent-icon-fill: light-dark(
+    color-mix(in srgb, currentColor 72%, transparent),
+    currentColor
+  );
+}
+
+/* The three custom properties that carry the wash indirectly. A rule reading
+ * `fill: var(--button-icon-fill)` never mentions color-mix, so redefining the
+ * property is the only lever that reaches it -- and it reaches every consumer
+ * at once. Each takes its own paired stroke token, same rule as below, softened
+ * the same way -- they cannot use --fluent-icon-fill because their colour is
+ * their own stroke token rather than currentColor.
+ * `*` and not `:root`, because an element that declares the property itself
+ * wins over any inherited value no matter the origin. */
+* {
+  --appmenu-icons-fill: light-dark(
+    color-mix(in srgb, var(--appmenu-icons-stroke) 72%, transparent),
+    var(--appmenu-icons-stroke)
+  ) !important;
+  --button-icon-fill: light-dark(
+    color-mix(in srgb, var(--button-icon-stroke, currentColor) 72%, transparent),
+    var(--button-icon-stroke, currentColor)
+  ) !important;
+  --menuitem-icon-fill: var(--fluent-icon-fill) !important;
+}
+
+#accountLogo,
+#archiveOptions fieldset ul li .icon,
+#archiveTree > treechildren::-moz-tree-image,
+#books:focus :where(.bookRow, .listRow).selected > #books .bookRow-container,
+#books:focus :where(.bookRow, .listRow).selected > #books .listRow-container,
+#button-newMsgPopup .menuitem-iconic,
+#calendar-add-task-button,
+#calendar-list > li > .calendar-list-icon,
+#calendar-list > li > :is(.calendar-displayed, .calendar-more-button),
+#calendar-status-todaypane-button > stack > .toolbarbutton-icon-begin,
+#deleteAccount,
+#detailsFooter menulist:not([hidden]),
+#detailsFooter menulist:not([hidden]) .menu-icon,
+#editContactAddressBookList,
+#folderPaneGetMessagesContext .menu-icon,
+#imip-bar > img,
+#imip-view-toolbar > .toolbarbutton-1.message-header-view-button,
+#msgEncryptedSubjectIcon,
+#offline-status,
+#openPgpKey,
+#photo,
+#qrExportContent .inset-icon::before,
+#qrExportSecurityHint::before,
+#releasenotes img,
+#threadTree[rows="thread-card"] .card-layout[data-properties~="hasUnread"] .replies-icon,
+#threadTree[rows="thread-card"] .card-layout[data-properties~="hasUnread"] .thread-replies,
+#todaypane-new-event-button,
+#toolbarGetMessagesContext .menu-icon,
+.abMenuItem > .menu-icon,
+.addon-banner-item > .toolbarbutton-icon,
+.alltabs-item > .menu-icon[srcset="null"],
+.autocomplete-richlistitem > .ac-site-icon,
+.btn-hub,
+.btn-link,
+.button,
+.cal-event-toolbarbutton,
+.category-icon,
+.config-list,
+.content-blocking-category .checkbox-label-box,
+.conv-nicklist-image,
+.encryption-button,
+.expiration-date-icon,
+.extra-information-label > img,
+.folderMenuItem > .menu-icon,
+.folderMenuItem::part(icon),
+.icon,
+.menu-icon,
+.message-header-view-button,
+.openpgp-image-btn .button-icon,
+.person-icon,
+.preview,
+.recipient-address-book-button img,
+.recipient-avatar.is-mail-list img,
+.reminder-icon,
+.reminder-list-icon .menu-icon,
+.reminder-list-icon::part(icon),
+.remove-property-button,
+.resource-link,
+.sidebar-footer-icon,
+.spaces-popup-menuitem image,
+.spaces-toolbar-button > img,
+.spaces-toolbar-pinned-button > img,
+.spaces-toolbar-statusbar-button > img,
+.startChatBubble,
+.subviewbutton-iconic,
+.synced-list,
+.tab-icon-image,
+.tab-throbber,
+.tabPane h1::before,
+.thread-tree-col-picker > image,
+.thread-tree-icon-header img,
+.tree-columnpicker-button,
+.zoom-in-icon,
+.zoom-out-icon,
+:host(.is-mail-list) img,
+:host.is-mail-list img,
+[is="tree-view-table"] img,
+[is="tree-view-table-body"] > .table-layout.selected:focus-within:not([data-properties~="flagged"]) > .tree-view-row-flag > .tree-button-flag > img,
+[is="tree-view-table-body"] > .table-layout.selected:focus-within:not([data-properties~="junk"]) > .tree-view-row-spam > .tree-button-spam > img,
+[is="tree-view-table-body"]:is(:focus, :focus-within) > .table-layout.selected:not([data-properties~="flagged"]) > .tree-view-row-flag > .tree-button-flag > img,
+[is="tree-view-table-body"]:is(:focus, :focus-within) > .table-layout.selected:not([data-properties~="junk"]) > .tree-view-row-spam > .tree-button-spam > img,
+a[href],
+button,
+button.email-action-flagged:not(.flagged):hover,
+calendar-notifications-setting .remove-button,
+certificate-check > img,
+img.icon,
+input::-moz-search-clear-button,
+input[type="search"],
+menulist::part(icon),
+menulist[is="menulist-addrbooks"]::part(icon),
+moz-button::part(button),
+panel-item[action="remove"]::part(button),
+slot[name="icon"]::slotted(img),
+slot[name="placeholders"] div::before,
+treechildren::-moz-tree-image(unreadButtonColHeader),
+unified-toolbar-tab::part(icon) {
+  fill: var(--fluent-icon-fill) !important;
+}
+
+.button-star,
+.tree-view-row-flag img,
+.tree-view-row-unread img,
+:is(.tree-view-row-spam img, .button-spam),
+button.email-action-flagged,
+treechildren::-moz-tree-image(deleteCol),
+treechildren::-moz-tree-image(flaggedCol),
+treechildren::-moz-tree-image(junkStatusCol),
+treechildren::-moz-tree-image(junkStatusCol, notjunk) {
+  fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+}
+
+treechildren::-moz-tree-image(deleteCol, selected, focus),
+treechildren::-moz-tree-image(flaggedCol, selected, focus),
+treechildren::-moz-tree-image(junkStatusCol, selected, focus),
+treechildren::-moz-tree-image(threadCol, selected, focus),
+treechildren::-moz-tree-image(unreadButtonColHeader, selected, focus) {
+  fill: var(--select-focus-text-color) !important;
+}
+
+.zoom-in-icon[disabled],
+.zoom-out-icon[disabled] {
+  fill: color-mix(in srgb, currentColor 40%, transparent) !important;
+}
+
+#books .bookRow-container,
+#books .listRow-container {
+  fill: var(--ab-icons-color) !important;
+}
+
+.icon-info,
+button.account-hub-option-button img.mail-lock-icon {
+  fill: var(--color-primary-default) !important;
+}
+
+#accounttree li .icon,
+.folder-chooser-popup-button {
+  fill: var(--icon-color) !important;
+}
+
+#notification-popup-box > .notification-anchor-icon,
+.toolbarbutton-1 {
+  fill: light-dark(
+    color-mix(in srgb, var(--toolbarbutton-icon-fill, currentColor) 72%, transparent),
+    var(--toolbarbutton-icon-fill, currentColor)
+  ) !important;
+}
+
+#button-chat[unreadMessages="true"],
+#editContactPanelIcon {
+  fill: var(--toolbarbutton-icon-fill-attention) !important;
+}
+
+treechildren::-moz-tree-image(threadCol, container) {
+  fill: color-mix(in srgb, currentColor 50%, transparent) !important;
+}
+
+.dark-reader-toggle::after {
+  fill: color-mix(in srgb, currentColor 55%, transparent) !important;
+}
+
+[is="tree-view-table-body"]:is(:focus, :focus-within) > .selected:not([data-properties~="flagged"]) .button-star {
+  fill: color-mix(in srgb, currentColor 70%, transparent) !important;
+}
+
+#abResultsTree .generatedname-column {
+  fill: color-mix(in srgb, currentColor 85%, transparent) !important;
+}
+
+.dark-reader-toggle:checked::after {
+  fill: color-mix(in srgb, var(--selected-item-text-color) 90%, transparent) !important;
+}
+
+.addon-banner-item {
+  fill: var(--appmenu-warning-color) !important;
+}
+
+.expiration-date-container.key-expired .expiration-date-icon {
+  fill: var(--color-amber-50) !important;
+}
+
+.icon-danger {
+  fill: var(--color-critical-pressed) !important;
+}
+
+.openpgp-status.status-success {
+  fill: var(--color-green-50) !important;
+}
+
+treechildren::-moz-tree-image(unreadButtonColHeader, unread) {
+  fill: var(--color-green-60) !important;
+}
+
+.statusTypeIcon {
+  fill: var(--color-ink-50) !important;
+}
+
+.openpgp-status.status-error {
+  fill: var(--color-red-50) !important;
+}
+
+.icon-success {
+  fill: var(--color-success-default) !important;
+}
+
+button.account-hub-option-button:disabled .mail-lock-icon {
+  fill: var(--color-text-secondary) !important;
+}
+
+.icon-warning {
+  fill: var(--color-warning-pressed) !important;
+}
+
+.warning-icon {
+  fill: var(--color-white) !important;
+}
+
+#rssSubscriptionsList > treechildren::-moz-tree-image {
+  fill: var(--default) !important;
+}
+
+.dialog-header-image {
+  fill: var(--dialog-highlight-color) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Archive) {
+  fill: var(--folder-color-archive) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Drafts) {
+  fill: var(--folder-color-draft) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol) {
+  fill: var(--folder-color-folder) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Virtual) {
+  fill: var(--folder-color-folder-filter) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, isFeedFolder-true) {
+  fill: var(--folder-color-folder-rss) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Inbox) {
+  fill: var(--folder-color-inbox) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, serverType-nntp) {
+  fill: var(--folder-color-newsletter) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Outbox) {
+  fill: var(--folder-color-outbox) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, isFeed-true) {
+  fill: var(--folder-color-rss) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Sent) {
+  fill: var(--folder-color-sent) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Junk) {
+  fill: var(--folder-color-spam) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Templates) {
+  fill: var(--folder-color-template) !important;
+}
+
+treechildren::-moz-tree-image(folderNameCol, specialFolder-Trash) {
+  fill: var(--folder-color-trash) !important;
+}
+
+#folderTree .icon {
   fill: var(--icon-color, var(--folder-color-folder)) !important;
 }
 
-/* THE THREAD TREE COLUMNS -- shared/messageIcons.css:77 and :186.
+.button-account::before {
+  fill: var(--primary) !important;
+}
+
+.recipient-address-book-button.in-address-book img {
+  fill: var(--selected-item-color) !important;
+}
+
+tree > treechildren::-moz-tree-image(primary, dropOn) {
+  fill: var(--selected-item-text-color) !important;
+}
+
+:host .tag-icon {
+  fill: var(--tag-color, currentColor) !important;
+}
+
+tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img {
+  fill: var(--thread-pane-unread-stroke) !important;
+}
+
+#detailsDeleteButton:not(:hover, :active) {
+  fill: var(--vcard-delete-button-color) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2c. TAB ICONS
  *
- * 10% fill under a 30% stroke, not the usual 20/100: these two columns are
- * meant to read as quiet status marks rather than as buttons. 30% is what
- * stock puts on the stroke, so 30% is what goes on the fill -- promoting them
- * to currentColor would make the delete and junk columns shout across every
- * row in the list, which is not what stock was saying. */
-treechildren::-moz-tree-image(deleteCol),
-treechildren::-moz-tree-image(junkStatusCol) {
+ * A tab's icon is not a token. It is the page's FAVICON -- a hardcoded
+ * chrome:// URL, either in a <link rel="icon"> or handed to setIcon() from JS
+ * (addressBookTab.js:67, calendar-tabs.js:85, chat-messenger.js:339,
+ * preferencesTab.js:60, glodaFacetTab.js:30). Nothing in the token layer
+ * touches it, which is why the spaces menu showed Microsoft's book while the
+ * Address Book tab one click later still showed Thunderbird's.
+ *
+ * The fix is to match the src and replace the rendered image. That is stock's
+ * own idiom on this exact element -- tabmail.css:132 does
+ * `.tab-icon-image:not([src]) { content: var(--icon-file); }` -- so it is a
+ * documented way to paint this img, not a trick.
+ *
+ * The src attribute is left alone deliberately. setIcon() installs a one-shot
+ * error listener to swap in its fallback, and rewriting the attribute out from
+ * under it is how that machinery would get confused.
+ *
+ * pdf.svg is the one favicon left stock: the icon set has no counterpart, and
+ * a PDF tab showing a generic document would say less than what is there now.
+ *
+ * `.tab-icon-image` already takes its full-strength fill from part 3.
+ * ------------------------------------------------------------------------- */
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/address-book.svg"] {
+  content: var(--icon-address-book) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/calendar.svg"] {
+  content: var(--icon-calendar) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/tasks.svg"] {
+  content: var(--icon-tasks) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/chat.svg"] {
+  content: var(--icon-chat) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/search.svg"] {
+  content: var(--icon-search) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/settings.svg"],
+.tab-icon-image[src="chrome://global/skin/icons/settings.svg"] {
+  content: var(--icon-settings) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/account-settings.svg"] {
+  content: var(--icon-account-settings) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/download.svg"] {
+  content: var(--icon-download) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/draft.svg"] {
+  content: var(--icon-draft) !important;
+}
+
+/* A MAIL TAB'S ICON IS NOT FIXED -- it tracks the selected folder.
+ * about3Pane.xhtml:22 declares folder.svg, but about3Pane.js:2867 overwrites
+ * that href on every folder change with FolderUtils.getFolderIcon(), which
+ * returns one of seventeen names from the same compact/ directory. So the tab
+ * shows a tray on Inbox, a bin on Trash, a globe on a news server. All
+ * seventeen need mapping or a mail tab keeps stock art -- and worse than
+ * stock, since part 3 gives that outline art a full-strength fill and it comes
+ * out as a solid blob. That blob is what an Inbox tab was showing.
+ *
+ * INBOX IS THE DELIBERATE EXCEPTION and the only rule in this file that does
+ * not follow its own source. Upstream draws Inbox as a tray; the spaces rail
+ * button that opens the very same view draws an envelope. The rail is the
+ * label people read, so the tab matches the rail. Every other folder type
+ * keeps its own meaning -- a Trash tab still says trash. */
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/inbox.svg"] {
+  content: var(--icon-mail) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/folder.svg"] {
+  content: var(--icon-folder) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/mail.svg"] {
+  content: var(--icon-mail) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/mail-secure.svg"] {
+  content: var(--icon-mail-secure) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/globe.svg"] {
+  content: var(--icon-globe) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/globe-secure.svg"] {
+  content: var(--icon-globe-secure) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/rss.svg"] {
+  content: var(--icon-rss) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/newsletter.svg"] {
+  content: var(--icon-newsletter) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/tag.svg"] {
+  content: var(--icon-tag) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/folder-filter.svg"] {
+  content: var(--icon-folder-filter) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/spam.svg"] {
+  content: var(--icon-spam) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/template.svg"] {
+  content: var(--icon-template) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/archive.svg"] {
+  content: var(--icon-archive) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/trash.svg"] {
+  content: var(--icon-trash) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/outbox.svg"] {
+  content: var(--icon-outbox) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/sent.svg"] {
+  content: var(--icon-sent) !important;
+}
+
+.tab-icon-image[src="chrome://messenger/skin/icons/new/compact/import.svg"] {
+  content: var(--icon-import) !important;
+}
+
+.tab-icon-image[src="chrome://global/skin/icons/info.svg"] {
+  content: var(--icon-info) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. THE SITES THAT NEVER OPTED INTO fill AT ALL
+ *
+ * Part 3 fixes rules that hand `fill` a wash. This fixes the opposite defect:
+ * 62 rules declare `-moz-context-properties` WITHOUT `fill` in the list --
+ * `stroke` alone, or `stroke, fill-opacity`. At those sites the keyword
+ * `context-fill` has nothing to resolve against, so Gecko falls back to the
+ * CSS initial value of `fill`, which is BLACK. Not faint, not the wrong
+ * shade -- black, and black in both colour schemes, which is what makes it
+ * look nothing like the wash bug even though it comes from the same mismatch.
+ *
+ * Thunderbird never noticed because outline art has nothing to lose: the shape
+ * IS the stroke, and an invisible black fill behind it costs nothing. Ours is
+ * all fill. Submenu chevrons and the today-pane nav arrows were the visible
+ * cases; the other 60 are the same rule waiting to be found.
+ *
+ * So each rule below restates stock's own property list WITH `fill` added, and
+ * gives fill that rule's own stroke value -- the same rule part 3 follows.
+ * Where stock names a real colour rather than currentColor it kept that colour
+ * verbatim and skipped the light-mode softening, because those are chosen
+ * colours (a green tick, a white overlay, an avatar tint), not text.
+ *
+ *
+ * NO NAMESPACE PREFIXES IN THESE LISTS, EVER. userChrome.css declares no
+ * @namespace on purpose (its header says why), so a selector like
+ * `html|input[...]` is invalid -- and ONE invalid selector in a comma list
+ * invalidates the WHOLE rule. Two of them shipped here once and silently took
+ * all 46 selectors of the first group down with them, which is how a fix that
+ * named #miniday-dropdown-button still left it black. Anything extracted from
+ * Thunderbird's own CSS has to have its prefixes stripped, not carried over:
+ * stock declares its namespaces, and this sheet cannot.
+ *
+ * fill-opacity IS IGNORED, and one place that shows. Nine of these also export
+ * fill-opacity, and Thunderbird uses it to keep a marker quiet -- the
+ * correspondent column sets 0, then 0.3 on outgoing rows. It cannot reach our
+ * paths: a context property only crosses into an SVG that asks for it by name,
+ * and ours ask for context-fill only. So that arrow comes out at full strength
+ * rather than at 30%. It was solid black before, so this is still the right
+ * direction, but it is a real difference and not an accident.
+ * ------------------------------------------------------------------------- */
+
+#AbPickerHeader #abContextMenuButton,
+#NextButton,
+#PreviousButton,
+#calendar-status-todaypane-button > .toolbarbutton-icon-end,
+#defaultSortOrder .radio-icon,
+#miniday-dropdown-button,
+.agenda-listitem-overlap,
+.arrowhead,
+.back,
+.calendar-list-header,
+.calendar-task-tree-col-priority,
+.eventToggle,
+.handlerSortHeaderIcon,
+.icon-close-lg,
+.icon-maximize,
+.icon-minimize,
+.icon-nav-right,
+.icon-recurrence,
+.item-classification-icon,
+.item-recurrence-icon,
+.nav-button,
+.notification-button.button-menu-list,
+.openpgp-more-btn .button-menu-dropmarker,
+.subviewbutton[checked],
+.today-pane-cycler,
+.toolbar-target .spacer,
+.toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker,
+.tree-table-cell-container button,
+button > .button-box > dropmarker,
+calendar-notifications-setting .add-button,
+form .input-field.number-input::-moz-number-spin-down,
+form .input-field.number-input::-moz-number-spin-up,
+form .input-textarea.number-input::-moz-number-spin-down,
+form .input-textarea.number-input::-moz-number-spin-up,
+input[type="number"]::-moz-number-spin-down,
+input[type="number"]::-moz-number-spin-up,
+li[is="calendar-dialog-attachment"] .attachment-icon,
+menulist::part(dropmarker-icon),
+richlistitem[is="chat-group-richlistitem"] .twisty,
+toolbarbutton.notification-button[is="toolbarbutton-menu-button"] > dropmarker,
+toolbarbutton[is="toolbarbutton-menu-button"] > dropmarker,
+treechildren::-moz-tree-image(attachmentCol, attach),
+treechildren::-moz-tree-twisty,
+vcard-edit select:not([size], [multiple]) {
+  -moz-context-properties: fill, stroke !important;
+  fill: var(--fluent-icon-fill) !important;
+}
+
+#attachmentToggle,
+#threadTree[rows="thread-card"] .card-layout td .card-container .is-outgoing [data-properties~="outgoing"] #threadTree[rows="thread-card"] .card-layout td .card-container > .sender,
+.PanelUI-subView .subviewbutton-nav::after,
+.correspondentcol-column,
+.miniday-nav-buttons,
+.overflow-icon,
+.widget-overflow-list .subviewbutton-nav::after,
+menupopup > menu::after,
+treechildren::-moz-tree-image(correspondentCol) {
+  -moz-context-properties: fill, stroke, fill-opacity !important;
+  fill: var(--fluent-icon-fill) !important;
+}
+
+.calendar-task-tree > treechildren::-moz-tree-image(calendar-task-tree-col-priority) {
+  -moz-context-properties: fill, stroke !important;
+  fill: transparent !important;
+}
+
+.contact-photo {
+  -moz-context-properties: fill, stroke !important;
+  fill: color-mix(in srgb, transparent 50%, var(--recipient-avatar-color)) !important;
+}
+
+#photoButton:is(:focus-visible, :hover) #photoOverlay {
+  -moz-context-properties: fill, stroke !important;
+  fill: #fff !important;
+}
+
+#photoDropTarget {
+  -moz-context-properties: fill, stroke !important;
+  fill: var(--background-color-box) !important;
+}
+
+.summary-items {
+  -moz-context-properties: fill, stroke !important;
+  fill: var(--color-green-60) !important;
+}
+
+.panel-header > .subviewbutton-back {
+  -moz-context-properties: fill, stroke !important;
+  fill: var(--panel-text-color) !important;
+}
+
+.contact-photo[src=""] {
+  -moz-context-properties: fill, stroke !important;
   fill: color-mix(in srgb, currentColor 30%, transparent) !important;
-}
-
-/* The spam mark and its button in the card/table views -- shared/threadPane.css:514.
- * Same intent and the same 30% as the columns above. */
-:is(.tree-view-row-spam img, .button-spam) {
-  fill: color-mix(in srgb, currentColor 30%, transparent) !important;
-}
-
-/* SEARCH FIELDS -- shared/common.css:159 and :177, shared/searchBox.css:11 and
- * :29, shared/search-bar.css:50. Four sheets, two icons: the magnifier inside
- * the field and the clear button at its end. Every one of them pairs the wash
- * with `stroke: currentColor`, so all five collapse into one rule. */
-input[type="search"],
-input::-moz-search-clear-button {
-  fill: currentColor !important;
-}
-
-/* The all-tabs dropdown, for tabs with no favicon -- shared/tabmail.css:373. */
-.alltabs-item > .menu-icon[srcset="null"] {
-  fill: currentColor !important;
 }
