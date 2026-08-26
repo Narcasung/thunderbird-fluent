@@ -6,7 +6,7 @@
 <p align="center">A Fluent theme for Thunderbird.</p>
 <br/>
 <p align="center">
-	<img style="border-radius:15px" src="screenshots/inbox.png"/>
+	<img src="screenshots/inbox.png"/>
 </p>
 
 ## Features
@@ -16,26 +16,23 @@
 - Toggleable mica background with transparency control.
 - Brand new icons from [Microsoft's FluentUI Icons](https://github.com/microsoft/fluentui-system-icons).
 
-## Previews
-
 <details>
-   <summary>Calendar</summary>
+   <summary>Previews</summary>
    <img src="screenshots/calendar.png"/>
-</details>
-<details>
-   <summary>Address Book</summary>
+   <br/>
    <img src="screenshots/address.png"/>
-</details>
-<details>
-   <summary>Settings</summary>
+   <br/>
    <img src="screenshots/settings.png"/>
-</details>
-<details>
-   <summary>Add-ons Manager with Spaces toolbar</summary>
+   <br/>
    <img src="screenshots/spaces.png"/>
 </details>
 
 ## Install
+
+**If you already have a `userChrome.css` or `userContent.css` of your own, back
+them up before installing.**
+
+### Extension
 
 1. Download `thunderbird-fluent.xpi` from the
    [latest release](https://github.com/Narcasung/thunderbird-fluent/releases/latest).
@@ -48,52 +45,39 @@ You can change the options in Add-ons Manager > Extensions > Thunderbird Fluent 
 
 The extension's theme mode option automatically switches Thunderbird's own setting as well as its own CSS files theme override. Don't change Thunderbird's theme manually or this theme will not work correctly.
 
-Recommended Thunderbird settings to get the preview's look:
+### Manual install
 
-- View:
-   - Layout:
-      - Vertical View: On
-   - Toolbars:
-      - Menu Bar: Off
-      - Spaces Toolbar: Off
-- Font Size: 13px
-- Density: Relaxed
+Not installing the extension comes with some caveats:
 
+- **The icons will not be replaced, and the default Thunderbird icons will not display or will be broken.**\
+To mitigate this, comment out `@import url("fluent-icons.css");` in `userChrome.css`.\
+It will restore most icons to default, but some will still be broken.
+- No options page. Change the prefs yourself in `about:config` instead:
 
-## What the extension does
+  | Pref                                         | Values                       |
+  | -------------------------------------------- | ---------------------------- |
+  | `extensions.thunderbird-fluent.colorScheme`  | `system`, `light` or `dark`  |
+  | `widget.windows.mica`                        | `true` / `false`             |
+  | `widget.windows.mica.toplevel-backdrop`      | `2` Mica, `3` Acrylic        |
+  | `extensions.thunderbird-fluent.transparency` | `10` to `100`, in steps of 10 |
 
-The extension will automatically change those prefs depending on your options:
+- If you want to remove the theme, delete `<profile>/chrome` and reset the prefs above by hand.
 
-- `widget.windows.mica`
-- `widget.windows.mica.toplevel-backdrop`
+If you still want to go ahead:
 
-It will also set `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`
-
-It will install those files to your profile folder:
-
-- `chrome\userChrome.css`
-- `chrome\userContent.css`
-- `chrome\fluent-tokens.css`
-- `chrome\fluent-chrome.css`
-- `chrome\fluent-layout.css`
-- `chrome\fluent-lists.css`
-- `chrome\fluent-icons.css`
-- `chrome\fluent-account-central.css`
-- `chrome\fluent-calendar.css`
-- `chrome\fluent-search-results.css`
-
-Windows path: `%USERPROFILE%\AppData\Roaming\Thunderbird\Profiles\<profile>`\
-To find the folder: Help > Troubleshooting Information > Profile Folder >
-Open Folder.
-
-**If you already had a `userChrome.css` or `userContent.css` of your own, back
-it up before installing.**
+1. Copy this repo's `chrome` folder into your Thunderbird's profile folder.\
+   Windows path: `%USERPROFILE%\AppData\Roaming\Thunderbird\Profiles\<profile>`\
+   To find the folder: Help > Troubleshooting Information > Profile Folder >
+   Open Folder.
+2. In `about:config` (Settings > General > Config Editor), set
+   `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`.
+3. Restart Thunderbird.
 
 ## Uninstall
 
-Remove the extension from the Add-ons Manager and restart.
+1. Remove the extension from the Add-ons Manager and restart.
 
-- Removing/disabling the extension should reset the aforementionned prefs.\
-If you still notice undesired transparency, reset them yourself. (Settings > General > Config Editor at the bottom)
-- Removing/disabling the extension should delete the aforementionned files.\
-If you still notice theme leftovers, check your profile\chrome folder manually for remaining files.
+- Removing/disabling the extension should reset the touched prefs.\
+  If you installed manually, or if you still notice undesired transparency after uninstalling the extension, reset them yourself.
+- Removing/disabling the extension should delete the chrome files.\
+  If you installed manually, or if you still notice theme leftovers after uninstalling the extension, check your profile\chrome folder manually for remaining files.
