@@ -14,8 +14,26 @@
 - Reworked layout and appearance to match Microsoft Fluent 2's design system.
 - Light, Dark, or follow system mode option.
 - Toggleable mica background with transparency control.
+- Brand new icons from [Microsoft's FluentUI Icons](https://github.com/microsoft/fluentui-system-icons).
 
 ## Previews
+
+<details>
+   <summary>Calendar</summary>
+   <img style="border-radius:15px" src="screenshots/calendar.png"/>
+</details>
+<details>
+   <summary>Address Book</summary>
+   <img style="border-radius:15px" src="screenshots/address.png"/>
+</details>
+<details>
+   <summary>Settings</summary>
+   <img style="border-radius:15px" src="screenshots/settings.png"/>
+</details>
+<details>
+   <summary>Add-ons Manager with Spaces toolbar</summary>
+   <img style="border-radius:15px" src="screenshots/spaces.png"/>
+</details>
 
 ## Install
 
@@ -35,7 +53,6 @@ Recommended Thunderbird settings to get the preview's look:
 - View:
    - Layout:
       - Vertical View: On
-      - Message List Header: Off
    - Toolbars:
       - Menu Bar: Off
       - Spaces Toolbar: Off
