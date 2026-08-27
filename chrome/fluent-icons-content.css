@@ -1,0 +1,823 @@
+/* ============================================================================
+ * Fluent 2 for Thunderbird -- ICONS FOR CONTENT TABS
+ *
+ * Split out of userContent.css so that it has a kill switch, and for no other
+ * reason: the rules below are unchanged. userContent.css @imports it as its
+ * first statement, so commenting that one line out is the content-tab twin of
+ * commenting @import url("fluent-icons.css") out of userChrome.css. A manual
+ * install that does one and not the other gets half a result -- the chrome
+ * window on stock art and Settings, the Add-ons Manager and the Address Book
+ * still on ours -- which is why the two switches exist as a pair.
+ *
+ * WHAT COMMENTING IT OUT DOES. Two jobs stop together. The token overrides
+ * stop repointing --icon-* at resource://thunderbird-fluent/, so the pages
+ * fall back to Thunderbird's own art; and the fill pass stops handing filled
+ * art a fill value, which stock art does not want anyway. Both have to go at
+ * once. Dropping only the fill pass leaves Microsoft's glyphs unpainted;
+ * dropping only the tokens leaves stock's outline art with a filled body,
+ * which is a dark ring around every icon in light mode.
+ *
+ * CASCADE. Moving these rules from the end of userContent.css to an @import at
+ * its top moves them to the FRONT of that sheet, and within one origin a later
+ * rule beats an earlier one at equal importance. Checked before the move:
+ * nothing ahead of them declared --icon-*, an alias, fill, stroke or a content
+ * URL. The only three `content` declarations in the file are `::before` on
+ * tree rows, which these rules never touch.
+ *
+ * The same three blocks fluent-icons.css installs in the chrome window: the
+ * --icon-* token overrides, the alias families that shadow them, and the fill
+ * pass that filled art needs. They are restated rather than imported for the
+ * reason at the top of userContent.css -- a custom property set on the
+ * messenger window's :root does not reach a document in a content docshell, so
+ * every page here would otherwise keep Thunderbird's art while the chrome
+ * around it showed Microsoft's. That is the seam the Settings sidebar, the
+ * Add-ons Manager sidebar and the Address Book tabs were sitting on.
+ *
+ * Cheap to duplicate now and it was not before: these are 211 URLs, where the
+ * first working version of the icon mechanism was a 143 KB inline blob.
+ *
+ * --button-icon-fill IS THE ONE THAT MATTERS MOST HERE. aboutExtra.css sets it
+ * to a 20% wash on .sticky-container/.main-heading/.main-search, and every
+ * moz-button in the Add-ons Manager reads it. See the note in fluent-icons.css
+ * for why the redefinition is on `*` and not on :root.
+ *
+ * RESOURCE:// FROM A CONTENT DOCSHELL is the assumption under this whole
+ * section. These are privileged about: pages, so it should resolve exactly as
+ * it does in chrome -- but "should" is not "measured", and if these pages come
+ * back with no icons at all rather than stock ones, that is the thing to test
+ * first.
+ * ========================================================================== */
+
+@-moz-document url-prefix("about:accountsettings"),
+               url-prefix("chrome://messenger/content/am-"),
+               url-prefix("chrome://messenger/content/SmtpServerEdit.xhtml"),
+               url-prefix("chrome://messenger/content/removeAccount.xhtml"),
+               url-prefix("about:addressbook"),
+               url-prefix("about:config"),
+               url-prefix("about:addons"),
+               url-prefix("about:import"),
+               url-prefix("about:downloads"),
+               url-prefix("about:preferences"),
+               url-prefix("chrome://messenger/content/preferences/"),
+               url-prefix("chrome://calendar/content/preferences/"),
+               url-prefix("chrome://mozapps/content/preferences/"),
+               url("chrome://messenger/content/newTagDialog.xhtml"),
+               url("chrome://messenger/content/systemIntegrationDialog.xhtml"),
+               url("chrome://messenger/content/addressbook/pref-editdirectories.xhtml"),
+               url("chrome://mozapps/content/update/history.xhtml"),
+               url("chrome://global/content/appPicker.xhtml"),
+               url("chrome://pippki/content/certManager.xhtml"),
+               url("chrome://pippki/content/device_manager.xhtml") {
+
+  :root {
+    --icon-account-settings: url("resource://thunderbird-fluent/account-settings.svg") !important;
+    --icon-account-sync: url("resource://thunderbird-fluent/account-sync.svg") !important;
+    --icon-add: url("resource://thunderbird-fluent/add.svg") !important;
+    --icon-add-md: url("resource://thunderbird-fluent/add-md.svg") !important;
+    --icon-address-book: url("resource://thunderbird-fluent/address-book.svg") !important;
+    --icon-address-book-lg: url("resource://thunderbird-fluent/address-book-lg.svg") !important;
+    --icon-address-book-new-lg: url("resource://thunderbird-fluent/address-book-new-lg.svg") !important;
+    --icon-address-book-remote-lg: url("resource://thunderbird-fluent/address-book-remote-lg.svg") !important;
+    --icon-app-menu: url("resource://thunderbird-fluent/app-menu.svg") !important;
+    --icon-app-menu-addon: url("resource://thunderbird-fluent/app-menu-addon.svg") !important;
+    --icon-archive: url("resource://thunderbird-fluent/archive.svg") !important;
+    --icon-ascending-xs: url("resource://thunderbird-fluent/ascending-xs.svg") !important;
+    --icon-attachment: url("resource://thunderbird-fluent/attachment.svg") !important;
+    --icon-attachment-sm: url("resource://thunderbird-fluent/attachment-sm.svg") !important;
+    --icon-bell: url("resource://thunderbird-fluent/bell.svg") !important;
+    --icon-bell-disabled: url("resource://thunderbird-fluent/bell-disabled.svg") !important;
+    --icon-bell-ring: url("resource://thunderbird-fluent/bell-ring.svg") !important;
+    --icon-calendar: url("resource://thunderbird-fluent/calendar.svg") !important;
+    --icon-calendar-empty: url("resource://thunderbird-fluent/calendar-empty.svg") !important;
+    --icon-calendar-imip: url("resource://thunderbird-fluent/calendar-imip.svg") !important;
+    --icon-calendar-invite: url("resource://thunderbird-fluent/calendar-invite.svg") !important;
+    --icon-calendar-lg: url("resource://thunderbird-fluent/calendar-lg.svg") !important;
+    --icon-calendar-today: url("resource://thunderbird-fluent/calendar-today.svg") !important;
+    --icon-chat: url("resource://thunderbird-fluent/chat.svg") !important;
+    --icon-chat-lg: url("resource://thunderbird-fluent/chat-lg.svg") !important;
+    --icon-check: url("resource://thunderbird-fluent/check.svg") !important;
+    --icon-checkbox: url("resource://thunderbird-fluent/checkbox.svg") !important;
+    --icon-circle-add-sm: url("resource://thunderbird-fluent/circle-add-sm.svg") !important;
+    --icon-circle-small: url("resource://thunderbird-fluent/circle-small.svg") !important;
+    --icon-clear: url("resource://thunderbird-fluent/clear.svg") !important;
+    --icon-clock: url("resource://thunderbird-fluent/clock.svg") !important;
+    --icon-close: url("resource://thunderbird-fluent/close.svg") !important;
+    --icon-close-lg: url("resource://thunderbird-fluent/close-lg.svg") !important;
+    --icon-close-xs: url("resource://thunderbird-fluent/close-xs.svg") !important;
+    --icon-cloud-download: url("resource://thunderbird-fluent/cloud-download.svg") !important;
+    --icon-cloud-download-md: url("resource://thunderbird-fluent/cloud-download-md.svg") !important;
+    --icon-collapse: url("resource://thunderbird-fluent/collapse.svg") !important;
+    --icon-column-menu: url("resource://thunderbird-fluent/column-menu.svg") !important;
+    --icon-compress: url("resource://thunderbird-fluent/compress.svg") !important;
+    --icon-contact: url("resource://thunderbird-fluent/contact.svg") !important;
+    --icon-conversation: url("resource://thunderbird-fluent/conversation.svg") !important;
+    --icon-copy: url("resource://thunderbird-fluent/copy.svg") !important;
+    --icon-cut: url("resource://thunderbird-fluent/cut.svg") !important;
+    --icon-date-time-sm: url("resource://thunderbird-fluent/date-time-sm.svg") !important;
+    --icon-density-compact: url("resource://thunderbird-fluent/density-compact.svg") !important;
+    --icon-density-default: url("resource://thunderbird-fluent/density-default.svg") !important;
+    --icon-density-relaxed: url("resource://thunderbird-fluent/density-relaxed.svg") !important;
+    --icon-descending-xs: url("resource://thunderbird-fluent/descending-xs.svg") !important;
+    --icon-display-options: url("resource://thunderbird-fluent/display-options.svg") !important;
+    --icon-dot: url("resource://thunderbird-fluent/dot.svg") !important;
+    --icon-dot-xs: url("resource://thunderbird-fluent/dot-xs.svg") !important;
+    --icon-download: url("resource://thunderbird-fluent/download.svg") !important;
+    --icon-download-md: url("resource://thunderbird-fluent/download-md.svg") !important;
+    --icon-draft: url("resource://thunderbird-fluent/draft.svg") !important;
+    --icon-error-circle: url("resource://thunderbird-fluent/error-circle.svg") !important;
+    --icon-event-continue: url("resource://thunderbird-fluent/event-continue.svg") !important;
+    --icon-event-end: url("resource://thunderbird-fluent/event-end.svg") !important;
+    --icon-event-start: url("resource://thunderbird-fluent/event-start.svg") !important;
+    --icon-export: url("resource://thunderbird-fluent/export.svg") !important;
+    --icon-export-lg: url("resource://thunderbird-fluent/export-lg.svg") !important;
+    --icon-extension: url("resource://thunderbird-fluent/extension.svg") !important;
+    --icon-eye: url("resource://thunderbird-fluent/eye.svg") !important;
+    --icon-features: url("resource://thunderbird-fluent/features.svg") !important;
+    --icon-file: url("resource://thunderbird-fluent/file.svg") !important;
+    --icon-file-draft: url("resource://thunderbird-fluent/file-draft.svg") !important;
+    --icon-filter: url("resource://thunderbird-fluent/filter.svg") !important;
+    --icon-fingerprint: url("resource://thunderbird-fluent/fingerprint.svg") !important;
+    --icon-flexible-space: url("resource://thunderbird-fluent/flexible-space.svg") !important;
+    --icon-folder: url("resource://thunderbird-fluent/folder.svg") !important;
+    --icon-folder-compact-sm: url("resource://thunderbird-fluent/folder-compact-sm.svg") !important;
+    --icon-folder-filter: url("resource://thunderbird-fluent/folder-filter.svg") !important;
+    --icon-folder-rss: url("resource://thunderbird-fluent/folder-rss.svg") !important;
+    --icon-folder-save: url("resource://thunderbird-fluent/folder-save.svg") !important;
+    --icon-font: url("resource://thunderbird-fluent/font.svg") !important;
+    --icon-forward: url("resource://thunderbird-fluent/forward.svg") !important;
+    --icon-get-mail: url("resource://thunderbird-fluent/get-mail.svg") !important;
+    --icon-globe: url("resource://thunderbird-fluent/globe.svg") !important;
+    --icon-globe-secure: url("resource://thunderbird-fluent/globe-secure.svg") !important;
+    --icon-guest-attending: url("resource://thunderbird-fluent/guest-attending.svg") !important;
+    --icon-guest-declined: url("resource://thunderbird-fluent/guest-declined.svg") !important;
+    --icon-guest-maybe: url("resource://thunderbird-fluent/guest-maybe.svg") !important;
+    --icon-handshake: url("resource://thunderbird-fluent/handshake.svg") !important;
+    --icon-heart: url("resource://thunderbird-fluent/heart.svg") !important;
+    --icon-hidden: url("resource://thunderbird-fluent/hidden.svg") !important;
+    --icon-id: url("resource://thunderbird-fluent/id.svg") !important;
+    --icon-import: url("resource://thunderbird-fluent/import.svg") !important;
+    --icon-import-lg: url("resource://thunderbird-fluent/import-lg.svg") !important;
+    --icon-inbox: url("resource://thunderbird-fluent/inbox.svg") !important;
+    --icon-info: url("resource://thunderbird-fluent/info.svg") !important;
+    --icon-kebab: url("resource://thunderbird-fluent/kebab.svg") !important;
+    --icon-key: url("resource://thunderbird-fluent/key.svg") !important;
+    --icon-layout: url("resource://thunderbird-fluent/layout.svg") !important;
+    --icon-link: url("resource://thunderbird-fluent/link.svg") !important;
+    --icon-loading: url("resource://thunderbird-fluent/loading.svg") !important;
+    --icon-lock: url("resource://thunderbird-fluent/lock.svg") !important;
+    --icon-lock-disabled: url("resource://thunderbird-fluent/lock-disabled.svg") !important;
+    --icon-mail: url("resource://thunderbird-fluent/mail.svg") !important;
+    --icon-mail-lg: url("resource://thunderbird-fluent/mail-lg.svg") !important;
+    --icon-mail-list: url("resource://thunderbird-fluent/mail-list.svg") !important;
+    --icon-mail-lock-lg: url("resource://thunderbird-fluent/mail-lock-lg.svg") !important;
+    --icon-mail-secure: url("resource://thunderbird-fluent/mail-secure.svg") !important;
+    --icon-mail-sm: url("resource://thunderbird-fluent/mail-sm.svg") !important;
+    --icon-maximize-sm: url("resource://thunderbird-fluent/maximize-sm.svg") !important;
+    --icon-minimize-sm: url("resource://thunderbird-fluent/minimize-sm.svg") !important;
+    --icon-mobile-export-lg: url("resource://thunderbird-fluent/mobile-export-lg.svg") !important;
+    --icon-mobile-export-sm: url("resource://thunderbird-fluent/mobile-export-sm.svg") !important;
+    --icon-moon-xs: url("resource://thunderbird-fluent/moon-xs.svg") !important;
+    --icon-more: url("resource://thunderbird-fluent/more.svg") !important;
+    --icon-more-md: url("resource://thunderbird-fluent/more-md.svg") !important;
+    --icon-nav-back: url("resource://thunderbird-fluent/nav-back.svg") !important;
+    --icon-nav-down: url("resource://thunderbird-fluent/nav-down.svg") !important;
+    --icon-nav-down-sm: url("resource://thunderbird-fluent/nav-down-sm.svg") !important;
+    --icon-nav-down-xs: url("resource://thunderbird-fluent/nav-down-xs.svg") !important;
+    --icon-nav-forward: url("resource://thunderbird-fluent/nav-forward.svg") !important;
+    --icon-nav-left: url("resource://thunderbird-fluent/nav-left.svg") !important;
+    --icon-nav-left-sm: url("resource://thunderbird-fluent/nav-left-sm.svg") !important;
+    --icon-nav-right: url("resource://thunderbird-fluent/nav-right.svg") !important;
+    --icon-nav-right-sm: url("resource://thunderbird-fluent/nav-right-sm.svg") !important;
+    --icon-nav-today: url("resource://thunderbird-fluent/nav-today.svg") !important;
+    --icon-nav-up: url("resource://thunderbird-fluent/nav-up.svg") !important;
+    --icon-nav-up-sm: url("resource://thunderbird-fluent/nav-up-sm.svg") !important;
+    --icon-nav-up-xs: url("resource://thunderbird-fluent/nav-up-xs.svg") !important;
+    --icon-new-address-book: url("resource://thunderbird-fluent/new-address-book.svg") !important;
+    --icon-new-chat: url("resource://thunderbird-fluent/new-chat.svg") !important;
+    --icon-new-contact: url("resource://thunderbird-fluent/new-contact.svg") !important;
+    --icon-new-event: url("resource://thunderbird-fluent/new-event.svg") !important;
+    --icon-new-indicator: url("resource://thunderbird-fluent/new-indicator.svg") !important;
+    --icon-new-key: url("resource://thunderbird-fluent/new-key.svg") !important;
+    --icon-new-mail: url("resource://thunderbird-fluent/new-mail.svg") !important;
+    --icon-new-task: url("resource://thunderbird-fluent/new-task.svg") !important;
+    --icon-new-user-list: url("resource://thunderbird-fluent/new-user-list.svg") !important;
+    --icon-newsletter: url("resource://thunderbird-fluent/newsletter.svg") !important;
+    --icon-notification-sm: url("resource://thunderbird-fluent/notification-sm.svg") !important;
+    --icon-notify: url("resource://thunderbird-fluent/notify.svg") !important;
+    --icon-offline: url("resource://thunderbird-fluent/offline.svg") !important;
+    --icon-online: url("resource://thunderbird-fluent/online.svg") !important;
+    --icon-outbox: url("resource://thunderbird-fluent/outbox.svg") !important;
+    --icon-overflow: url("resource://thunderbird-fluent/overflow.svg") !important;
+    --icon-paint-brush: url("resource://thunderbird-fluent/paint-brush.svg") !important;
+    --icon-paste: url("resource://thunderbird-fluent/paste.svg") !important;
+    --icon-pencil: url("resource://thunderbird-fluent/pencil.svg") !important;
+    --icon-photo-ban: url("resource://thunderbird-fluent/photo-ban.svg") !important;
+    --icon-pin: url("resource://thunderbird-fluent/pin.svg") !important;
+    --icon-print: url("resource://thunderbird-fluent/print.svg") !important;
+    --icon-priority: url("resource://thunderbird-fluent/priority.svg") !important;
+    --icon-priority-low: url("resource://thunderbird-fluent/priority-low.svg") !important;
+    --icon-question: url("resource://thunderbird-fluent/question.svg") !important;
+    --icon-question-dialog: url("resource://thunderbird-fluent/question-dialog.svg") !important;
+    --icon-quit: url("resource://thunderbird-fluent/quit.svg") !important;
+    --icon-quote: url("resource://thunderbird-fluent/quote.svg") !important;
+    --icon-receipt: url("resource://thunderbird-fluent/receipt.svg") !important;
+    --icon-recurrence: url("resource://thunderbird-fluent/recurrence.svg") !important;
+    --icon-recurrence-exception: url("resource://thunderbird-fluent/recurrence-exception.svg") !important;
+    --icon-recurrence-sm: url("resource://thunderbird-fluent/recurrence-sm.svg") !important;
+    --icon-redirect: url("resource://thunderbird-fluent/redirect.svg") !important;
+    --icon-remove: url("resource://thunderbird-fluent/remove.svg") !important;
+    --icon-replies-xs: url("resource://thunderbird-fluent/replies-xs.svg") !important;
+    --icon-reply: url("resource://thunderbird-fluent/reply.svg") !important;
+    --icon-reply-all: url("resource://thunderbird-fluent/reply-all.svg") !important;
+    --icon-reply-list: url("resource://thunderbird-fluent/reply-list.svg") !important;
+    --icon-restore: url("resource://thunderbird-fluent/restore.svg") !important;
+    --icon-ribbon: url("resource://thunderbird-fluent/ribbon.svg") !important;
+    --icon-rss: url("resource://thunderbird-fluent/rss.svg") !important;
+    --icon-search: url("resource://thunderbird-fluent/search.svg") !important;
+    --icon-sent: url("resource://thunderbird-fluent/sent.svg") !important;
+    --icon-settings: url("resource://thunderbird-fluent/settings.svg") !important;
+    --icon-shield: url("resource://thunderbird-fluent/shield.svg") !important;
+    --icon-shortcut: url("resource://thunderbird-fluent/shortcut.svg") !important;
+    --icon-sort: url("resource://thunderbird-fluent/sort.svg") !important;
+    --icon-spaces-menu: url("resource://thunderbird-fluent/spaces-menu.svg") !important;
+    --icon-spam: url("resource://thunderbird-fluent/spam.svg") !important;
+    --icon-spam-sm: url("resource://thunderbird-fluent/spam-sm.svg") !important;
+    --icon-sparkle-star-sm: url("resource://thunderbird-fluent/sparkle-star-sm.svg") !important;
+    --icon-sparkle-star-xs: url("resource://thunderbird-fluent/sparkle-star-xs.svg") !important;
+    --icon-spelling: url("resource://thunderbird-fluent/spelling.svg") !important;
+    --icon-star: url("resource://thunderbird-fluent/star.svg") !important;
+    --icon-star-sm: url("resource://thunderbird-fluent/star-sm.svg") !important;
+    --icon-status-away: url("resource://thunderbird-fluent/status-away.svg") !important;
+    --icon-status-away-sm: url("resource://thunderbird-fluent/status-away-sm.svg") !important;
+    --icon-status-idle: url("resource://thunderbird-fluent/status-idle.svg") !important;
+    --icon-status-idle-sm: url("resource://thunderbird-fluent/status-idle-sm.svg") !important;
+    --icon-status-offline: url("resource://thunderbird-fluent/status-offline.svg") !important;
+    --icon-status-offline-sm: url("resource://thunderbird-fluent/status-offline-sm.svg") !important;
+    --icon-status-online: url("resource://thunderbird-fluent/status-online.svg") !important;
+    --icon-status-online-sm: url("resource://thunderbird-fluent/status-online-sm.svg") !important;
+    --icon-subthread-ignored: url("resource://thunderbird-fluent/subthread-ignored.svg") !important;
+    --icon-subtract-circle-sm: url("resource://thunderbird-fluent/subtract-circle-sm.svg") !important;
+    --icon-success: url("resource://thunderbird-fluent/success.svg") !important;
+    --icon-sun-xs: url("resource://thunderbird-fluent/sun-xs.svg") !important;
+    --icon-sync: url("resource://thunderbird-fluent/sync.svg") !important;
+    --icon-sync-lg: url("resource://thunderbird-fluent/sync-lg.svg") !important;
+    --icon-tag: url("resource://thunderbird-fluent/tag.svg") !important;
+    --icon-tag-sm: url("resource://thunderbird-fluent/tag-sm.svg") !important;
+    --icon-tasks: url("resource://thunderbird-fluent/tasks.svg") !important;
+    --icon-template: url("resource://thunderbird-fluent/template.svg") !important;
+    --icon-tentative: url("resource://thunderbird-fluent/tentative.svg") !important;
+    --icon-thread: url("resource://thunderbird-fluent/thread.svg") !important;
+    --icon-thread-ignored: url("resource://thunderbird-fluent/thread-ignored.svg") !important;
+    --icon-thread-sm: url("resource://thunderbird-fluent/thread-sm.svg") !important;
+    --icon-tools: url("resource://thunderbird-fluent/tools.svg") !important;
+    --icon-trash: url("resource://thunderbird-fluent/trash.svg") !important;
+    --icon-trash-sm: url("resource://thunderbird-fluent/trash-sm.svg") !important;
+    --icon-unread: url("resource://thunderbird-fluent/unread.svg") !important;
+    --icon-unread-sm: url("resource://thunderbird-fluent/unread-sm.svg") !important;
+    --icon-upload-sm: url("resource://thunderbird-fluent/upload-sm.svg") !important;
+    --icon-user: url("resource://thunderbird-fluent/user.svg") !important;
+    --icon-user-list: url("resource://thunderbird-fluent/user-list.svg") !important;
+    --icon-video-sm: url("resource://thunderbird-fluent/video-sm.svg") !important;
+    --icon-warning: url("resource://thunderbird-fluent/warning.svg") !important;
+    --icon-warning-dialog: url("resource://thunderbird-fluent/warning-dialog.svg") !important;
+    --icon-warning-sm: url("resource://thunderbird-fluent/warning-sm.svg") !important;
+  }
+
+  :root {
+    --account-central-address-book: var(--icon-address-book) !important;
+    --account-central-calendar: var(--icon-calendar) !important;
+    --account-central-chat: var(--icon-chat) !important;
+    --account-central-folder: var(--icon-folder) !important;
+    --account-central-globe: var(--icon-globe) !important;
+    --account-central-link: var(--icon-link) !important;
+    --account-central-mail: var(--icon-mail) !important;
+    --account-central-newsletter: var(--icon-newsletter) !important;
+    --account-central-rss: var(--icon-rss) !important;
+    --addons-manager-available-updates: url("resource://thunderbird-fluent/extension-update-available.svg") !important;
+    --addons-manager-dictionaries: url("resource://thunderbird-fluent/dictionary.svg") !important;
+    --addons-manager-extensions: var(--icon-extension) !important;
+    --addons-manager-languages: url("resource://thunderbird-fluent/language.svg") !important;
+    --addons-manager-recent-updates: url("resource://thunderbird-fluent/extension-update-recent.svg") !important;
+    --addons-manager-recommendations: var(--icon-features) !important;
+    --addons-manager-site-permissions: var(--icon-globe) !important;
+    --addons-manager-themes: var(--icon-paint-brush) !important;
+    --folder-pane-archive: var(--icon-archive) !important;
+    --folder-pane-draft: var(--icon-draft) !important;
+    --folder-pane-folder: var(--icon-folder) !important;
+    --folder-pane-folder-filter: var(--icon-folder-filter) !important;
+    --folder-pane-folder-rss: var(--icon-folder-rss) !important;
+    --folder-pane-globe: var(--icon-globe) !important;
+    --folder-pane-globe-secure: var(--icon-globe-secure) !important;
+    --folder-pane-inbox: var(--icon-inbox) !important;
+    --folder-pane-mail: var(--icon-mail) !important;
+    --folder-pane-mail-secure: var(--icon-mail-secure) !important;
+    --folder-pane-newsletter: var(--icon-newsletter) !important;
+    --folder-pane-outbox: var(--icon-outbox) !important;
+    --folder-pane-rss: var(--icon-rss) !important;
+    --folder-pane-sent: var(--icon-sent) !important;
+    --folder-pane-spam: var(--icon-spam) !important;
+    --folder-pane-template: var(--icon-template) !important;
+    --folder-pane-trash: var(--icon-trash) !important;
+    --spaces-icon-address-book: var(--icon-address-book) !important;
+    --spaces-icon-calendar: var(--icon-calendar) !important;
+    --spaces-icon-chat: var(--icon-chat) !important;
+    --spaces-icon-collapse: var(--icon-collapse) !important;
+    --spaces-icon-mail: var(--icon-mail) !important;
+    --spaces-icon-overflow: var(--icon-overflow) !important;
+    --spaces-icon-settings: var(--icon-settings) !important;
+    --spaces-icon-tasks: var(--icon-tasks) !important;
+  }
+
+  /* Light mode softens the fill; see LIGHT MODE GETS A SOFTER ICON in
+   * fluent-icons.css for the ratio and why dark mode is left alone. */
+  :root {
+    --fluent-icon-fill: light-dark(
+      color-mix(in srgb, currentColor 72%, transparent),
+      currentColor
+    );
+  }
+
+  * {
+    --appmenu-icons-fill: light-dark(
+      color-mix(in srgb, var(--appmenu-icons-stroke) 72%, transparent),
+      var(--appmenu-icons-stroke)
+    ) !important;
+    --button-icon-fill: light-dark(
+      color-mix(in srgb, var(--button-icon-stroke, currentColor) 72%, transparent),
+      var(--button-icon-stroke, currentColor)
+    ) !important;
+    --menuitem-icon-fill: var(--fluent-icon-fill) !important;
+  }
+
+  #accountLogo,
+  #archiveOptions fieldset ul li .icon,
+  #archiveTree > treechildren::-moz-tree-image,
+  #books:focus :where(.bookRow, .listRow).selected > #books .bookRow-container,
+  #books:focus :where(.bookRow, .listRow).selected > #books .listRow-container,
+  #button-newMsgPopup .menuitem-iconic,
+  #calendar-add-task-button,
+  #calendar-list > li > .calendar-list-icon,
+  #calendar-list > li > :is(.calendar-displayed, .calendar-more-button),
+  #calendar-status-todaypane-button > stack > .toolbarbutton-icon-begin,
+  #deleteAccount,
+  #detailsFooter menulist:not([hidden]),
+  #detailsFooter menulist:not([hidden]) .menu-icon,
+  #editContactAddressBookList,
+  #folderPaneGetMessagesContext .menu-icon,
+  #imip-bar > img,
+  #imip-view-toolbar > .toolbarbutton-1.message-header-view-button,
+  #msgEncryptedSubjectIcon,
+  #offline-status,
+  #openPgpKey,
+  #photo,
+  #qrExportContent .inset-icon::before,
+  #qrExportSecurityHint::before,
+  #releasenotes img,
+  #threadTree[rows="thread-card"] .card-layout[data-properties~="hasUnread"] .replies-icon,
+  #threadTree[rows="thread-card"] .card-layout[data-properties~="hasUnread"] .thread-replies,
+  #todaypane-new-event-button,
+  #toolbarGetMessagesContext .menu-icon,
+  .abMenuItem > .menu-icon,
+  .addon-banner-item > .toolbarbutton-icon,
+  .alltabs-item > .menu-icon[srcset="null"],
+  .autocomplete-richlistitem > .ac-site-icon,
+  .btn-hub,
+  .btn-link,
+  .button,
+  .cal-event-toolbarbutton,
+  .category-icon,
+  .config-list,
+  .content-blocking-category .checkbox-label-box,
+  .conv-nicklist-image,
+  .encryption-button,
+  .expiration-date-icon,
+  .extra-information-label > img,
+  .folderMenuItem > .menu-icon,
+  .folderMenuItem::part(icon),
+  .icon,
+  .menu-icon,
+  .message-header-view-button,
+  .openpgp-image-btn .button-icon,
+  .person-icon,
+  .preview,
+  .recipient-address-book-button img,
+  .recipient-avatar.is-mail-list img,
+  .reminder-icon,
+  .reminder-list-icon .menu-icon,
+  .reminder-list-icon::part(icon),
+  .remove-property-button,
+  .resource-link,
+  .sidebar-footer-icon,
+  .spaces-popup-menuitem image,
+  .spaces-toolbar-button > img,
+  .spaces-toolbar-pinned-button > img,
+  .spaces-toolbar-statusbar-button > img,
+  .startChatBubble,
+  .subviewbutton-iconic,
+  .synced-list,
+  .tab-icon-image,
+  .tab-throbber,
+  .tabPane h1::before,
+  .thread-tree-col-picker > image,
+  .thread-tree-icon-header img,
+  .tree-columnpicker-button,
+  .zoom-in-icon,
+  .zoom-out-icon,
+  :host(.is-mail-list) img,
+  :host.is-mail-list img,
+  [is="tree-view-table"] img,
+  [is="tree-view-table-body"] > .table-layout.selected:focus-within:not([data-properties~="flagged"]) > .tree-view-row-flag > .tree-button-flag > img,
+  [is="tree-view-table-body"] > .table-layout.selected:focus-within:not([data-properties~="junk"]) > .tree-view-row-spam > .tree-button-spam > img,
+  [is="tree-view-table-body"]:is(:focus, :focus-within) > .table-layout.selected:not([data-properties~="flagged"]) > .tree-view-row-flag > .tree-button-flag > img,
+  [is="tree-view-table-body"]:is(:focus, :focus-within) > .table-layout.selected:not([data-properties~="junk"]) > .tree-view-row-spam > .tree-button-spam > img,
+  a[href],
+  button,
+  button.email-action-flagged:not(.flagged):hover,
+  calendar-notifications-setting .remove-button,
+  certificate-check > img,
+  img.icon,
+  input::-moz-search-clear-button,
+  input[type="search"],
+  menulist::part(icon),
+  menulist[is="menulist-addrbooks"]::part(icon),
+  moz-button::part(button),
+  panel-item[action="remove"]::part(button),
+  slot[name="icon"]::slotted(img),
+  slot[name="placeholders"] div::before,
+  treechildren::-moz-tree-image(unreadButtonColHeader),
+  unified-toolbar-tab::part(icon) {
+    fill: var(--fluent-icon-fill) !important;
+  }
+
+  .button-star,
+  .tree-view-row-flag img,
+  .tree-view-row-unread img,
+  :is(.tree-view-row-spam img, .button-spam),
+  button.email-action-flagged,
+  treechildren::-moz-tree-image(deleteCol),
+  treechildren::-moz-tree-image(flaggedCol),
+  treechildren::-moz-tree-image(junkStatusCol),
+  treechildren::-moz-tree-image(junkStatusCol, notjunk) {
+    fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+  }
+
+  treechildren::-moz-tree-image(deleteCol, selected, focus),
+  treechildren::-moz-tree-image(flaggedCol, selected, focus),
+  treechildren::-moz-tree-image(junkStatusCol, selected, focus),
+  treechildren::-moz-tree-image(threadCol, selected, focus),
+  treechildren::-moz-tree-image(unreadButtonColHeader, selected, focus) {
+    fill: var(--select-focus-text-color) !important;
+  }
+
+  .zoom-in-icon[disabled],
+  .zoom-out-icon[disabled] {
+    fill: color-mix(in srgb, currentColor 40%, transparent) !important;
+  }
+
+  #books .bookRow-container,
+  #books .listRow-container {
+    fill: var(--ab-icons-color) !important;
+  }
+
+  .icon-info,
+  button.account-hub-option-button img.mail-lock-icon {
+    fill: var(--color-primary-default) !important;
+  }
+
+  #accounttree li .icon,
+  .folder-chooser-popup-button {
+    fill: var(--icon-color) !important;
+  }
+
+  #notification-popup-box > .notification-anchor-icon,
+  .toolbarbutton-1 {
+    fill: light-dark(
+      color-mix(in srgb, var(--toolbarbutton-icon-fill, currentColor) 72%, transparent),
+      var(--toolbarbutton-icon-fill, currentColor)
+    ) !important;
+  }
+
+  #button-chat[unreadMessages="true"],
+  #editContactPanelIcon {
+    fill: var(--toolbarbutton-icon-fill-attention) !important;
+  }
+
+  treechildren::-moz-tree-image(threadCol, container) {
+    fill: color-mix(in srgb, currentColor 50%, transparent) !important;
+  }
+
+  .dark-reader-toggle::after {
+    fill: color-mix(in srgb, currentColor 55%, transparent) !important;
+  }
+
+  [is="tree-view-table-body"]:is(:focus, :focus-within) > .selected:not([data-properties~="flagged"]) .button-star {
+    fill: color-mix(in srgb, currentColor 70%, transparent) !important;
+  }
+
+  #abResultsTree .generatedname-column {
+    fill: color-mix(in srgb, currentColor 85%, transparent) !important;
+  }
+
+  .dark-reader-toggle:checked::after {
+    fill: color-mix(in srgb, var(--selected-item-text-color) 90%, transparent) !important;
+  }
+
+  .addon-banner-item {
+    fill: var(--appmenu-warning-color) !important;
+  }
+
+  .expiration-date-container.key-expired .expiration-date-icon {
+    fill: var(--color-amber-50) !important;
+  }
+
+  .icon-danger {
+    fill: var(--color-critical-pressed) !important;
+  }
+
+  .openpgp-status.status-success {
+    fill: var(--color-green-50) !important;
+  }
+
+  treechildren::-moz-tree-image(unreadButtonColHeader, unread) {
+    fill: var(--color-green-60) !important;
+  }
+
+  .statusTypeIcon {
+    fill: var(--color-ink-50) !important;
+  }
+
+  .openpgp-status.status-error {
+    fill: var(--color-red-50) !important;
+  }
+
+  .icon-success {
+    fill: var(--color-success-default) !important;
+  }
+
+  button.account-hub-option-button:disabled .mail-lock-icon {
+    fill: var(--color-text-secondary) !important;
+  }
+
+  .icon-warning {
+    fill: var(--color-warning-pressed) !important;
+  }
+
+  .warning-icon {
+    fill: var(--color-white) !important;
+  }
+
+  #rssSubscriptionsList > treechildren::-moz-tree-image {
+    fill: var(--default) !important;
+  }
+
+  .dialog-header-image {
+    fill: var(--dialog-highlight-color) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Archive) {
+    fill: var(--folder-color-archive) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Drafts) {
+    fill: var(--folder-color-draft) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol) {
+    fill: var(--folder-color-folder) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Virtual) {
+    fill: var(--folder-color-folder-filter) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, isFeedFolder-true) {
+    fill: var(--folder-color-folder-rss) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Inbox) {
+    fill: var(--folder-color-inbox) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, serverType-nntp) {
+    fill: var(--folder-color-newsletter) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Outbox) {
+    fill: var(--folder-color-outbox) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, isFeed-true) {
+    fill: var(--folder-color-rss) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Sent) {
+    fill: var(--folder-color-sent) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Junk) {
+    fill: var(--folder-color-spam) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Templates) {
+    fill: var(--folder-color-template) !important;
+  }
+
+  treechildren::-moz-tree-image(folderNameCol, specialFolder-Trash) {
+    fill: var(--folder-color-trash) !important;
+  }
+
+  #folderTree .icon {
+    fill: var(--icon-color, var(--folder-color-folder)) !important;
+  }
+
+  .button-account::before {
+    fill: var(--primary) !important;
+  }
+
+  .recipient-address-book-button.in-address-book img {
+    fill: var(--selected-item-color) !important;
+  }
+
+  tree > treechildren::-moz-tree-image(primary, dropOn) {
+    fill: var(--selected-item-text-color) !important;
+  }
+
+  :host .tag-icon {
+    fill: var(--tag-color, currentColor) !important;
+  }
+
+  tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img {
+    fill: var(--thread-pane-unread-stroke) !important;
+  }
+
+  #detailsDeleteButton:not(:hover, :active) {
+    fill: var(--vcard-delete-button-color) !important;
+  }
+
+  /* The rules that declare -moz-context-properties WITHOUT `fill`, where
+   * context-fill falls back to the CSS initial value and paints BLACK. Same
+   * block as part 4 of fluent-icons.css; see its header for the full account.
+   * Reaches vcard-edit's selects, the contact photo placeholders and the
+   * number-input spinners, all of which live on these pages.
+   * No namespace prefixes -- see part 4's header for what they cost. */
+
+  #AbPickerHeader #abContextMenuButton,
+  #NextButton,
+  #PreviousButton,
+  #calendar-status-todaypane-button > .toolbarbutton-icon-end,
+  #defaultSortOrder .radio-icon,
+  #miniday-dropdown-button,
+  .agenda-listitem-overlap,
+  .arrowhead,
+  .back,
+  .calendar-list-header,
+  .calendar-task-tree-col-priority,
+  .eventToggle,
+  .handlerSortHeaderIcon,
+  .icon-close-lg,
+  .icon-maximize,
+  .icon-minimize,
+  .icon-nav-right,
+  .icon-recurrence,
+  .item-classification-icon,
+  .item-recurrence-icon,
+  .nav-button,
+  .notification-button.button-menu-list,
+  .openpgp-more-btn .button-menu-dropmarker,
+  .subviewbutton[checked],
+  .today-pane-cycler,
+  .toolbar-target .spacer,
+  .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker,
+  .tree-table-cell-container button,
+  button > .button-box > dropmarker,
+  calendar-notifications-setting .add-button,
+  form .input-field.number-input::-moz-number-spin-down,
+  form .input-field.number-input::-moz-number-spin-up,
+  form .input-textarea.number-input::-moz-number-spin-down,
+  form .input-textarea.number-input::-moz-number-spin-up,
+  input[type="number"]::-moz-number-spin-down,
+  input[type="number"]::-moz-number-spin-up,
+  li[is="calendar-dialog-attachment"] .attachment-icon,
+  menulist::part(dropmarker-icon),
+  richlistitem[is="chat-group-richlistitem"] .twisty,
+  toolbarbutton.notification-button[is="toolbarbutton-menu-button"] > dropmarker,
+  toolbarbutton[is="toolbarbutton-menu-button"] > dropmarker,
+  treechildren::-moz-tree-image(attachmentCol, attach),
+  treechildren::-moz-tree-twisty,
+  vcard-edit select:not([size], [multiple]) {
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--fluent-icon-fill) !important;
+  }
+
+  #attachmentToggle,
+  #threadTree[rows="thread-card"] .card-layout td .card-container .is-outgoing [data-properties~="outgoing"] #threadTree[rows="thread-card"] .card-layout td .card-container > .sender,
+  .PanelUI-subView .subviewbutton-nav::after,
+  .correspondentcol-column,
+  .miniday-nav-buttons,
+  .overflow-icon,
+  .widget-overflow-list .subviewbutton-nav::after,
+  menupopup > menu::after,
+  treechildren::-moz-tree-image(correspondentCol) {
+    -moz-context-properties: fill, stroke, fill-opacity !important;
+    fill: var(--fluent-icon-fill) !important;
+  }
+
+  .calendar-task-tree > treechildren::-moz-tree-image(calendar-task-tree-col-priority) {
+    -moz-context-properties: fill, stroke !important;
+    fill: transparent !important;
+  }
+
+  .contact-photo {
+    -moz-context-properties: fill, stroke !important;
+    fill: color-mix(in srgb, transparent 50%, var(--recipient-avatar-color)) !important;
+  }
+
+  #photoButton:is(:focus-visible, :hover) #photoOverlay {
+    -moz-context-properties: fill, stroke !important;
+    fill: #fff !important;
+  }
+
+  #photoDropTarget {
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--background-color-box) !important;
+  }
+
+  .summary-items {
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--color-green-60) !important;
+  }
+
+  .panel-header > .subviewbutton-back {
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--panel-text-color) !important;
+  }
+
+  .contact-photo[src=""] {
+    -moz-context-properties: fill, stroke !important;
+    fill: color-mix(in srgb, currentColor 30%, transparent) !important;
+  }
+
+  /* SETTINGS DRAWS ITS SIDEBAR FROM HARDCODED URLS, NOT TOKENS.
+   * preferences.xhtml puts the path straight in the markup
+   * (`<html:img class="category-icon" src="chrome://...">`), so nothing in the
+   * token layer reaches these and they stayed on Thunderbird's outline art.
+   * That is worse than merely unthemed: `.category-icon` and
+   * `.sidebar-footer-icon` are in the fill pass, so each one rendered as a
+   * full-strength outline around a softened body -- a dark ring, obvious in
+   * light mode. Same defect the Add-ons Manager sidebar had.
+   *
+   * Matching the src and replacing the rendered image is the same move part 2c
+   * makes for tab icons, and stock's own idiom on this kind of element. The
+   * attribute itself is left alone. */
+
+  /* General */
+  img[src="chrome://messenger/skin/icons/new/touch/settings.svg"] {
+    content: var(--icon-settings) !important;
+  }
+
+  /* Appearance -- upstream draws a palette, the set has no palette */
+  img[src="chrome://messenger/skin/icons/new/touch/paint-palette.svg"] {
+    content: var(--icon-paint-brush) !important;
+  }
+
+  /* Composition */
+  img[src="chrome://messenger/skin/icons/new/touch/pencil.svg"] {
+    content: var(--icon-pencil) !important;
+  }
+
+  /* Privacy & Security */
+  img[src="chrome://messenger/skin/icons/new/touch/lock.svg"] {
+    content: var(--icon-lock) !important;
+  }
+
+  /* Chat */
+  img[src="chrome://messenger/skin/icons/new/touch/chat.svg"] {
+    content: var(--icon-chat) !important;
+  }
+
+  /* Calendar */
+  img[src="chrome://messenger/skin/icons/new/touch/calendar.svg"] {
+    content: var(--icon-calendar) !important;
+  }
+
+  /* Export for Mobile */
+  img[src="chrome://messenger/skin/icons/lg/mobile-export.svg"] {
+    content: var(--icon-mobile-export-lg) !important;
+  }
+
+  /* Account Settings, in the sidebar footer */
+  img[src="chrome://messenger/skin/icons/new/compact/account-settings.svg"] {
+    content: var(--icon-account-settings) !important;
+  }
+
+  /* Add-ons and Themes, in the sidebar footer */
+  img[src="chrome://messenger/skin/icons/new/compact/extension.svg"] {
+    content: var(--icon-extension) !important;
+  }
+
+  /* the update / info notices */
+  img[src="chrome://global/skin/icons/info.svg"] {
+    content: var(--icon-info) !important;
+  }
+
+}

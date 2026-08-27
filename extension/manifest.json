@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Thunderbird Fluent",
   "description": "The Fluent 2 theme for Thunderbird",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Narcasung",
   "icons": {
     "32": "icon.svg",

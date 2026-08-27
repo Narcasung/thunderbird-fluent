@@ -46,11 +46,19 @@ The extension's theme mode option automatically switches Thunderbird's own setti
 
 ### Manual install
 
-Not installing the extension comes with some caveats:
+1. Copy this repo's `chrome` folder into your Thunderbird's profile folder.\
+   Windows path: `%USERPROFILE%\AppData\Roaming\Thunderbird\Profiles\<profile>`\
+   To find the folder: Help > Troubleshooting Information > Profile Folder >
+   Open Folder.
+2. Change the `@import url("fluent-icons.css");` line in `userChrome.css`
+   and `@import url("fluent-icons-content.css");` line in `userContent.css` to\
+   `/*@import url("fluent-icons.css");*/` and `/*@import url("fluent-icons-content.css");*/` respectively.
+3. In `about:config` (Settings > General > Config Editor), set
+   `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`.
+4. Restart Thunderbird.
 
-- **The icons will not be replaced, and the default Thunderbird icons will not display or will be broken.**\
-To mitigate this, comment out `@import url("fluent-icons.css");` in `userChrome.css`.\
-It will restore most icons to default, but some will still be broken.
+Not installing the extension comes with some inconvenience:
+
 - No options page. Change the prefs yourself in `about:config` instead:
 
   | Pref                                         | Values                       |
@@ -61,16 +69,6 @@ It will restore most icons to default, but some will still be broken.
   | `extensions.thunderbird-fluent.transparency` | `10` to `100`, in steps of 10 |
 
 - If you want to remove the theme, delete `<profile>/chrome` and reset the prefs above by hand.
-
-If you still want to go ahead:
-
-1. Copy this repo's `chrome` folder into your Thunderbird's profile folder.\
-   Windows path: `%USERPROFILE%\AppData\Roaming\Thunderbird\Profiles\<profile>`\
-   To find the folder: Help > Troubleshooting Information > Profile Folder >
-   Open Folder.
-2. In `about:config` (Settings > General > Config Editor), set
-   `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`.
-3. Restart Thunderbird.
 
 ## Uninstall
 
