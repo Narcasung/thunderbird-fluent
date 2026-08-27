@@ -1,25 +1,36 @@
 <#
 .SYNOPSIS
-  Build the Thunderbird Fluent add-on into an installable .xpi.
+  Build the Thunderbird Fluent add-on into an installable .zip.
 
 .DESCRIPTION
   Builds the whole theme into one file. The archive is ..\extension plus a
   staged copy of ..\chrome and a generated chrome-files.json index; api.js
-  writes that CSS into the profile on first run, so a user installs one .xpi
+  writes that CSS into the profile on first run, so a user installs one file
   and nothing else. See DEPLOYING THE STYLESHEETS in extension\api.js for why
   the add-on deploys files rather than registering the sheets itself.
 
-  An .xpi is a zip with the manifest at its ROOT, not inside a folder, which is
-  the one thing that is easy to get wrong and gives an unhelpful "corrupt"
-  error on install.
+  An add-on archive is a zip with the manifest at its ROOT, not inside a
+  folder, which is the one thing that is easy to get wrong and gives an
+  unhelpful "corrupt" error on install.
+
+  NAMED .zip, NOT .xpi, and the extension is the whole reason. GitHub types a
+  release asset from its filename extension -- it ignores the Content-Type the
+  upload sends, measured -- and serves .xpi as application/x-xpinstall with
+  "content-disposition: inline". Firefox then routes the click to its own
+  add-on installer, which cannot install a Thunderbird add-on, instead of
+  saving the file. Every other extension is served as octet-stream with
+  "attachment", which downloads normally. Nothing is lost by renaming:
+  XPInstall reads the archive rather than trusting its name, and Thunderbird's
+  own picker already filters on "*.xpi;*.jar;*.zip" (toolkit
+  aboutaddons-utils.mjs), so a .zip is offered and installs.
 
   Signing is not needed on this build: xpinstall.signatures.required defaults
   to false (greprefs.js) and MOZ_REQUIRE_SIGNING is false, which is also what
   lets an unsigned add-on use an Experiment API at all
   (AddonSettings.sys.mjs gates EXPERIMENTS_ENABLED on exactly that).
 
-  INSTALL: Add-ons Manager > gear > Install Add-on From File, pick the .xpi,
-  then restart Thunderbird. Re-running this after an edit overwrites the .xpi;
+  INSTALL: Add-ons Manager > gear > Install Add-on From File, pick the .zip,
+  then restart Thunderbird. Re-running this after an edit overwrites the .zip;
   bump "version" in extension\manifest.json so the install replaces rather
   than refuses.
 
@@ -49,8 +60,8 @@ if (-not (Test-Path $chrome)) { throw "Chrome folder not found: $chrome" }
 $icons = Join-Path (Split-Path $PSScriptRoot -Parent) 'icons\fluent'
 
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
-$xpi = Join-Path $OutDir 'thunderbird-fluent.xpi'
-if (Test-Path $xpi) { Remove-Item $xpi -Force }
+$archive = Join-Path $OutDir 'thunderbird-fluent.zip'
+if (Test-Path $archive) { Remove-Item $archive -Force }
 
 # The archive is extension\ plus a copy of chrome\, staged rather than zipped
 # in place: chrome\ stays the single source of truth and the CSS is never
@@ -96,14 +107,14 @@ try {
 
   # Compress-Archive on the folder itself would nest everything one level down.
   # The wildcard keeps the manifest at the archive root, where the loader wants it.
-  Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $xpi -CompressionLevel Optimal
+  Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 } finally {
   Remove-Item $stage -Recurse -Force
 }
 
-$size = [math]::Round((Get-Item $xpi).Length / 1KB, 1)
+$size = [math]::Round((Get-Item $archive).Length / 1KB, 1)
 Write-Host ""
-Write-Host "  built  $xpi  ($size KB)"
+Write-Host "  built  $archive  ($size KB)"
 Write-Host "  id     $id"
 Write-Host "  ver    $version"
 Write-Host ""

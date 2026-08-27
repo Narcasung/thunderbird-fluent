@@ -34,8 +34,7 @@ them up before installing.**
 
 ### Extension
 
-1. Download `thunderbird-fluent.xpi` from the
-   [latest release](https://github.com/Narcasung/thunderbird-fluent/releases/latest).
+1. Download [`thunderbird-fluent.zip`](https://github.com/Narcasung/thunderbird-fluent/releases/latest/download/thunderbird-fluent.zip).
 2. Install it from the Add-ons Manager: gear icon > Install Add-on From File.
 3. Restart Thunderbird.
 
