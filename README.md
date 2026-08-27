@@ -35,7 +35,7 @@ them up before installing.**
 ### Extension
 
 1. Download [`thunderbird-fluent.zip`](https://github.com/Narcasung/thunderbird-fluent/releases/latest/download/thunderbird-fluent.zip).
-2. Install it from the Add-ons Manager: gear icon > Install Add-on From File.
+2. From Thunderbird's Add-ons Manager: gear icon > Install Add-on From File > select the downloaded zip.
 3. Restart Thunderbird.
 
 You can change the options in Add-ons Manager > Extensions > Thunderbird Fluent > Options tab.
