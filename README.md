@@ -1,5 +1,5 @@
 <h1 align="center">
-	<img src="screenshots/icon.svg" width="100" alt="Logo"/>
+	<img src="extension/icon.svg" width="100" alt="Logo"/>
    <br/><br/>
 	thunderbird-fluent
 </h1>
