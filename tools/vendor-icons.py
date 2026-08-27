@@ -1,9 +1,6 @@
-"""Vendor Fluent icons into the repo.
-
-Downloads once from microsoft/fluentui-system-icons, rewrites the hardcoded
-fill to Gecko's context-fill keyword, and writes the result under icons/fluent/.
-Nothing here runs at theme runtime; this is authoring-time only.
-"""
+"""Vendor Fluent icons into icons/fluent/, rewriting each hardcoded fill to
+context-fill so Gecko paints them with the theme colour. Authoring-time only --
+nothing here runs at theme runtime."""
 
 import re
 import sys
@@ -16,8 +13,6 @@ RAW = ("https://raw.githubusercontent.com/microsoft/fluentui-system-icons"
 
 OUT = Path(__file__).resolve().parent.parent / "icons" / "fluent"
 
-# TB --icon-* token  ->  Microsoft icon folder name.
-# Ranked by how many places the token is referenced in Thunderbird's skin.
 MAP = {
     "nav-down-sm":  "Chevron Down",
     "nav-up-sm":    "Chevron Up",
@@ -44,7 +39,6 @@ MAP = {
     "filter":       "Filter",
     "pencil":       "Edit",
 
-    # --- navigation / chrome furniture -------------------------------------
     "nav-back": "Arrow Left",
     "nav-forward": "Arrow Right",
     "nav-left": "Chevron Left",
@@ -57,73 +51,73 @@ MAP = {
     "descending-xs": "Chevron Down",
     "kebab": "More Vertical",
     "more-md": "More Horizontal",
-    "overflow": "More Horizontal",  # check
-    "collapse": "Panel Left Contract",  # check
+    "overflow": "More Horizontal",
+    "collapse": "Panel Left Contract",
     "close-lg": "Dismiss",
     "close-xs": "Dismiss",
     "maximize-sm": "Maximize",
-    "minimize-sm": "Arrow Minimize",  # check
-    "restore": "Square Multiple",  # check
-    "flexible-space": "Line Horizontal 1",  # check
-    # --- mail ---------------------------------------------------------------
+    "minimize-sm": "Arrow Minimize",
+    "restore": "Square Multiple",
+    "flexible-space": "Line Horizontal 1",
+
     "inbox": "Mail Inbox",
     "sent": "Send",
-    "draft": "Document Edit",  # check
-    "file-draft": "Document Edit",  # check
-    "outbox": "Mail Arrow Up",  # check
-    "new-mail": "Mail Edit",  # check
+    "draft": "Document Edit",
+    "file-draft": "Document Edit",
+    "outbox": "Mail Arrow Up",
+    "new-mail": "Mail Edit",
     "mail-lg": "Mail",
     "mail-sm": "Mail",
-    "mail-list": "Mail Multiple",  # check
-    "mail-secure": "Mail Shield",  # check
-    "mail-lock-lg": "Mail Shield",  # check
-    "unread": "Mail Unread",  # check
-    "unread-sm": "Mail Unread",  # check
+    "mail-list": "Mail Multiple",
+    "mail-secure": "Mail Shield",
+    "mail-lock-lg": "Mail Shield",
+    "unread": "Mail Unread",
+    "unread-sm": "Mail Unread",
     "reply": "Arrow Reply",
     "reply-all": "Arrow Reply All",
     "forward": "Arrow Forward",
-    "redirect": "Share",  # check
-    "conversation": "Chat Multiple",  # check
-    "thread": "Chat Multiple",  # check
-    "thread-sm": "Chat Multiple",  # check
-    "replies-xs": "Arrow Reply All",  # check
-    "newsletter": "News",  # check
+    "redirect": "Share",
+    "conversation": "Chat Multiple",
+    "thread": "Chat Multiple",
+    "thread-sm": "Chat Multiple",
+    "replies-xs": "Arrow Reply All",
+    "newsletter": "News",
     "rss": "RSS",
-    "folder-rss": "Folder",  # check
-    "folder-filter": "Folder Search",  # check
+    "folder-rss": "Folder",
+    "folder-filter": "Folder Search",
     "folder-compact-sm": "Folder",
-    "template": "Document Copy",  # check
-    "quote": "Text Quote",  # check
+    "template": "Document Copy",
+    "quote": "Text Quote",
     "spam-sm": "Shield Prohibited",
     "trash-sm": "Delete",
     "tag-sm": "Tag",
     "attachment": "Attach",
     "attachment-sm": "Attach",
-    "priority": "Arrow Up",  # check
-    "priority-low": "Arrow Down",  # check
+    "priority": "Arrow Up",
+    "priority-low": "Arrow Down",
     "receipt": "Receipt",
-    # --- people / identity --------------------------------------------------
+
     "contact": "Person",
     "user": "Person",
     "user-list": "People",
     "new-contact": "Person Add",
     "new-user-list": "People Add",
     "address-book-lg": "Book Contacts",
-    "address-book-new-lg": "Book Add",  # check
-    "address-book-remote-lg": "Book Globe",  # check
-    "new-address-book": "Book Add",  # check
-    "id": "Person Board",  # check
-    "photo-ban": "Person Prohibited",  # check
-    # --- calendar / tasks ---------------------------------------------------
+    "address-book-new-lg": "Book Add",
+    "address-book-remote-lg": "Book Globe",
+    "new-address-book": "Book Add",
+    "id": "Person Board",
+    "photo-ban": "Person Prohibited",
+
     "new-event": "Calendar Add",
     "calendar-today": "Calendar Today",
     "calendar-lg": "Calendar LTR",
     "nav-today": "Calendar Today",
-    "new-task": "Task List Square Add",  # check
-    "date-time-sm": "Calendar Clock",  # check
+    "new-task": "Task List Square Add",
+    "date-time-sm": "Calendar Clock",
     "clock": "Clock",
-    "recurrence": "Arrow Repeat All",  # check
-    # --- status / feedback --------------------------------------------------
+    "recurrence": "Arrow Repeat All",
+
     "warning": "Warning",
     "warning-sm": "Warning",
     "warning-dialog": "Warning",
@@ -132,9 +126,9 @@ MAP = {
     "info": "Info",
     "question": "Question Circle",
     "question-dialog": "Question Circle",
-    "loading": "Arrow Clockwise",  # check
+    "loading": "Arrow Clockwise",
     "bell": "Alert",
-    "bell-ring": "Alert Badge",  # check
+    "bell-ring": "Alert Badge",
     "notification-sm": "Alert",
     "hidden": "Eye Off",
     "eye": "Eye",
@@ -143,30 +137,30 @@ MAP = {
     "circle-small": "Circle Small",
     "circle-add-sm": "Add Circle",
     "subtract-circle-sm": "Subtract Circle",
-    "checkbox": "Checkbox Unchecked",  # check
+    "checkbox": "Checkbox Unchecked",
     "star": "Star",
     "star-sm": "Star",
     "heart": "Heart",
     "ribbon": "Ribbon",
     "pin": "Pin",
-    # --- presence -----------------------------------------------------------
-    "status-online": "Presence Available",  # check
-    "status-offline": "Presence Offline",  # check
-    "status-away": "Presence Away",  # check
-    "status-idle": "Presence Away",  # check
-    "online": "Presence Available",  # check
-    "offline": "Presence Offline",  # check
+
+    "status-online": "Presence Available",
+    "status-offline": "Presence Offline",
+    "status-away": "Presence Away",
+    "status-idle": "Presence Away",
+    "online": "Presence Available",
+    "offline": "Presence Offline",
     "new-chat": "Chat Add",
     "chat-lg": "Chat",
-    # --- security -----------------------------------------------------------
+
     "lock": "Lock Closed",
-    "lock-disabled": "Lock Open",  # check
+    "lock-disabled": "Lock Open",
     "key": "Key",
-    "new-key": "Key",  # check
+    "new-key": "Key",
     "shield": "Shield",
-    "globe-secure": "Globe Shield",  # check
+    "globe-secure": "Globe Shield",
     "handshake": "Handshake",
-    # --- files / transfer ---------------------------------------------------
+
     "file": "Document",
     "download": "Arrow Download",
     "cloud-download": "Cloud Arrow Down",
@@ -175,39 +169,38 @@ MAP = {
     "import-lg": "Arrow Import",
     "export": "Arrow Export",
     "export-lg": "Arrow Export",
-    "mobile-export-sm": "Phone Arrow Right",  # check
+    "mobile-export-sm": "Phone Arrow Right",
     "copy": "Copy",
     "cut": "Cut",
     "paste": "Clipboard Paste",
     "link": "Link",
     "url": "Link",
-    "shortcut": "Open",  # check
+    "shortcut": "Open",
     "video-sm": "Video",
-    # --- app / settings -----------------------------------------------------
+
     "settings": "Settings",
-    "account-settings": "Person Settings",  # check
-    "account-sync": "Arrow Sync",  # check
+    "account-settings": "Person Settings",
+    "account-sync": "Arrow Sync",
     "sync-lg": "Arrow Sync",
     "extension": "Puzzle Piece",
-    "app-menu": "Line Horizontal 3",  # check
-    "app-menu-addon": "Puzzle Piece",  # check
+    "app-menu": "Line Horizontal 3",
+    "app-menu-addon": "Puzzle Piece",
     "tools": "Wrench",
-    "quit": "Sign Out",  # check
-    "layout": "Layout Column Two",  # check
+    "quit": "Sign Out",
+    "layout": "Layout Column Two",
     "display-options": "Options",
-    "column-menu": "Table Settings",  # check
-    "density-compact": "Text Density",  # check
-    "density-default": "Text Density",  # check
-    "density-relaxed": "Text Density",  # check
-    "font": "Text Font",  # check
-    "spelling": "Text Grammar Checkmark",  # check
+    "column-menu": "Table Settings",
+    "density-compact": "Text Density",
+    "density-default": "Text Density",
+    "density-relaxed": "Text Density",
+    "font": "Text Font",
+    "spelling": "Text Grammar Checkmark",
     "add-md": "Add",
-    "sparkle-star-sm": "Sparkle",  # check
-    "sparkle-star-xs": "Sparkle",  # check
-    "moon-xs": "Weather Moon",  # check
-    "sun-xs": "Weather Sunny",  # check
+    "sparkle-star-sm": "Sparkle",
+    "sparkle-star-xs": "Sparkle",
+    "moon-xs": "Weather Moon",
+    "sun-xs": "Weather Sunny",
 
-    # --- rescued from the orphan list ---
     "thread-ignored": "Chat Off",
     "subthread-ignored": "Comment Off",
     "reply-list": "Arrow Reply All",
@@ -218,34 +211,26 @@ MAP = {
     "guest-maybe": "Question Circle",
     "tentative": "Question Circle",
 
-    # ---- The 25 tokens the first survey missed --------------------------
-    # icons.css declares 223 image-valued --icon-* tokens, not the 198 that
-    # earlier passes assumed. The shortfall was invisible until light mode:
-    # part 3 pours a 72% fill into whatever art a rule points at, and on
-    # OUTLINE art that reads as a dark ring around a filled body, because the
-    # stroke stays at full strength. Filled art has no such edge. So every
-    # token the fill pass can reach has to BE filled -- leaving one behind is
-    # not neutral, it actively breaks it.
     "bell-disabled": "Alert Off",
     "calendar-empty": "Calendar Empty",
-    "calendar-invite": "Calendar Mail",           # check
+    "calendar-invite": "Calendar Mail",
     "clear": "Dismiss Circle",
-    "compress": "Arrow Minimize",                 # check
+    "compress": "Arrow Minimize",
     "download-md": "Arrow Download",
-    "event-continue": "Arrow Right",              # check
-    "event-end": "Arrow Export",                  # check
-    "event-start": "Arrow Import",                # check
+    "event-continue": "Arrow Right",
+    "event-end": "Arrow Export",
+    "event-start": "Arrow Import",
     "features": "Sparkle",
     "fingerprint": "Fingerprint",
-    "folder-save": "Folder Arrow Right",          # check
-    "get-mail": "Arrow Download",                 # check
+    "folder-save": "Folder Arrow Right",
+    "get-mail": "Arrow Download",
     "mobile-export-lg": "Phone Arrow Right",
-    "new-indicator": "Circle Small",              # check
+    "new-indicator": "Circle Small",
     "notify": "Alert",
     "paint-brush": "Paint Brush",
     "recurrence-exception": "Arrow Repeat All Off",
     "recurrence-sm": "Arrow Repeat All",
-    "remove": "Subtract",                         # check
+    "remove": "Subtract",
     "sort": "Arrow Sort",
     "status-away-sm": "Presence Away",
     "status-idle-sm": "Presence Away",
@@ -253,23 +238,12 @@ MAP = {
     "status-online-sm": "Presence Available",
     "upload-sm": "Arrow Upload",
 
-    # ---- Not --icon-* tokens at all -------------------------------------
-    # The four --addons-manager-* names with no --icon-* twin. They are given
-    # files of their own here so the alias block in fluent-icons.css has
-    # something to point at; the Add-ons Manager sidebar is where the dark
-    # ring was first spotted, and these were three of the four icons in it.
-    "dictionary": "Book Letter",                  # check
-    "language": "Local Language",                 # check
-    "extension-update-available": "Arrow Sync Circle",   # check
-    "extension-update-recent": "History",         # check
+    "dictionary": "Book Letter",
+    "language": "Local Language",
+    "extension-update-available": "Arrow Sync Circle",
+    "extension-update-recent": "History",
 }
 
-# Deliberately NOT replaced -- these keep Thunderbird's own art.
-#
-# The first seven are thread-list column marks: single glyphs encoding WHICH
-# combination of replied / forwarded / redirected happened to a message. Fluent
-# has no vocabulary for that, and substituting a plain arrow throws the encoding
-# away. The rest are cases where the badge, the dot or the brand IS the meaning.
 KEEP_STOCK = {
     "reply-col": "column mark: replied",
     "forward-col": "column mark: forwarded",
@@ -285,10 +259,8 @@ KEEP_STOCK = {
     "thundermail-lg": "Thundermail brand mark, not furniture",
 }
 
-
 def stem(folder):
     return "ic_fluent_" + re.sub(r"[^a-z0-9]+", "_", folder.lower()).strip("_")
-
 
 def fetch(folder, size, style="filled"):
     url = RAW.format(folder=urllib.parse.quote(folder), stem=stem(folder),
@@ -299,14 +271,8 @@ def fetch(folder, size, style="filled"):
     except Exception:
         return None
 
-
 def fetch_any(folder):
-    """16px filled, then 20px, then the regular cut at either size.
 
-    The regular fallback is not a compromise everywhere it fires. A few icons
-    ship no filled variant at all because filling them would destroy what they
-    mean -- Presence Offline is an empty ring, and a filled ring is Presence
-    Available. Where upstream declined to draw one, upstream is right."""
     for size in (16, 20):
         if svg := fetch(folder, size):
             return svg
@@ -315,18 +281,14 @@ def fetch_any(folder):
             return svg
     return None
 
-
 def contextify(svg):
-    """Every hardcoded fill becomes context-fill so Gecko paints it with the
-    theme colour, exactly the way Thunderbird's own icons are painted."""
+
     svg = re.sub(r'fill="#[0-9A-Fa-f]{3,8}"', 'fill="context-fill"', svg)
-    # The root element carries fill="none"; leave it, it is the canvas.
+
     return svg
 
-
-
 def write_sheet(ok_names):
-    """A reviewable table of what maps to what, regenerated on every run."""
+
     out = [
         "# Icon mapping",
         "",
@@ -368,7 +330,6 @@ def main():
     for token, folder in failed:
         print(f"  FAILED  {token:14s} <- {folder}")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

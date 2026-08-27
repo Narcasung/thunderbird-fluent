@@ -3,11 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>Fluent 2</title>
-    <!-- Styles are inline because the CSP blocks inline SCRIPT, not inline
-         style, and two rules do not need a file of their own. The palette is
-         left to color-scheme: this page renders inside the Add-ons Manager,
-         which the theme already paints, and hardcoding colours here would be
-         the one surface that fails to follow the switch it operates. -->
     <style>
       :root {
         color-scheme: light dark;
@@ -20,10 +15,6 @@
         padding: 4px 0;
       }
 
-      /* Two columns, and the label block is ONE grid item rather than a
-         label and a paragraph placed separately -- with the text as loose
-         children, anything added to a row lands back in the checkbox column
-         and shoves the layout sideways. */
       .row {
         align-items: start;
         display: grid;
@@ -36,9 +27,6 @@
         border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
       }
 
-      /* A row whose control is not a checkbox. The two-column grid exists to
-         hang a label block off a checkbox; with nothing in the first column
-         there is nothing to hang, and the .sub inside brings its own grid. */
       .row.solo {
         display: block;
       }
@@ -61,9 +49,6 @@
         opacity: 0.75;
       }
 
-      /* The Mica sub-settings. Hidden outright rather than disabled when Mica
-         is off: neither of them means anything without a backdrop to apply
-         it to, and a greyed row still asks to be read. */
       .sub {
         display: grid;
         gap: 4px 10px;
@@ -91,9 +76,6 @@
   </head>
 
   <body>
-    <!-- .solo, not the checkbox grid: this row's control IS the select, so
-         there is no checkbox to sit in the first column and a lone child
-         would otherwise be squeezed into that auto-width track. -->
     <div class="row solo">
       <div class="sub">
         <label for="color-scheme">Appearance</label>
@@ -103,8 +85,7 @@
           <option value="dark">Dark</option>
         </select>
         <p class="hint">
-          Picks the palette, and switches Thunderbird's own theme to match.
-          Follow system tracks the Windows light/dark setting.
+          Changing this setting also changes Thunderbird's stock theme.
         </p>
       </div>
     </div>

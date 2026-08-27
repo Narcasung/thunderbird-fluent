@@ -1,42 +1,10 @@
 <#
-.SYNOPSIS
-  Build the Thunderbird Fluent add-on into an installable .zip.
-
-.DESCRIPTION
-  Builds the whole theme into one file. The archive is ..\extension plus a
-  staged copy of ..\chrome and a generated chrome-files.json index; api.js
-  writes that CSS into the profile on first run, so a user installs one file
-  and nothing else. See DEPLOYING THE STYLESHEETS in extension\api.js for why
-  the add-on deploys files rather than registering the sheets itself.
-
-  An add-on archive is a zip with the manifest at its ROOT, not inside a
-  folder, which is the one thing that is easy to get wrong and gives an
-  unhelpful "corrupt" error on install.
-
-  NAMED .zip, NOT .xpi, and the extension is the whole reason. GitHub types a
-  release asset from its filename extension -- it ignores the Content-Type the
-  upload sends, measured -- and serves .xpi as application/x-xpinstall with
-  "content-disposition: inline". Firefox then routes the click to its own
-  add-on installer, which cannot install a Thunderbird add-on, instead of
-  saving the file. Every other extension is served as octet-stream with
-  "attachment", which downloads normally. Nothing is lost by renaming:
-  XPInstall reads the archive rather than trusting its name, and Thunderbird's
-  own picker already filters on "*.xpi;*.jar;*.zip" (toolkit
-  aboutaddons-utils.mjs), so a .zip is offered and installs.
-
-  Signing is not needed on this build: xpinstall.signatures.required defaults
-  to false (greprefs.js) and MOZ_REQUIRE_SIGNING is false, which is also what
-  lets an unsigned add-on use an Experiment API at all
-  (AddonSettings.sys.mjs gates EXPERIMENTS_ENABLED on exactly that).
-
-  INSTALL: Add-ons Manager > gear > Install Add-on From File, pick the .zip,
-  then restart Thunderbird. Re-running this after an edit overwrites the .zip;
-  bump "version" in extension\manifest.json so the install replaces rather
-  than refuses.
-
-.EXAMPLE
-  .\pack-extension.ps1
+  Builds extension/ + chrome/ + icons/fluent/ into dist/thunderbird-fluent.zip.
+  The manifest MUST land at the archive root or the install fails as "corrupt".
+  Named .zip and not .xpi so GitHub serves it as a download -- see CLAUDE.md.
+  A change under chrome/ or icons/ needs a manifest version bump to deploy.
 #>
+
 [CmdletBinding()]
 param(
   [string]$OutDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'dist')
@@ -63,10 +31,6 @@ if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out
 $archive = Join-Path $OutDir 'thunderbird-fluent.zip'
 if (Test-Path $archive) { Remove-Item $archive -Force }
 
-# The archive is extension\ plus a copy of chrome\, staged rather than zipped
-# in place: chrome\ stays the single source of truth and the CSS is never
-# duplicated in git. api.js reads it back out at runtime and writes it to the
-# profile -- see DEPLOYING THE STYLESHEETS in that file.
 $stage = Join-Path ([System.IO.Path]::GetTempPath()) ("fluent-pack-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $stage | Out-Null
 
@@ -74,9 +38,6 @@ try {
   Copy-Item (Join-Path $source '*') $stage -Recurse -Force
   Copy-Item $chrome (Join-Path $stage 'chrome') -Recurse -Force
 
-  # The file index api.js reads, so adding a module to chrome\ needs no code
-  # edit. Sorted for a reproducible archive; userChrome.css's @import order is
-  # what actually sequences the cascade, not this list.
   $cssNames = Get-ChildItem $chrome -Filter *.css |
               Sort-Object Name |
               Select-Object -ExpandProperty Name
@@ -84,15 +45,6 @@ try {
   ConvertTo-Json @($cssNames) |
     Set-Content (Join-Path $stage 'chrome-files.json') -Encoding utf8NoBOM
 
-  # The icon set, staged and indexed the same way. Vendored from
-  # microsoft/fluentui-system-icons at authoring time; icons\README.md records
-  # where each one came from. Nothing is downloaded here or at runtime.
-  #
-  # These CANNOT ride in as data: URIs inside the CSS -- measured, see the
-  # ICONS block in chrome\fluent-icons.css. Gecko refuses context-paint to an
-  # SVG loaded from a data: URI, so the glyphs come out solid black instead of
-  # following the theme colour. They have to be real files behind a privileged
-  # URL, which is what the resource:// substitution in api.js gives them.
   if (Test-Path $icons) {
     Copy-Item $icons (Join-Path $stage 'icons') -Recurse -Force
     $iconNames = Get-ChildItem $icons -Filter *.svg |
@@ -105,8 +57,6 @@ try {
       Set-Content (Join-Path $stage 'icon-files.json') -Encoding utf8NoBOM
   }
 
-  # Compress-Archive on the folder itself would nest everything one level down.
-  # The wildcard keeps the manifest at the archive root, where the loader wants it.
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 } finally {
   Remove-Item $stage -Recurse -Force

@@ -1,265 +1,76 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- TOKENS
- * Palette, geometry, elevation, motion, typography.
- *
- * Two sections:
- *   1. Fluent 2 design tokens (--fluent-*), the source of truth.
- *   2. Mapping onto Thunderbird's own tokens, so the theme propagates into
- *      surfaces we never write a selector for.
- *
- * userChrome.css is a USER sheet. In the CSS cascade, author-normal beats
- * user-normal, so every declaration that Thunderbird also sets needs
- * !important. That is why it is on nearly everything here.
- * ========================================================================== */
-
-/* ---------------------------------------------------------------------------
- * 1. FLUENT 2 TOKENS
- * ------------------------------------------------------------------------- */
-
 :root {
-  /* --- Surfaces --- */
-  --fluent-base:              light-dark(#F3F3F3, #202020);  /* window, behind cards */
 
-  /* Fluent's solid ladder has a BaseAlt step between base and card
-   * (#EEEEEE / #1C1C1C). It was declared here and never read: the surfaces
-   * this theme actually needs are base for the window, card for a pane, and
-   * tertiary/quart for blocks and controls inside one. Nothing sits between
-   * the window and a pane. Restate it if a surface ever does. */
+  --fluent-base:              light-dark(#F3F3F3, #202020);
 
-  /* Mica. DWM paints the window backdrop itself (widget.windows.mica in
-   * user.js). CSS cannot fake it, but it CAN detect it: see the
-   * -moz-windows-mica query below. The backdrop
-   * only shows where every layer above it is transparent, so one opaque
-   * paint anywhere in titlebar > tabs > unified toolbar > tabmail hides it
-   * entirely and looks exactly like "the pref did nothing".
-   *
-   * --fluent-base stays the opaque window colour and is still the fallback
-   * everything falls back to; --fluent-base-chrome is what the base surfaces
-   * actually paint. Cards, panes and the selected tab stay opaque on purpose
-   * -- in Fluent they float ON the Mica, they are not part of it.
-   *
-   * TO TURN MICA OFF: drop the prefs from user.js. The media query below stops
-   * matching and every base surface goes back to the opaque colour on its own
-   * -- nothing here needs editing. */
   --fluent-base-chrome:       var(--fluent-base);
-  --fluent-card:              light-dark(#FFFFFF, #2B2B2B);  /* the three panes */
-  --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);  /* blocks inside a pane */
-  --fluent-solid-quart:       light-dark(#EFEFEF, #383838);  /* controls in content */
-  /* Opaque, and it stays opaque. Popups in this theme do not participate in
-   * Mica -- see the note where the (-moz-windows-mica-popups) block used to
-   * be, further down this file. */
-  --fluent-flyout:            light-dark(#F9F9F9, #2C2C2C);  /* menus, panels */
+  --fluent-card:              light-dark(#FFFFFF, #2B2B2B);
+  --fluent-solid-tertiary:    light-dark(#F9F9F9, #303030);
+  --fluent-solid-quart:       light-dark(#EFEFEF, #383838);
 
-  /* --- Text --- */
+  --fluent-flyout:            light-dark(#F9F9F9, #2C2C2C);
+
   --fluent-text-primary:      light-dark(#1A1A1A, #FFFFFF);
   --fluent-text-secondary:    light-dark(#5D5D5D, #CFCFCF);
   --fluent-text-tertiary:     light-dark(#A4A4A4, rgba(255, 255, 255, .54));
   --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
 
-  /* --- Strokes ---
-   * Every box outline in this theme is transparent, on the user's explicit
-   * instruction: no hairline around a pane, a card, a button, an input or a
-   * popup. Surfaces are told apart by fill and shadow alone.
-   *
-   * This is the single point that does it. Every border the theme draws routes
-   * through one of these five -- grep `border` across chrome/ and there is no
-   * literal colour anywhere -- so nothing else needs editing, and restoring the
-   * strokes is a matter of putting the values below back.
-   *
-   * The values, for whenever that happens. Fluent's control stroke is
-   * asymmetric: in light mode the bottom edge is darker, a grounding shadow
-   * baked into the border; in dark mode the TOP edge is lighter instead.
-   *   divider               light-dark(rgba(0,0,0,.08), rgba(255,255,255,.08))
-   *   card-stroke           light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
-   *   control-stroke        light-dark(rgba(0,0,0,.06), rgba(255,255,255,.07))
-   *   control-stroke-top    light-dark(rgba(0,0,0,.06), rgba(255,255,255,.09))
-   *   control-stroke-bottom light-dark(rgba(0,0,0,.16), rgba(255,255,255,.07))
-   *
-   * --fluent-divider is kept SEPARATE and still painted. It is not a box
-   * outline: it draws the rule under the thread pane's column headers
-   * (fluent-lists.css) and the sidebar/section separators mapped below. Those
-   * are structure, not decoration, and blanking them merges the column headers
-   * into the first row. If those should go too, this is the one line to
-   * change -- but check that header first. */
   --fluent-divider:               light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
   --fluent-card-stroke:           transparent;
   --fluent-control-stroke:        transparent;
   --fluent-control-stroke-top:    transparent;
   --fluent-control-stroke-bottom: transparent;
 
-  /* --- Subtle fills: the Fluent list/nav state ladder --- */
   --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));
   --fluent-subtle-pressed:    light-dark(rgba(0, 0, 0, .024), rgba(255, 255, 255, .04));
 
-  /* --- Accent ---
-   * AccentColor is the live Windows 11 personalization accent. Windows keeps
-   * light1/light2/dark1 shades internally that CSS cannot read, so the hover
-   * and pressed variants are synthesized -- close, not bit-identical.
-   * To pin a fixed accent instead, replace AccentColor below with a hex. */
-  /* Prefer Thunderbird's own accent (Settings > Appearance) when set, and
-   * fall back to the live Windows accent otherwise -- the same precedence
-   * Thunderbird uses for --selected-item-color. */
   --fluent-accent:             var(--sidebar-highlight-background-color, AccentColor);
   --fluent-accent-text:        var(--sidebar-highlight-text-color, AccentColorText);
   --fluent-accent-hover:       color-mix(in srgb, AccentColor 90%, light-dark(#000000, #FFFFFF));
   --fluent-accent-pressed:     color-mix(in srgb, AccentColor 80%, light-dark(#000000, #FFFFFF));
-  /* Selection tints. The 12%/24% in Fluent's spec assumes a saturated accent;
-   * against a desaturated one (this machine's is #4A5459) that produces a
-   * ~6% contrast step, too quiet to track selection across a long message
-   * list. Leaned on harder so a muted accent still reads. Lower these toward
-   * 12/24 if you ever switch to a vivid Windows accent. */
+
   --fluent-accent-tint:        color-mix(in srgb, AccentColor 20%, transparent);
   --fluent-accent-tint-strong: color-mix(in srgb, AccentColor 35%, transparent);
 
-  /* --- Geometry --- */
   --fluent-gutter:            8px;
-  --fluent-radius-card:       8px;   /* overlayCornerRadius */
-  --fluent-radius-control:    4px;   /* controlCornerRadius */
+  --fluent-radius-card:       8px;
+  --fluent-radius-control:    4px;
   --fluent-radius-row:        4px;
   --fluent-row-inset:         4px;
-  /* The thread pane's own inset, measured from the pane edge, shared by the
-   * message cards and the header card above them (fluent-lists.css,
-   * fluent-layout.css). Deliberately a step wider than --fluent-gutter: that
-   * one is the gap BETWEEN panes, and a card wants more air than a splitter.
-   * One name for both consumers is what stops the header card and the list
-   * under it drifting apart. */
+
   --fluent-card-inset:        12px;
-  /* A folder-pane row is a 28px fill floating in a taller slot, not a fill
-   * that IS the slot -- two adjacent fills would otherwise share an edge and
-   * merge into one block. The gap is per side, so the slot works out at
-   * 28 + 2*3 = 34px and there is 6px of backdrop between one fill and the
-   * next. That deliberately breaks the 32px pitch 0add3a5 matched to the
-   * Account Settings sidebar; the folder pane runs one step looser than that
-   * sidebar, on purpose.
-   *
-   * 6px is not a free choice: it is what the thread pane's message cards get
-   * (3px of td padding either side of a row, fluent-lists.css), and the two
-   * lists sit side by side. It cannot be expressed as one shared token,
-   * because the thread pane pays for its gap out of a JS-fixed row height and
-   * the folder pane adds its own -- the number matches, the mechanism cannot.
-   * The address book's contact list is the third list held to it. Change one
-   * of the three and change all three. */
+
   --fluent-row-fill-height:   28px;
   --fluent-row-gap:           3px;
   --fluent-control-height:    32px;
-  /* The height of the strip across the top of the window's two left panes:
-   * the thread pane's header card and each of the folder pane's three button
-   * cards. They sit side by side at the same y, so an odd pixel between them
-   * reads as a mistake -- one token, both consumers, in fluent-layout.css.
-   * Taller than --fluent-control-height because these are cards, not controls;
-   * the number is what the header card measured at with its content driving
-   * it, rounded up. */
+
   --fluent-header-height:     40px;
-  --fluent-row-height-table:  32px;  /* table view stays dense */
-  --fluent-row-height-card:   40px;  /* cards view gets full Fluent height */
+  --fluent-row-height-table:  32px;
+  --fluent-row-height-card:   40px;
   --fluent-indicator-width:   3px;
   --fluent-indicator-height:  16px;
 
-  /* --- Elevation --- */
   --fluent-shadow-card:       0 2px 4px light-dark(rgba(0, 0, 0, .04), rgba(0, 0, 0, .26));
   --fluent-shadow-flyout:     0 8px 16px light-dark(rgba(0, 0, 0, .14), rgba(0, 0, 0, .48));
 
-  /* --- Motion --- */
   --fluent-duration-fast:     150ms;
   --fluent-duration-normal:   250ms;
   --fluent-ease-decelerate:   cubic-bezier(0, 0, 0, 1);
   --fluent-ease-standard:     cubic-bezier(.33, 0, .67, 1);
 
-  /* --- Typography ---
-   * No size token, on purpose. Fluent's ramp is caption 12 / body 14 /
-   * subtitle 20, and all three were declared here and read by nothing: this
-   * theme sets the family and the weight and leaves every text SIZE to
-   * Thunderbird, which already scales them off the user's font-size pref and
-   * the uidensity setting. Overriding sizes would break both. The one literal
-   * font-size in the theme is fluent-icons.css:118, and that is a glyph size
-   * for the spaces toolbar, not body type -- its matching 20px is a
-   * coincidence, not this ramp.
-   *
-   * fluent-lists.css carries the only exceptions, on #folderPane and
-   * #threadPane. Both are 1.1rem, relative to the same message-box root, and
-   * both exist only to close a size step Thunderbird itself opens between
-   * about:3pane and its content tabs. A shared token would not help: the two
-   * sides need the SAME computed size, not the same declared one, and they
-   * compute from different roots. */
   --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --fluent-weight-strong:     600;  /* Fluent uses semibold, never bold, in chrome */
+  --fluent-weight-strong:     600;
 }
 
-/* Gecko exposes the live backdrop state as a media feature -- these are real,
- * defined in xul.dll (UTF-16, which is why a plain ASCII string scan misses
- * them) and used by Thunderbird's own toolkit/skin/classic/global/menu.css.
- * Gating on them rather than on the pref means the theme cannot end up
- * transparent with no backdrop behind it: if Mica is off, unsupported, or
- * dropped by DWM at runtime (battery saver, transparency disabled), the query
- * stops matching and the opaque colours come back by themselves.
- *
- * >>> WHY #messengerWindow[customtitlebar] AND NOT :root <<<
- * The media query says the APP has a backdrop. It does not say THIS WINDOW is
- * allowed to be transparent, and every chrome window in the profile matches
- * it -- userChrome.css is scoped to no document, so a bare :root here reaches
- * the New Task dialog, the recurrence dialog, the remote-debugging prompt,
- * every one of them.
- *
- * Those windows keep the NATIVE Windows title bar, and a native frame wants an
- * opaque client area. Made transparent it composites to a solid black band
- * across the title row instead -- reported on the New Task dialog and on the
- * debugger's Incoming Connection prompt, both a 30px black strip.
- *
- * Stock draws the same line in messenger.css:47-56 and this copies it: the
- * main window, and only while Gecko owns the title bar. [customtitlebar] is
- * absent when "Hide system window titlebar" is off, which turns the main
- * window into that same native-frame case.
- *
- * Stock's third gate, :not([lwtheme]), is deliberately NOT copied. It exists
- * so an active lightweight theme's --lwt-accent-color still paints; this
- * theme overrides that fill with !important on purpose, and the add-on keeps
- * a built-in theme enabled at all times, so copying it would switch Mica off
- * permanently. */
 @media (-moz-windows-mica) {
   #messengerWindow[customtitlebar] {
     --fluent-base-chrome: transparent;
 
-    /* The veil's own token, and NOT --fluent-base-chrome. That one is read by
-     * a dozen surfaces which nest -- #navigation-toolbox wraps #titlebar wraps
-     * #tabs-toolbar, #unifiedToolbarContainer wraps unified-toolbar -- and a
-     * translucent fill on each of them composites against the one below.
-     * Measured: at half strength the toolbar stack read as three quarters
-     * while #tabmail beside it read as half, and the step between them drew a
-     * seam across the window at the titlebar and the status bar. The veil is
-     * therefore painted ONCE, on :root in fluent-layout.css's MICA block, and
-     * every base surface stays fully transparent above it.
-     *
-     * ONCE PER WINDOW, NOT ONCE PER DOCUMENT. userContent.css deliberately
-     * has no veil: a content tab's document stacks on top of the chrome root
-     * that already carries it, so tinting there too made the tab area two
-     * layers deep against one for the rail beside it -- the same seam again,
-     * now running down the edge of the tab. Those documents stay transparent
-     * and the chrome veil shows through them. */
     --fluent-veil: transparent;
   }
 
-  /* THE VEIL. The backdrop is DWM's and its strength is not ours to set --
-   * DWM_SYSTEMBACKDROP_TYPE is an enum, there is no opacity on it. What IS
-   * ours is how much of our own base surface sits between the backdrop and
-   * the user, so the options page's Transparency slider paints this token
-   * instead of leaving it fully transparent. 100 is the case above and the
-   * default: all backdrop, no veil.
-   *
-   * DISCRETE STEPS, NOT A FREE 0-100, because -moz-pref works in a media query
-   * and nowhere else: CSS can test a pref against one literal value and cannot
-   * read one as a number, and there is no less-than form to build a range out
-   * of. So every step the slider can produce needs a block here, and the
-   * slider's `step` attribute in options.html has to match this list exactly
-   * -- a value with no block falls through to the default and the slider looks
-   * broken rather than wrong.
-   *
-   * The list stops at 10 because 0 is not a setting: a fully opaque window
-   * with a backdrop behind it that never shows is what turning Mica off does,
-   * minus the titlebar treatment DWM keeps.
-   *
-   * THE PREF COUNTS THE OPPOSITE WAY TO THE TOKEN. It is transparency, as the
-   * options page names it, while --fluent-veil is the opacity of what covers
-   * the backdrop. Each step below pairs a transparency with its complement. */
+  /* Discrete steps, not a range: -moz-pref can only test a pref against one
+   * literal. Every step needs its own block here and options.html's slider
+   * must list exactly the same set, or the value paints nothing. */
   @media -moz-pref("extensions.thunderbird-fluent.transparency", 90) {
     #messengerWindow[customtitlebar] {
       --fluent-veil: color-mix(in srgb, var(--fluent-base) 10%, transparent);
@@ -315,27 +126,6 @@
   }
 }
 
-/* THE SAME TOKEN, FOR THE MAIN WINDOW'S SUB-DOCUMENTS.
- *
- * Custom properties inherit through a DOM, not across a document boundary.
- * The block above sets --fluent-base-chrome on #messengerWindow, so it reaches
- * everything drawn in messenger.xhtml itself and stops dead at every <browser>
- * inside it -- and two of those documents paint their own backdrop from this
- * token: body#paneLayout in about:3pane (fluent-layout.css) and the root, body
- * and #gloda-facet-view of the search results (fluent-search-results.css).
- * Without this block they fall back to the opaque value and the Mail tab goes
- * solid while every other tab stays glass, which is exactly what scoping the
- * block above to a selector did on its own.
- *
- * :root is safe HERE where it was not safe there: @-moz-document names the
- * documents, and neither of these ever loads as a standalone window. That is
- * the whole distinction the dialogs turn on -- transparency is legal in the
- * main window and in what it embeds, not in a window with a native frame.
- *
- * glodaFacetViewWrapper.xhtml is absent on purpose: it paints `transparent`
- * literally rather than through this token (fluent-search-results.css:113-121),
- * so it needs nothing here. A document added to either sheet that reads
- * --fluent-base-chrome has to be added to this list too. */
 @-moz-document url("about:3pane"),
                url("chrome://messenger/content/glodaFacetView.xhtml") {
   @media (-moz-windows-mica) {
@@ -345,119 +135,62 @@
   }
 }
 
-/* There is NO (-moz-windows-mica-popups) block here, and that is deliberate.
- *
- * There used to be one, blanking --fluent-flyout to transparent so the DWM
- * backdrop could show through. It was removed once popups were taken off Mica
- * (profile/user.js sets widget.windows.mica.popups to false, because the
- * border that backdrop draws is outside the CSS box and this theme draws no
- * box outlines). What the removal fixed is subtler than a dead rule: the pref
- * and the media feature do NOT move together. Turning the pref off stops the
- * widget applying a backdrop to popup windows -- the border goes -- but
- * (-moz-windows-mica-popups) keeps matching, so menu.css:48 keeps handing the
- * popup `appearance: auto`. Native paint with no backdrop beneath it paints
- * nothing at all, and a blanked --fluent-flyout leaves nothing else to paint
- * either, so menus came up SEE-THROUGH over the main window's Mica: measured
- * as a 69-to-73 gradient in both axes where a flat #2C2C2C was expected.
- * fluent-chrome.css closes the other half by forcing appearance: none.
- *
- * So: do not gate popup surfaces on this feature. Menu ITEM fills are fine as
- * translucent state layers -- they composite onto whatever the popup paints. */
-
-/* ---------------------------------------------------------------------------
- * 2. MAPPING ONTO THUNDERBIRD'S TOKENS
- *
- * Thunderbird's layout.css defines a semantic ladder that happens to line up
- * with Fluent's. Redefining it here propagates the palette into Settings,
- * Address Book and dialogs without a single selector.
- * ------------------------------------------------------------------------- */
-
 :root {
-  /* Surfaces. bg-0..2 all resolve to the card colour because the folder,
-   * thread and message panes are all cards; the window base is set separately
-   * in fluent-layout.css so toolbars do not inherit card white. */
+
   --layout-background-0: var(--fluent-card) !important;
   --layout-background-1: var(--fluent-card) !important;
   --layout-background-2: var(--fluent-card) !important;
   --layout-background-3: var(--fluent-solid-tertiary) !important;
   --layout-background-4: var(--fluent-solid-quart) !important;
 
-  /* Text ladder */
   --layout-color-0: var(--fluent-text-primary) !important;
   --layout-color-1: var(--fluent-text-primary) !important;
   --layout-color-2: var(--fluent-text-secondary) !important;
   --layout-color-3: var(--fluent-text-tertiary) !important;
 
-  /* Strokes */
   --layout-border-0: var(--fluent-divider) !important;
   --layout-border-1: var(--fluent-card-stroke) !important;
   --layout-border-2: var(--fluent-control-stroke) !important;
 
-  /* XUL toolbarbutton strokes. Only ever used as border-color, and the message
-   * header's Reply/Forward/Archive row is the most visible consumer -- six
-   * outlined boxes in a row, which is what a Fluent command bar specifically
-   * is not. Both go transparent, same as every other box outline in this
-   * theme. The buttons keep their hover fill, which comes from elsewhere. */
   --toolbarbutton-header-bordercolor: transparent !important;
   --toolbarbutton-active-bordercolor: transparent !important;
 
-  /* Sidebar tokens -- the folder pane reads these rather than --layout-* */
   --sidebar-background: var(--fluent-card) !important;
   --sidebar-color: var(--fluent-text-primary) !important;
   --sidebar-border-color: var(--fluent-divider) !important;
   --sidebar-border: var(--fluent-divider) !important;
 
-  /* Chrome surfaces stay on the window base, not card white */
   --toolbar-bgcolor: var(--fluent-base) !important;
   --toolbar-color: var(--fluent-text-primary) !important;
 
-  /* Flyouts */
   --arrowpanel-background: var(--fluent-flyout) !important;
   --arrowpanel-color: var(--fluent-text-primary) !important;
   --arrowpanel-border-color: var(--fluent-card-stroke) !important;
 
-  /* Geometry. The last three token names are new in Thunderbird 153;
-   * --panel-border-radius already ships at 8px there, which is Fluent's
-   * overlayCornerRadius, so that one is restated rather than changed. */
   --button-border-radius: var(--fluent-radius-control) !important;
   --listbox-border-radius: var(--fluent-radius-row) !important;
   --border-radius-medium: var(--fluent-radius-control) !important;
   --input-text-border-radius: var(--fluent-radius-control) !important;
   --panel-border-radius: var(--fluent-radius-card) !important;
 
-  /* Motion */
   --transition-duration: var(--fluent-duration-fast) !important;
   --transition-timing: var(--fluent-ease-standard) !important;
 
-  /* Focus: Fluent uses a 2px accent ring offset from the control */
   --focus-outline-color: var(--fluent-accent) !important;
   --focus-outline: 2px solid var(--fluent-accent) !important;
   --focus-outline-offset: 2px !important;
 
-  /* Icons are full-strength in Fluent, never dimmed */
   --toolbarbutton-icon-fill-opacity: 1 !important;
 
-  /* Scrollbars. Gecko exposes only these two properties -- Fluent's
-   * expand-on-hover scrollbar is not reachable from CSS. */
   scrollbar-width: thin !important;
   scrollbar-color: light-dark(rgba(0, 0, 0, .35), rgba(255, 255, 255, .35)) transparent !important;
 }
-
-/* ---------------------------------------------------------------------------
- * TYPOGRAPHY
- * Segoe UI Variable with its optical-size axis enabled, so small text gets
- * looser spacing and a larger x-height automatically.
- * ------------------------------------------------------------------------- */
 
 :root,
 body {
   font-family: var(--fluent-font) !important;
   font-optical-sizing: auto !important;
 }
-
-/* ---------------------------------------------------------------------------
- * REDUCED MOTION -- Fluent's own spec requires honouring this.
- * ------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   :root {

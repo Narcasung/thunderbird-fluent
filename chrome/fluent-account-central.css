@@ -1,96 +1,23 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- ACCOUNT CENTRAL
- *
- * msgAccountCentral.xhtml: the page that fills the message-list half of
- * about:3pane when an ACCOUNT ROOT row is selected in the folder pane
- * (about3Pane.js:2874, gated on gFolder.isServer). One page, one file.
- *
- * WHY userChrome AND NOT userContent.
- * The host is `<xul:browser id="accountCentralBrowser"/>` at
- * about3Pane.xhtml:513, with NO type attribute -- compare its sibling
- * #multiMessageBrowser two lines up, which is explicitly type="content".
- * A browser without a type is a chrome docshell, so this page is reached by
- * userChrome.css and the shared @-moz-document token block in userContent.css
- * does not apply to it. That is the opposite of the five content tabs.
- *
- * WHY THE CHROME URL SCOPES IT.
- * README warns that blocks keyed on the chrome:// URL fired on nothing for the
- * five about: pages -- because there the chrome path sits behind an
- * AboutRedirector mapping and the document's URI is the about: one. Here there
- * is no redirect: about3Pane.js sets the browser's src to the chrome URL
- * literally, so the document URI IS the chrome path. Same reason the am-*
- * prefix reaches Account Settings' panes.
- *
- * The trailing ?folderURI=... is why this is url-prefix and not url().
- *
- * The card this page sits on is NOT here -- it is on the browser element, in
- * fluent-layout.css, because that element lives in about:3pane's document.
- * ========================================================================== */
-
 @-moz-document url-prefix("chrome://messenger/content/msgAccountCentral.xhtml") {
-
-  /* -------------------------------------------------------------------------
-   * TOKENS
-   * This document never sees --fluent-accent-link: that token is declared
-   * inside userContent.css's shared block, which is scoped to the content
-   * tabs. Restated here rather than promoted to fluent-tokens.css so this file
-   * stays self-contained; if a third surface ever needs it, promote it then.
-   * The derivation, and the measurement behind the 60/55 split, are documented
-   * once, in userContent.css.
-   * ----------------------------------------------------------------------- */
 
   :root {
     --fluent-accent-link: light-dark(
       color-mix(in srgb, AccentColor 60%, #000000),
       color-mix(in srgb, AccentColor 55%, #FFFFFF));
 
-    /* Stock drives every link, the donation link and the .btn-hub glyphs off
-     * this one pair. Mapping the pair is the whole link treatment -- the same
-     * approach as the shared block in userContent.css. */
     --color-primary-default: var(--fluent-accent-link) !important;
     --color-primary-hover: color-mix(in srgb, var(--fluent-accent-link) 85%, light-dark(#000000, #FFFFFF)) !important;
 
     --color-text-base: var(--fluent-text-primary) !important;
 
-    /* .btn-link:hover fills with this; stock resolves it to a 12% accent tint
-     * (variables.css:237), which is a selection colour, not a hover one. */
     --panel-background-color-dimmed: var(--fluent-subtle-hover) !important;
   }
-
-  /* -------------------------------------------------------------------------
-   * THE SURFACE
-   *
-   * Nothing in this document may paint an opaque fill. The card -- colour,
-   * stroke, 8px radius, shadow -- is on the browser ELEMENT in
-   * fluent-layout.css, and a Gecko browser does not reliably clip its document
-   * to its own border-radius. So the fill has to come from underneath: html
-   * and body go transparent, the browser's card shows through, and the corners
-   * stay round because nothing is drawn over them.
-   *
-   * Transparency propagates here because this is a chrome docshell in the same
-   * process -- the same reason the about:3pane Mica chain works and the
-   * content-tab one does not (see the end of fluent-layout.css).
-   *
-   * body's stock `block-size: 100vh` is left alone deliberately. It was the
-   * overflow trap on Account Settings' #accountTreeBox, but there 100vh was
-   * measured against an ancestor scroll container; here body IS the viewport
-   * root, so 100vh and 100% are the same number and `overflow: auto` still
-   * scrolls normally when the sections outgrow the pane.
-   * ----------------------------------------------------------------------- */
 
   html,
   body {
     background-color: transparent !important;
   }
 
-  /* Match the folder pane's text size.
-   *
-   * Same one-step gap, same fix, same reason as fluent-lists.css's #folderPane
-   * rule -- read the note there. This page loads messenger.css and colors.css
-   * but no in-content sheet (msgAccountCentral.xhtml:17-20), so it never gets
-   * the tenth that every content tab's body adds, and it renders a step below
-   * the folder pane sitting immediately beside it. rem is this document's own
-   * root, still message-box, so the user's font-size pref keeps scaling it. */
   body {
     font-size: 1.1rem !important;
   }
@@ -99,13 +26,6 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* The zebra banding and the header band both resolve to
-   * --layout-background-1, which fluent-tokens.css already maps to
-   * --fluent-card -- so they are invisible before this rule ever runs. They
-   * are killed anyway for two reasons: the header sits at the TOP of the card
-   * and an opaque fill there squares off the two top corners, and the
-   * alternation must not come back if that token mapping is ever loosened.
-   * Fluent separates blocks with spacing, not with bands. */
   .account-central-header,
   .account-central-section.zebra {
     background-color: transparent !important;
@@ -116,31 +36,6 @@
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* -------------------------------------------------------------------------
-   * THE SETUP TILES
-   *
-   * .btn-hub is a <button> that sets no background of its own; it inherits
-   * `background-color: var(--button-background-color)` from widgets.css:12,
-   * and that token is unmapped in chrome (userContent.css maps it, but only
-   * inside its own scope). So the rest state has to be stated outright.
-   *
-   * On an account that already exists these are all .btn-inline -- row pills,
-   * 8px/12px padding. The 90px column tiles only appear on the no-account
-   * first-run page. One rule covers both.
-   *
-   * Stock's hover flips the whole tile to solid --selected-item-color with
-   * `color: ... !important` (accountCentral.css:223). That author !important
-   * loses to a user !important -- the cascade order is UA-important >
-   * user-important > author-important -- which is what makes this reachable at
-   * all. The flip is reversed for the same reason the folder pane's
-   * --treeitem-background-active was: in Fluent a hover is a subtle neutral
-   * state layer, and accent appears as accent, never as a whole filled
-   * surface.
-   *
-   * The hover/pressed polarity is Fluent's, not a lighten/darken constant:
-   * hover moves AWAY from the surface (lighter in dark, darker in light) and
-   * pressed moves back TOWARD it, which is why the two mixes take opposite
-   * light-dark() pairs. */
   .btn-hub {
     background-color: var(--fluent-solid-quart) !important;
     color: var(--fluent-text-primary) !important;
@@ -162,21 +57,10 @@
     background-color: color-mix(in srgb, var(--fluent-solid-quart) 94%, light-dark(#FFFFFF, #000000)) !important;
   }
 
-  /* Stock drops the glyph to currentColor on hover, which only made sense
-   * because the tile went solid accent underneath it. With a neutral hover the
-   * glyph keeps its accent. Author !important there too. */
   .btn-hub:hover::before {
     color: var(--fluent-accent-link) !important;
   }
 
-  /* -------------------------------------------------------------------------
-   * ROW ACTIONS AND LINKS
-   * ----------------------------------------------------------------------- */
-
-  /* .btn-link is the Read / Write / Search / Filter / E2E row and the Account
-   * Settings button. Stock gives it padding: 0, so the hover fill it already
-   * has lands as a bare rectangle tight against the glyph. Fluent's list state
-   * layer needs room and a radius to read as one. */
   .btn-link {
     border-radius: var(--fluent-radius-row) !important;
     padding-block: 4px !important;
@@ -192,17 +76,6 @@
   .btn-link:hover:active {
     background-color: var(--fluent-subtle-pressed) !important;
   }
-
-  /* -------------------------------------------------------------------------
-   * THE TILE TOOLTIP
-   * .account-description is an absolutely-positioned div that fades in under a
-   * hovered tile. Stock paints it --layout-background-2, which this theme maps
-   * to the card -- so on a card it is an invisible box with a 4px shadow.
-   * Given the tertiary surface plus a stroke it reads as the flyout it is.
-   * NOT --fluent-flyout: that token goes transparent under
-   * -moz-windows-mica-popups, and this is an in-page div with no DWM backdrop
-   * behind it to become.
-   * ----------------------------------------------------------------------- */
 
   .account-description > p {
     background-color: var(--fluent-solid-tertiary) !important;

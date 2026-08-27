@@ -1,37 +1,6 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- ICONS
- *
- * Five parts:
- *   1. Retune what is left of Thunderbird's own SVG set.
- *   2. Point 211 of its 223 --icon-* tokens at Microsoft's Fluent UI System
- *      Icons, served over resource:// by the add-on.
- *  2b. Alias the three token families that name the same art under other
- *      names, so a button and the menu that opens it cannot disagree.
- *  2c. Match tab icons by their favicon URL, the one place the icon is not
- *      addressable as a token at all.
- *   3. Give `fill` the full-strength colour on every rule written for outline
- *      art, because the new art is filled.
- *   4. Turn `fill` ON at the 62 sites that never exported it, where the
- *      keyword falls back to its initial value and paints black.
- *
- * ALL OF IT IS RESTATED IN userContent.css. Settings, the Add-ons Manager and
- * the Address Book are content docshells; this sheet does not reach them, and
- * a custom property does not cross a document boundary.
- *
- * SEGOE FLUENT ICONS USED TO BE PART 2 AND ARE GONE.
- * An earlier pass swapped fourteen buttons -- the message-header actions and
- * the spaces rail -- to Segoe glyphs injected as ::before, because there was
- * no way to ship real assets at the time. There is now, and two icon sets
- * side by side is how silhouettes drift apart: the same action drawn one way
- * in the header and another in a menu. The glyph blocks are removed and those
- * buttons take their icons from the token layer like everything else.
- * The codepoints are in git history if they are ever wanted back.
- * ========================================================================== */
-
-/* ---------------------------------------------------------------------------
- * 1. RETUNE THE EXISTING SET
- * Fluent icons are full-strength; Thunderbird dims them to .85 by default.
- * ------------------------------------------------------------------------- */
+/* Icon tokens and the fill pass for the chrome window.
+ * resource://, NEVER data: -- Gecko refuses context-paint to a data: URI and
+ * the glyphs paint solid black. api.js registers the host. See CLAUDE.md. */
 
 :root {
   --toolbarbutton-icon-fill-opacity: 1 !important;
@@ -42,42 +11,6 @@ toolbarbutton .toolbarbutton-icon,
 .toolbar-button img {
   opacity: 1 !important;
 }
-
-/* ---------------------------------------------------------------------------
- * 2. THE ICON SET
- *
- * 211 of Thunderbird's 223 image-valued --icon-* tokens. The skin reads them
- * 891 times, so overriding the property reaches every use site at once -- with
- * one exception, the 49 places that hardcode a chrome:// URL instead of going
- * through a token. Those are the compose window's formatting toolbar, mostly,
- * and they are their own pass.
- *
- * THE COUNT WAS 186 OF 198 AND BOTH NUMBERS WERE WRONG. The first survey
- * missed 25 tokens outright. That is not a cosmetic shortfall: part 3 pours a
- * fill into whatever art a rule points at, and on OUTLINE art the result is a
- * dark ring around a filled body, because the stroke keeps full strength while
- * the fill is softened. Filled art has no such edge. Light mode shows it
- * plainly, dark mode barely. So a token left behind is not neutral -- the pass
- * actively breaks it, and the set has to be complete for the pass to be right.
- *
- * The twelve tokens NOT here keep Thunderbird's art on purpose; tools/
- * vendor-icons.py lists them with reasons, and icons/MAPPING.md is the
- * generated table of what became what.
- *
- * !important IS REQUIRED. Stock sets these on :root as an AUTHOR rule, and
- * author-normal beats user-normal -- the same cascade problem documented at
- * the top of userContent.css.
- *
- * WHY resource:// AND NOT data:. Gecko refuses context-paint to an image
- * loaded from a data: URI, so fill="context-fill" never resolves and every
- * glyph renders solid black. Measured; the full account is in THE ICON SET in
- * extension/api.js. The add-on registers resource://thunderbird-fluent/
- * against <profile>/chrome/icons/ to give these files a privileged URL.
- *
- * WITHOUT THE ADD-ON these URLs resolve to nothing and Thunderbird's own icons
- * come back -- the correct degradation, and the same bargain the Mica gate in
- * fluent-layout.css makes.
- * ------------------------------------------------------------------------- */
 
 :root {
   --icon-account-settings: url("resource://thunderbird-fluent/account-settings.svg") !important;
@@ -293,29 +226,6 @@ toolbarbutton .toolbarbutton-icon,
   --icon-warning-sm: url("resource://thunderbird-fluent/warning-sm.svg") !important;
 }
 
-/* ---------------------------------------------------------------------------
- * 2b. THE ALIAS FAMILIES
- *
- * --icon-* is not the whole token layer. Three more families name the very
- * same art under different tokens, and each is read by a different part of the
- * UI: --spaces-icon-* by the spaces rail and its overflow menu, --folder-pane-*
- * by the special-folder rows, --account-central-* by the start page. Override
- * --icon-address-book alone and the spaces menu gets Microsoft's book while
- * the tab it opens keeps Thunderbird's -- the same action drawn two ways, one
- * click apart.
- *
- * Each line below was derived by matching target FILES, not names: two tokens
- * that resolve to the same .svg get the same answer by construction. The
- * families differ only in which density folder they point at, which is why
- * they alias to the token rather than to a resource:// URL -- the --icon-*
- * line above stays the single place any of this is decided.
- *
- * ELEVEN TOKENS ARE DELIBERATELY NOT HERE. The five --*-illustration
- * pictographs are large empty-state drawings with no icon counterpart;
- * --font-size-increase/decrease and the four remaining --addons-manager-*
- * tokens have no twin in the --icon-* set at all.
- * ------------------------------------------------------------------------- */
-
 :root {
   --account-central-address-book: var(--icon-address-book) !important;
   --account-central-calendar: var(--icon-calendar) !important;
@@ -361,91 +271,6 @@ toolbarbutton .toolbarbutton-icon,
   --spaces-icon-tasks: var(--icon-tasks) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * 3. FILLED ART NEEDS A FILLED PAINT
- *
- * Thunderbird's own icons are OUTLINE art and its rules are written for that:
- * the full-strength colour goes on `stroke`, and `fill` gets a 10-20% alpha
- * wash -- the soft tint inside the outline. Microsoft's art is FILLED: one
- * path, all fill, no stroke geometry. On a wash site the whole glyph therefore
- * renders at one fifth strength and reads as a smudge. Measured before this
- * block existed: folder-pane Spam came out #513234 against a #292B2D
- * background, which back-solves to the right red at exactly 20%.
- *
- * THE RULE, APPLIED WITHOUT EXCEPTION:
- *   give `fill` whatever stock gives `stroke`.
- * Not currentColor everywhere -- stock's own stroke value at that site. That
- * is what keeps the per-folder tinting (spam red, archive olive, inbox blue),
- * keeps selected rows using the selection colour, and keeps the deliberately
- * quiet thread-tree columns quiet instead of promoting them to full strength.
- * The rules below are grouped by that value, which is why there are 47 of them
- * for 161 selectors rather than one blanket rule.
- *
- * Extracted from the shipped skin rather than written by hand: every selector
- * here encloses a `fill: color-mix(...)` in Thunderbird's own CSS, with the
- * nesting resolved. That is also why some will look redundant -- they are
- * stock's shape, not ours.
- *
- * TWO WAYS THE FIRST VERSION OF THIS BLOCK MISSED, both now fixed. It ran at
- * 127 selectors and left most of the visible chrome faint -- the message
- * header actions, the calendar and chat toolbars, the folder-pane header, the
- * search field's magnifier.
- *   1. The extractor discarded a rule's declarations when a nested rule opened
- *      inside it. `.button`, `.toolbarbutton-1` and
- *      `.message-header-view-button` all declare their wash before their first
- *      `&:hover`, so all three vanished -- 38 selectors in total.
- *   2. It only looked for a literal `fill: color-mix(...)`. Three custom
- *      properties carry the wash indirectly, and a rule reading
- *      `fill: var(--button-icon-fill)` names no color-mix at all. They are
- *      redefined in the first rule below.
- * Both were bugs in the tooling, not judgement calls, which is why the block
- * grew by a quarter without any new decision behind it.
- *
- * WHY NOT IN THE SVG INSTEAD -- three variants were built and measured:
- *   fill="context-stroke"          full strength on the wash sites, and BLACK
- *                                  on the ~64 that export fill only.
- *   both paths, stroke over fill   the same black, painted over a good glyph.
- *   fill="context-fill"  (kept)    correct wherever stock sets fill to a real
- *                                  colour; faint on the wash sites, which is
- *                                  what this block is for.
- * The finding under all three: an unresolved context-stroke paints BLACK, not
- * nothing. There is no SVG-side trick.
- *
- * SAFE TO APPLY BROADLY ONLY BECAUSE THE SET IS NEARLY COMPLETE. While most
- * icons were still Thunderbird's, a rule like this turned THEIR outline art
- * into solid blobs, so the first version of this block had to name consumers
- * one at a time.
- *
- * THE TWELVE STILL ON STOCK ART ARE NOT ALL OUT OF REACH. The thread-list
- * column marks are safe -- treechildren::-moz-tree-image(subjectCol, ...) is
- * not in this block. But #button-nextUnread and #button-previousUnread are
- * .toolbarbutton-1, the card-view column marks are matched by
- * `[is="tree-view-table"] img`, and the app-menu badge rides a toolbar button
- * too. Those can still show the ring described above. Replacing them would
- * throw away the encoding that is the whole reason they were kept, so the fix
- * is to hand those consumers stock's 20% wash back, not to redraw them.
- * ------------------------------------------------------------------------- */
-
-/* LIGHT MODE GETS A SOFTER ICON.
- *
- * "Give fill whatever stock gives stroke" is right about WHICH colour, and on
- * dark chrome it is right about the strength too. On light chrome it is not:
- * an outline glyph at full text colour is a thin line, and the same colour
- * poured through a filled silhouette is a solid black shape. Same value, much
- * more of it, and the icons end up heavier than the text they sit beside.
- *
- * Fluent 2's own answer is to draw icons one step down the neutral ramp --
- * NeutralForeground3 #616161 against NeutralForeground1 #242424 for text. 72%
- * of the text colour over white lands on #616161, so that is the ratio.
- *
- * Dark mode is deliberately left at full strength: there the glyph is lighter
- * than its ground, so thinning it toward the background only makes it muddy --
- * which is the exact failure the 20% wash produced before part 3 existed.
- *
- * light-dark() and not a media query, because the theme's light/dark switch is
- * a pref that drives `color-scheme` (see userChrome.css), and light-dark()
- * follows color-scheme. A prefers-color-scheme query would follow the OS and
- * desync the moment the two disagree. Same idiom as fluent-tokens.css. */
 :root {
   --fluent-icon-fill: light-dark(
     color-mix(in srgb, currentColor 72%, transparent),
@@ -453,14 +278,6 @@ toolbarbutton .toolbarbutton-icon,
   );
 }
 
-/* The three custom properties that carry the wash indirectly. A rule reading
- * `fill: var(--button-icon-fill)` never mentions color-mix, so redefining the
- * property is the only lever that reaches it -- and it reaches every consumer
- * at once. Each takes its own paired stroke token, same rule as below, softened
- * the same way -- they cannot use --fluent-icon-fill because their colour is
- * their own stroke token rather than currentColor.
- * `*` and not `:root`, because an element that declares the property itself
- * wins over any inherited value no matter the origin. */
 * {
   --appmenu-icons-fill: light-dark(
     color-mix(in srgb, var(--appmenu-icons-stroke) 72%, transparent),
@@ -778,31 +595,6 @@ tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img 
   fill: var(--vcard-delete-button-color) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * 2c. TAB ICONS
- *
- * A tab's icon is not a token. It is the page's FAVICON -- a hardcoded
- * chrome:// URL, either in a <link rel="icon"> or handed to setIcon() from JS
- * (addressBookTab.js:67, calendar-tabs.js:85, chat-messenger.js:339,
- * preferencesTab.js:60, glodaFacetTab.js:30). Nothing in the token layer
- * touches it, which is why the spaces menu showed Microsoft's book while the
- * Address Book tab one click later still showed Thunderbird's.
- *
- * The fix is to match the src and replace the rendered image. That is stock's
- * own idiom on this exact element -- tabmail.css:132 does
- * `.tab-icon-image:not([src]) { content: var(--icon-file); }` -- so it is a
- * documented way to paint this img, not a trick.
- *
- * The src attribute is left alone deliberately. setIcon() installs a one-shot
- * error listener to swap in its fallback, and rewriting the attribute out from
- * under it is how that machinery would get confused.
- *
- * pdf.svg is the one favicon left stock: the icon set has no counterpart, and
- * a PDF tab showing a generic document would say less than what is there now.
- *
- * `.tab-icon-image` already takes its full-strength fill from part 3.
- * ------------------------------------------------------------------------- */
-
 .tab-icon-image[src="chrome://messenger/skin/icons/new/compact/address-book.svg"] {
   content: var(--icon-address-book) !important;
 }
@@ -840,20 +632,6 @@ tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img 
   content: var(--icon-draft) !important;
 }
 
-/* A MAIL TAB'S ICON IS NOT FIXED -- it tracks the selected folder.
- * about3Pane.xhtml:22 declares folder.svg, but about3Pane.js:2867 overwrites
- * that href on every folder change with FolderUtils.getFolderIcon(), which
- * returns one of seventeen names from the same compact/ directory. So the tab
- * shows a tray on Inbox, a bin on Trash, a globe on a news server. All
- * seventeen need mapping or a mail tab keeps stock art -- and worse than
- * stock, since part 3 gives that outline art a full-strength fill and it comes
- * out as a solid blob. That blob is what an Inbox tab was showing.
- *
- * INBOX IS THE DELIBERATE EXCEPTION and the only rule in this file that does
- * not follow its own source. Upstream draws Inbox as a tray; the spaces rail
- * button that opens the very same view draws an envelope. The rail is the
- * label people read, so the tab matches the rail. Every other folder type
- * keeps its own meaning -- a Trash tab still says trash. */
 .tab-icon-image[src="chrome://messenger/skin/icons/new/compact/inbox.svg"] {
   content: var(--icon-mail) !important;
 }
@@ -926,53 +704,9 @@ tr[data-properties~="unread"] .tree-view-row-unread > .tree-button-unread > img 
   content: var(--icon-info) !important;
 }
 
-/* The Add-ons Manager tab. about:addons is a toolkit page and its favicon comes
- * from mozapps, not messenger, so it is the one tab icon whose URL is outside
- * the skin the rest of this file reads. */
 .tab-icon-image[src="chrome://mozapps/skin/extensions/extension.svg"] {
   content: var(--icon-extension) !important;
 }
-
-/* ---------------------------------------------------------------------------
- * 4. THE SITES THAT NEVER OPTED INTO fill AT ALL
- *
- * Part 3 fixes rules that hand `fill` a wash. This fixes the opposite defect:
- * 62 rules declare `-moz-context-properties` WITHOUT `fill` in the list --
- * `stroke` alone, or `stroke, fill-opacity`. At those sites the keyword
- * `context-fill` has nothing to resolve against, so Gecko falls back to the
- * CSS initial value of `fill`, which is BLACK. Not faint, not the wrong
- * shade -- black, and black in both colour schemes, which is what makes it
- * look nothing like the wash bug even though it comes from the same mismatch.
- *
- * Thunderbird never noticed because outline art has nothing to lose: the shape
- * IS the stroke, and an invisible black fill behind it costs nothing. Ours is
- * all fill. Submenu chevrons and the today-pane nav arrows were the visible
- * cases; the other 60 are the same rule waiting to be found.
- *
- * So each rule below restates stock's own property list WITH `fill` added, and
- * gives fill that rule's own stroke value -- the same rule part 3 follows.
- * Where stock names a real colour rather than currentColor it kept that colour
- * verbatim and skipped the light-mode softening, because those are chosen
- * colours (a green tick, a white overlay, an avatar tint), not text.
- *
- *
- * NO NAMESPACE PREFIXES IN THESE LISTS, EVER. userChrome.css declares no
- * @namespace on purpose (its header says why), so a selector like
- * `html|input[...]` is invalid -- and ONE invalid selector in a comma list
- * invalidates the WHOLE rule. Two of them shipped here once and silently took
- * all 46 selectors of the first group down with them, which is how a fix that
- * named #miniday-dropdown-button still left it black. Anything extracted from
- * Thunderbird's own CSS has to have its prefixes stripped, not carried over:
- * stock declares its namespaces, and this sheet cannot.
- *
- * fill-opacity IS IGNORED, and one place that shows. Nine of these also export
- * fill-opacity, and Thunderbird uses it to keep a marker quiet -- the
- * correspondent column sets 0, then 0.3 on outgoing rows. It cannot reach our
- * paths: a context property only crosses into an SVG that asks for it by name,
- * and ours ask for context-fill only. So that arrow comes out at full strength
- * rather than at 30%. It was solid black before, so this is still the right
- * direction, but it is a real difference and not an accident.
- * ------------------------------------------------------------------------- */
 
 #AbPickerHeader #abContextMenuButton,
 #NextButton,
@@ -1069,27 +803,6 @@ treechildren::-moz-tree-image(correspondentCol) {
   -moz-context-properties: fill, stroke !important;
   fill: color-mix(in srgb, currentColor 30%, transparent) !important;
 }
-
-/* ---------------------------------------------------------------------------
- * 5. THE PLACES A `fill` IS SUPPOSED TO DISAPPEAR
- *
- * Parts 3 and 4 both assume stock's fill value is a colour worth keeping. In a
- * few places it is `transparent`, and it means "draw nothing" -- a real state,
- * not a wash to be corrected. A user-origin !important beats author at any
- * specificity, so the broad rules above overrode the disappearing act and made
- * a permanent marker out of a conditional one.
- *
- * The read-status dot is the one that showed. threadCard.css:12 points it at
- * --icon-dot and then drives it entirely through two custom properties:
- * transparent for a read message (line 32), green for unread (81), yellow and
- * a different glyph for new (90). Part 3's `[is="tree-view-table"] img` caught
- * it and pinned fill to a visible colour, so every row wore the unread dot.
- *
- * Handing the two properties back is enough -- all three states come with
- * them, and the sizing and glyph choice were never ours. The selector needs
- * `[is="tree-view-table"]` in front only to outrank part 3's, which is one
- * class heavier than a bare `.read-status`.
- * ------------------------------------------------------------------------- */
 
 [is="tree-view-table"] img.read-status {
   fill: var(--read-status-fill) !important;

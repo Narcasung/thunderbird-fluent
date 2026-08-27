@@ -1,54 +1,5 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- SEARCH RESULTS
- *
- * The global-search tab (glodaFacetTab.js:9), whose title is the search string.
- * One tab, three documents, so one file -- the same call ACCOUNT CENTRAL made.
- *
- * THE PAINT CHAIN IS FOUR LAYERS DEEP, and every one of them could hide the
- * backdrop on its own:
- *
- *   tab panel (vbox, cloned from messenger.xhtml:6922)
- *     .chromeTabInstance > .contentTabToolbox        the search toolbar
- *     iframe  -> glodaFacetViewWrapper.xhtml
- *       body (flex column, margin 0)
- *         browser#browser  -> glodaFacetView.xhtml   the results themselves
- *
- * WHY userChrome AND NOT userContent, MEASURED NOT REASONED.
- * Both documents sit in chrome docshells -- the wrapper is a plain XUL iframe,
- * and glodaFacetViewWrapper.xhtml's browser#browser carries no `type`
- * attribute -- which is the same shape as #accountCentralBrowser and
- * about:3pane, and the same argument says userChrome. This project has been
- * wrong about paint before, so it was settled with a probe rather than an
- * argument: the same #gloda-facet-view rule in both sheets, red here and lime
- * in userContent.css, using background-IMAGE so that a user sheet's !important
- * could not win the test for a rule that was not being tested. It came up red.
- *
- * CONSEQUENCE: NO ADD-ON WORK. A chrome docshell in the same process
- * composites into its parent's layer tree, so there is no opaque canvas
- * backstop between these documents and the window -- the thing that forced the
- * Thunderbird Fluent add-on on the five content tabs (see the MICA block in
- * fluent-layout.css). extension/api.js is untouched and its allowlist stays at
- * five pages.
- *
- * Everything here is scoped by document URL. An unscoped :root in a user sheet
- * matches the root of every chrome document, messenger.xhtml included.
- * ========================================================================== */
-
-/* ---------------------------------------------------------------------------
- * THE CHROME SIDE -- messenger.xhtml
- *
- * glodaFacetTab.js:39 clones the #glodaTab template per tab and renames the
- * panel "glodaTab" + n, so the panels are matched by id prefix. The template
- * itself is collapsed and matches harmlessly.
- * ------------------------------------------------------------------------- */
-
 @-moz-document url("chrome://messenger/content/messenger.xhtml") {
 
-  /* Base surface all the way down to the iframe. The gutter is NOT here: it is
-   * inside the facet document, where the sidebar and the card are, exactly as
-   * about:3pane's gutter lives on body#paneLayout rather than on the browser
-   * that holds it. The toolbar is handled generically by TAB TOOLBARS in
-   * fluent-chrome.css, with every other .contentTabToolbox. */
   [id^="glodaTab"],
   [id^="glodaTab"] > .chromeTabInstance,
   [id^="glodaTab"] iframe {
@@ -56,15 +7,6 @@
     border: none !important;
   }
 
-  /* The search field in the tab's own toolbar. It is a plain HTML input, not
-   * the search-bar widget the unified toolbar uses, so none of the SEARCH BAR
-   * block in fluent-chrome.css reaches it and the Fluent control is written out
-   * here: card fill, transparent stroke, control height.
-   *
-   * Stock is shared/searchBox.css:32-42 -- a `Field` fill, a 50%-currentColor
-   * border and a drop shadow under a 24px box -- plus a hover shadow at :57 and
-   * a brighter --toolbar-field-border-color under a theme at :69. The shadow is
-   * what dates it most: Fluent inputs do not cast one. */
   .remote-gloda-search {
     appearance: none !important;
     box-sizing: border-box !important;
@@ -81,32 +23,11 @@
     outline: none !important;
   }
 
-  /* Same width call as the unified toolbar's search bar: the field stops
-   * growing to fill the toolbar and settles at about a third of it, with a
-   * min() so a narrow window shrinks it rather than crowding the toolbar. */
   .remote-gloda-search-container {
     flex: 0 1 auto !important;
     inline-size: min(320px, 40vw) !important;
   }
 }
-
-/* ---------------------------------------------------------------------------
- * THE WRAPPER DOCUMENT -- glodaFacetViewWrapper.xhtml
- *
- * A document whose entire job is to hold one browser. It contributes nothing
- * visible and must contribute nothing painted either: global.css gives a chrome
- * document's root a Dialog-coloured canvas, which would sit between the results
- * and the window as an opaque sheet the size of the tab.
- *
- * The root gets a fully transparent gradient rather than only a transparent
- * background-color, for the reason 01829eb documented on about:config: with
- * background-color transparent AND background-image none, Gecko takes the
- * canvas background from the BODY instead (nsCSSRendering::FindCanvasBackground,
- * gated on nsStyleBackground::IsTransparent). A transparent gradient makes
- * IsTransparent false, so the root keeps its own background -- which is
- * nothing -- and propagation never runs. No colour can do this: any value that
- * stops propagation is by definition opaque.
- * ------------------------------------------------------------------------- */
 
 @-moz-document url("chrome://messenger/content/glodaFacetViewWrapper.xhtml") {
 
@@ -121,24 +42,7 @@
   }
 }
 
-/* ---------------------------------------------------------------------------
- * THE RESULTS DOCUMENT -- glodaFacetView.xhtml
- * ------------------------------------------------------------------------- */
-
 @-moz-document url("chrome://messenger/content/glodaFacetView.xhtml") {
-
-  /* -------------------------------------------------------------------------
-   * TOKENS
-   * Stock drives this page off the --layout-* family (glodaFacetView.css
-   * imports layout.css) plus a handful of locals declared on #body:22-32.
-   * Retokenizing carries most of the page; the selectors below are only for
-   * what a token cannot reach.
-   *
-   * --fluent-accent-link is restated here for the same reason ACCOUNT CENTRAL
-   * restates it: it is declared inside userContent.css's shared block, which is
-   * scoped to the content tabs and does not reach a chrome docshell. The
-   * derivation is documented once, in userContent.css.
-   * ----------------------------------------------------------------------- */
 
   :root,
   #body {
@@ -146,9 +50,6 @@
       color-mix(in srgb, AccentColor 60%, #000000),
       color-mix(in srgb, AccentColor 55%, #FFFFFF));
 
-    /* The two fills in the screenshot: --layout-background-0 is the page
-     * (glodaFacetView.css:36) and --layout-background-1 the Filters column
-     * (:43). Both go, and what replaces them is the card, once, below. */
     --layout-background-0: transparent !important;
     --layout-background-1: transparent !important;
     --layout-background-2: var(--fluent-solid-tertiary) !important;
@@ -167,34 +68,11 @@
     --button-border-radius: var(--fluent-radius-control) !important;
   }
 
-  /* -------------------------------------------------------------------------
-   * THE SURFACE
-   * The root, the body and #gloda-facet-view are all backdrop; the results
-   * column is the only card. --fluent-base-chrome carries the three of them to
-   * Mica by itself.
-   * ----------------------------------------------------------------------- */
-
   :root,
   body {
     background-color: var(--fluent-base-chrome) !important;
   }
 
-  /* The gutter, the same one body#paneLayout applies in about:3pane and for the
-   * same reason: this is the surface the card floats on.
-   *
-   * The page itself does not scroll; the two columns do, each on its own. That
-   * is about:3pane's model, and it is what keeps the card's rounded corners on
-   * screen instead of scrolling them away at the first screenful.
-   *
-   * So this box is exactly the viewport -- block-size, not min-block-size, with
-   * border-box so the gutter is inside it -- and #main-column's own 100vh
-   * (glodaFacetView.css:52-56) is dropped below. Left as a minimum, the column's
-   * full viewport height plus this element's 16px of padding overflowed by
-   * exactly the gutter and put a scrollbar on every result set, however short.
-   *
-   * The gap is what separates the Filters column from the card. The sidebar has
-   * no card of its own -- it is a filter pane, the folder-pane exception -- so
-   * there is nothing between them but backdrop. */
   #gloda-facet-view {
     background-color: var(--fluent-base-chrome) !important;
     box-sizing: border-box !important;
@@ -204,16 +82,6 @@
     overflow: hidden !important;
   }
 
-  /* The Filters column: no card, no fill, and no padding of its own -- stock
-   * indents it 1em (glodaFacetView.css:43-49) and the gutter is doing that job
-   * now. */
-  /* One step up in size, the same bump the folder pane takes
-   * (fluent-lists.css:46) and for the same reason: this is a nav pane sitting
-   * beside a content surface, and stock renders it a step below everything
-   * around it. rem rather than px, so the user's system font size and font-size
-   * pref keep scaling it -- rem here is this document's own root, which is
-   * still message-box. The h2 group headings scale with it, being em-sized by
-   * the UA. */
   .facets-sidebar {
     background-color: transparent !important;
     padding: 0 !important;
@@ -229,15 +97,6 @@
     padding-inline: var(--fluent-row-inset) !important;
   }
 
-  /* The card. --fluent-card-inset rather than stock's 1em padding-inline-start
-   * (:53), and min-block-size back to nothing -- see #gloda-facet-view above.
-   *
-   * The card IS the scroll container. Clipping was tried first, to keep content
-   * inside the rounded corners without making one, and it took the page's
-   * scrolling with it: the card is exactly the height of the viewport, so a
-   * result set longer than one screen had nowhere to overflow to and simply
-   * ended at the fold with no scrollbar anywhere on the page. Auto gives the
-   * results their scrollbar back, inside the card, and still clips the corners. */
   #main-column {
     background-color: var(--fluent-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
@@ -248,15 +107,6 @@
     padding: var(--fluent-card-inset) !important;
   }
 
-  /* Stock spaces the header 2em down from the top of the column (:58-64) and
-   * the data column another 1em below that, both measured from a surface with
-   * no padding of its own. The card has padding now, so those margins are dead
-   * weight. */
-  /* Stock caps both at 60em (:59, :69), which on a wide window leaves the
-   * results in a narrow column down the left of an otherwise empty card --
-   * measured on a maximised window, the card ran to x=1716 while its content
-   * stopped near x=990. A cap that reads as a measure on a text page reads as a
-   * layout bug inside a card, so it goes and the results use the card. */
   #header,
   #data-column {
     max-inline-size: none !important;
@@ -271,15 +121,6 @@
     margin-inline-end: 0 !important;
   }
 
-  /* -------------------------------------------------------------------------
-   * FACETS -- the filter bars in the sidebar
-   * ----------------------------------------------------------------------- */
-
-  /* Stock rules every facet row off top and bottom with a 1px
-   * --layout-color-3 line (glodaFacetView.css:330-341) and fills the row with
-   * solid accent on hover. Both are the stock look: Fluent separates rows by
-   * the fill under the pointer, and that fill is neutral and subtle -- solid
-   * accent means selected, not pointed-at. */
   .barry,
   .bar {
     border-color: transparent !important;
@@ -294,8 +135,6 @@
     background-color: var(--fluent-subtle-hover) !important;
   }
 
-  /* Selection keeps the accent, as a tint rather than a slab, so the label
-   * stays readable in the page's own ink instead of AccentColorText. */
   .bar[selected="true"] {
     background-color: var(--fluent-accent-tint) !important;
     color: var(--fluent-text-primary) !important;
@@ -311,11 +150,6 @@
     color: var(--fluent-text-tertiary) !important;
   }
 
-  /* The boolean facets at the top of the sidebar are chips, and a chip IS a
-   * selected-state control, so this is the one place a solid accent fill is
-   * right. Only the resting hover changes: stock uses the same solid accent for
-   * hover as for checked (:268-276), which makes a pointed-at chip look as
-   * though it has already been applied. */
   .facet-checkbox-bubble {
     border-radius: var(--fluent-radius-control) !important;
     padding-inline: var(--fluent-row-inset) 6px !important;
@@ -327,13 +161,6 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* -------------------------------------------------------------------------
-   * RESULTS
-   * ----------------------------------------------------------------------- */
-
-  /* Stock underlines the results header with a 2px hsla(0, 0%, 60%, .25) rule
-   * (:393-397). One px of --fluent-divider is what every other divider inside a
-   * card in this theme is. */
   .results-message-header {
     border-block-end: 1px solid var(--fluent-divider) !important;
     padding-inline-start: 0 !important;
@@ -344,8 +171,6 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* "Open as list" is a link, so it gets link ink and a subtle hover rather
-   * than the solid accent fill stock gives it on hover (:427-430). */
   .results-message-showall-button {
     color: var(--fluent-accent-link) !important;
     border-radius: var(--fluent-radius-control) !important;
@@ -356,7 +181,6 @@
     color: var(--fluent-accent-link) !important;
   }
 
-  /* The sort dropdown, as a Fluent control. */
   #sortby {
     min-block-size: var(--fluent-control-height) !important;
     color: var(--fluent-text-primary) !important;
@@ -369,15 +193,6 @@
     background-color: var(--fluent-subtle-hover) !important;
   }
 
-  /* Result rows. Stock separates them with a `lightgrey` bottom border and
-   * draws a three-layer inset box-shadow on hover (:472-501) -- literally
-   * lightgrey, not a token, which is why those hairlines read the same in dark
-   * mode as in light. Rows here separate the way every other list in this theme
-   * separates: by the fill under the pointer.
-   *
-   * The focus rule is dropped rather than restyled. Stock's is
-   * `border: 1px dotted lightgrey; padding: 1em 0` (:507-510) -- it changes the
-   * row's padding, so focusing a row made the whole list jump. */
   .message {
     border-color: transparent !important;
     border-radius: var(--fluent-radius-row) !important;
@@ -398,9 +213,6 @@
     background-color: var(--fluent-subtle-hover) !important;
   }
 
-  /* Subjects are the clickable thing in a row, so they keep link ink; stock
-   * additionally fills them with solid accent on hover (:495-505), which is a
-   * selection treatment fired by a hover. */
   .message .message-subject,
   .message:hover .message-subject {
     color: var(--fluent-accent-link) !important;
@@ -412,9 +224,6 @@
     border-radius: var(--fluent-radius-row) !important;
   }
 
-  /* The fulltext hit inside a body snippet is a highlight, not a selection.
-   * Solid accent behind a monospace run at font-size medium is a slab; the tint
-   * keeps the ink as ink and marks the run underneath it. */
   .message-body-fulltext-match {
     background-color: var(--fluent-accent-tint-strong) !important;
     color: var(--fluent-text-primary) !important;
@@ -430,8 +239,6 @@
     color: var(--fluent-accent-link) !important;
   }
 
-  /* The empty state. Stock pins its text to --color-blue-70 (:672-680), a
-   * literal blue that is unreadable on a dark card and ignores the accent. */
   span.empty,
   span.loading {
     color: var(--fluent-text-secondary) !important;

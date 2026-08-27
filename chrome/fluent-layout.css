@@ -1,38 +1,3 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- LAYOUT
- *
- * The base-vs-card split:
- *   BASE (flush, no radius, no shadow, window colour)
- *     titlebar, unified toolbar, menubar, tab strip, spaces rail, status bar
- *   CARD (inset by one gutter, 8px radius, elevation shadow, card colour)
- *     folder pane, thread pane, message pane, Account Central
- *
- * This is the Windows 11 convention: chrome and nav rails are base, only
- * content is card. Same pattern as Settings and the new Outlook.
- * ========================================================================== */
-
-/* ---------------------------------------------------------------------------
- * BASE SURFACES -- messenger.xhtml
- *
- * #titlebar is a vbox containing, in order: unified-toolbar, menubar,
- * tabs-toolbar. With "Hide system window titlebar" on, this whole block is
- * the draggable window region and Thunderbird draws its own caption buttons.
- *
- * `unified-toolbar` is the custom-element HOST, and it is listed separately
- * from the two ids nested inside it because it carries something they do not:
- *
- *   unified-toolbar { border-block-end: 1px solid rgba(0, 0, 0, 0.15); }
- *   -- unifiedToolbar.css:47-49
- *
- * That is the hairline between the toolbar and the tab strip. It went unseen
- * for as long as the chrome behind it was dark, and only showed up once a
- * white desktop came through Mica and lifted the surface: measured 43 where
- * the chrome around it was 51, and 45 where it was 53 -- both exactly 85% of
- * their surround, which is what a 15% black border over a translucent
- * backdrop composites to. Fluent keeps the chrome one continuous surface, so
- * it goes the same way as the hairline under the tab strip below.
- * ------------------------------------------------------------------------- */
-
 #navigation-toolbox,
 #titlebar,
 #toolbar-menubar,
@@ -47,14 +12,11 @@ unified-toolbar,
   box-shadow: none !important;
 }
 
-/* Kill the hairline Thunderbird draws under the tab strip. In Fluent the
- * chrome is one continuous surface; separation comes from the card edges. */
 #tabs-toolbar {
   border-bottom: none !important;
   --tabs-tabbar-border-size: 0 !important;
 }
 
-/* The spaces rail is base, flush to the window edge, full height. */
 #spacesToolbar {
   background-color: var(--fluent-base-chrome) !important;
   background-image: none !important;
@@ -62,58 +24,12 @@ unified-toolbar,
   box-shadow: none !important;
 }
 
-/* The tab content area is the surface the cards float on. */
 #tabmail,
 #tabpanelcontainer,
 .tabmail-tab-panel {
   background-color: var(--fluent-base-chrome) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * STATUS BAR
- *
- * Stock is a 22px strip ruled into cells: every .statusbarpanel carries
- * `border-inline-end: 1px solid ThreeDLightShadow` (classic/messenger.css:383,
- * a Windows-only file), and that border -- not any separator element -- is
- * what reads as a vertical divider around each item.
- *
- * Fluent does not rule a status bar into cells. It sets the interactive items
- * down as their own small surfaces and lets the gaps do the separating. So
- * the rules go, the controls become cards, and the readouts stay bare:
- * #statusText ("Done") is empty most of the time, and a pill that blinks in
- * and out with a transient string is noise rather than structure.
- *
- * The spaces buttons' state ladder used to live in fluent-lists.css, written
- * alongside the spaces rail. It is here now because it is the same ladder as
- * the other two pills and, left behind, its subtle fills would have contra-
- * dicted the solid ones below.
- * ------------------------------------------------------------------------- */
-
-/* Base surface, and room for a 28px pill inside what stock floors at 22px.
- * The floor rather than the content sets the height, so the bar cannot jump
- * as the calendar panels collapse and uncollapse between tabs. No flex `gap`:
- * the event-dialog panels sit on this bar permanently and merely collapsed,
- * and a gap track for each of them would spread the visible items apart.
- * Each pill carries its own margin instead.
- *
- * The height is 28px of pill plus 8px under it, and NOTHING above it. That
- * looks lopsided written down and is the only thing that reads level on
- * screen, because the gap above the pill is not the bar's to give: body
- * #paneLayout already pads 8px all round (see THE THREE CARDS below), so the
- * message card stops 8px short of the bar. Mica fills that padding and Mica
- * fills the bar, and the eye cannot tell where one ends -- a 6px pad of our
- * own on top of it read as 14px above against 6px below. Letting the pane's
- * padding be the entire top gap puts 8px of backdrop on each side of the pill.
- *
- * That 8px is the bar's own padding rather than a margin on each item, so it
- * applies once no matter how deep an item sits. Margins do not: #offline-status
- * is nested two boxes down inside [role="status"], so biasing both the wrapper
- * and the pill stacked two 8px offsets and left that one pill 4px above its
- * neighbour. One padding on the container cannot double up that way.
- *
- * border-box so the 36px floor is the outer height and the content band is the
- * 28px the pills want exactly. Everything on the bar then centres on the same
- * line -- pills fill the band, the readouts centre inside it. */
 #status-bar {
   background-color: var(--fluent-base-chrome) !important;
   border-top: none !important;
@@ -124,21 +40,10 @@ unified-toolbar,
   padding-inline: var(--fluent-gutter) !important;
 }
 
-/* Colour, not `border: none` -- the 1px stays in the box model, so nothing on
- * the bar shifts inline when the line stops being drawn. Same treatment as the
- * .button-group dividers in fluent-chrome.css. */
 .statusbarpanel {
   border-inline-end-color: transparent !important;
 }
 
-/* The readouts stay bare, but they still have to sit on the same line as the
- * pills. They did not: #statusText's ink centred 7px above the pills' centre,
- * because label.statusbarpanel is `display: inline-block` with `margin-block:
- * 3px` (shared/messenger.css:948) inside boxes that stretch to the full bar
- * height -- so the label was pinned to the top of a 40px box rather than
- * centred in it. Centring the two wrapper boxes makes the label a centred flex
- * item, and the stock margin, now measured from a centred position rather than
- * from the top, would only push it back off again. */
 #status-bar > [role="status"],
 #status-bar #statusTextBox {
   align-items: center !important;
@@ -149,19 +54,6 @@ unified-toolbar,
   margin-block: 0 !important;
 }
 
-/* The three controls, as cards. Shape is #folderPaneHeaderBar > .button's,
- * one size down: --fluent-radius-card at 8px on a 28px pill reads rounded
- * without tipping into a stadium, and it keeps the bar agreeing with the
- * radius unification the rest of the theme just went through.
- *
- * content-box for the same reason as those buttons -- the block axis is the
- * only one being pinned. 26px of content plus the 1px stroke on each side is
- * the 28px total; border-box would have to reach into the inline axis, where
- * stock's own min-inline-size is what these buttons actually get.
- *
- * The transparent one-stop gradient is a placeholder layer. [checked] below
- * fills it with the accent tint; keeping the layer present in every state is
- * what lets that tint fade in rather than snap on. */
 #status-bar #spacesToolbarReveal,
 #status-bar #offline-status,
 #status-bar #calendar-status-todaypane-button {
@@ -180,18 +72,10 @@ unified-toolbar,
               background-image var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
 }
 
-/* Two IDs deep on purpose. Stock ships `padding: 0 2px !important` for this
- * button in calendar/calendar.css:19, and specificity is the only way past an
- * !important that is already there. Wider than the icon-only pair because it
- * carries a text label. */
 #status-bar #calendar-status-todaypane-button {
   padding-inline: 12px !important;
 }
 
-/* Solid ladder, not the subtle one. --fluent-base-chrome resolves to
- * `transparent` under Mica (fluent-tokens.css:195), so a translucent tint over
- * a filled pill would composite against the desktop and land DARKER than rest
- * -- the trap the folder pane buttons hit. An opaque step sidesteps it. */
 #status-bar #spacesToolbarReveal:hover,
 #status-bar #offline-status:hover,
 #status-bar #calendar-status-todaypane-button:hover {
@@ -207,10 +91,6 @@ unified-toolbar,
   box-shadow: none !important;
 }
 
-/* Today Pane holds [checked] for as long as the pane is open. Without the
- * stock border there is nothing else left to read the toggle by, so the tint
- * has to carry it -- as the gradient layer over the card fill, never as the
- * background-color, or it would paint onto Mica instead of onto the pill. */
 #status-bar #calendar-status-todaypane-button[checked] {
   background-image: linear-gradient(var(--fluent-accent-tint) 0 0) !important;
 }
@@ -219,43 +99,12 @@ unified-toolbar,
   background-image: linear-gradient(var(--fluent-accent-tint-strong) 0 0) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * THE THREE CARDS -- about:3pane
- *
- * body#paneLayout is a CSS grid with named areas (folders / threads / message)
- * and the splitters occupying their own min-content tracks between them.
- * Rather than adding grid gaps -- which would leave the splitters stranded --
- * the splitters are widened to BECOME the gutters. That keeps the drag targets
- * exactly where the visual gaps are.
- * ------------------------------------------------------------------------- */
-
-/* The gutters between the cards are Mica too, which takes four transparent
- * layers rather than one. about:3pane is a separate document inside a
- * <browser src="about:3pane"> nested in a <stack> (messenger.xhtml,
- * mail3PaneTabTemplate), so the paint chain is:
- *
- *   browser element -> stack -> document canvas (:root) -> body#paneLayout
- *
- * Any one of them still painting hides the backdrop. The browser is a chrome
- * browser in the same process with no type="content", so it composites into
- * the parent's layer tree and transparency propagates -- a remote content
- * browser would not.
- *
- * The chrome half of that chain is in the MICA block at the end of this file;
- * chrome selectors cannot reach into the sub-document, so :root there is
- * scoped with @-moz-document to about:3pane, or it would match the root of
- * every chrome document including messenger.xhtml itself. */
 body#paneLayout {
   background-color: var(--fluent-base-chrome) !important;
   padding: var(--fluent-gutter) !important;
   box-sizing: border-box !important;
 }
 
-/* Splitters become the inter-card gutters.
- *   --splitter-occupy-size  = space taken in the grid  (the visual gap)
- *   --splitter-content-size = the clickable/draggable band
- * Setting both to the gutter makes the whole gap draggable, so resizing gets
- * easier rather than harder. The border is what drew the old 1px line. */
 #paneLayout hr[is="pane-splitter"] {
   --splitter-occupy-size: var(--fluent-gutter) !important;
   --splitter-content-size: var(--fluent-gutter) !important;
@@ -268,83 +117,27 @@ body#paneLayout {
   border: 1px solid var(--fluent-card-stroke) !important;
   border-radius: var(--fluent-radius-card) !important;
   box-shadow: var(--fluent-shadow-card) !important;
-  /* clip, not hidden: keeps content inside the rounded corners without
-   * creating a scroll container. */
+
   overflow: clip !important;
 }
 
-/* The folder pane is the exception: no card. It is a navigation pane, and
- * WinUI does not put one on a surface -- NavigationView sits directly on the
- * window backdrop, and only the content beside it gets a card. Mail apps built
- * on Fluent do the same. Dropping the fill here also means the pane is Mica
- * when Mica is on, which a nav pane should be.
- *
- * No new work is needed to make that happen: the whole chain above this pane
- * -- browser, stack, :root, body#paneLayout -- is already transparent under
- * (-moz-windows-mica), see the MICA block at the end of this file. Going
- * transparent is enough.
- *
- * radius and overflow go with the fill. There is no surface left to round, and
- * `clip` only ever existed to keep content inside those corners. */
 #folderPane {
   background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-/* The thread pane is the second exception, and for a different reason. The
- * folder pane has no card because a nav pane never gets one. This pane has
- * none because the card MOVED: every message is a card of its own now, see
- * THREAD PANE -- CARDS VIEW in fluent-lists.css. A card of cards is one
- * surface too many -- the row cards would sit on a fill one step away from
- * their own, which is the same thing that made menus disappear into the pane
- * behind them, and the shadow that separates them would land on nothing.
- *
- * radius and `clip` are not restated here because they were never this pane's
- * to give up: about3Pane.css:140-151 already sets overflow: hidden and
- * contain: strict on it. Card shadows still stop at the pane's edges. Keeping
- * the sides clear is the row margin's job, not this element's. */
 #threadPane {
   background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-/* Inner regions must not paint their own background over the card, or the
- * rounded corners get squared off from the inside. #threadTree carries a fill
- * of its own to clear on top of that -- threadPane.css:31-40 paints it
- * --tree-view-bg, and --layout-background-0 again whenever the rows are
- * thread-rows.
- *
- * Neither header bar is in this list. Both are surfaces in their own right
- * further down: #threadPaneHeaderBar is a card, and #folderPaneHeaderBar is a
- * bare strip carrying three separate button cards. */
 #threadTree,
 #folderTree {
   background-color: transparent !important;
 }
 
-/* The thread pane's header -- folder name, message count, display options
- * (about3Pane.xhtml:125, .list-header-bar). It gets a card, where the folder
- * pane's toolbar below does not, and the difference is what is in them: that
- * one is three unrelated commands with nothing to group, this one is a single
- * contiguous strip titling the list under it. On a pane with no card left, a
- * bare strip would read as floating.
- *
- * `border` rather than `border: none` is deliberate. Stock draws a
- * border-block-end in --layout-border-0 (threadPane.css:582), which this
- * theme maps to --fluent-divider -- a visible line. Restating all four sides
- * in --fluent-card-stroke, transparent like every other card here, replaces it
- * rather than leaving it to be found again later.
- *
- * The inline margin is --fluent-card-inset, the same one the message cards
- * below use, so the header and the list share one edge down both sides. The
- * block margin below is the gutter, and there is none above.
- *
- * Height is pinned rather than left to the content. Left to itself this bar
- * measured 39px against the folder pane's 30px buttons sitting at the same y,
- * which read as two strips that missed each other. Both now take
- * --fluent-header-height. */
 #threadPaneHeaderBar {
   background-color: var(--fluent-card) !important;
   border: 1px solid var(--fluent-card-stroke) !important;
@@ -352,31 +145,11 @@ body#paneLayout {
   box-shadow: var(--fluent-shadow-card) !important;
   margin-inline: var(--fluent-card-inset) !important;
   margin-block-end: var(--fluent-gutter) !important;
-  /* border-box on both this and the buttons, so --fluent-header-height is the
-   * number a ruler would read on each of them rather than one plus its border
-   * and the other plus its own. */
+
   box-sizing: border-box !important;
   block-size: var(--fluent-header-height) !important;
 }
 
-/* The quick filter bar, which slides in between that header card and the list
- * when Quick Filter is switched on (about3Pane.xhtml:167). It is a third band
- * in the same stack, so it takes the same card: same inset, same radius, same
- * fill, and the gutter below it that the header card has.
- *
- * `border` replaces stock's border-block-end in --sidebar-border
- * (quickFilterBar.css:17), which this theme maps to --fluent-divider -- a
- * visible rule running the full width of the pane, under a card and above a
- * list of cards.
- *
- * Padding is the theme's own rather than stock's --qfb-padding (3px, 0 3px
- * when compact), and the two axes are not the same number. Inline needs the
- * gutter: the contents sit inside an 8px radius and a 3px inset does not clear
- * the corner. Block needs almost nothing, because stock already puts
- * --button-margin: 3px on everything in this bar (quickFilterBar.css:14) and
- * the field carries margin: 3px of its own (:71) -- 8px here stacked on top of
- * that and the bar came out half again as tall as it needed to be. 2px plus
- * the 3px that is already there is the clearance. */
 #quick-filter-bar {
   background-color: var(--fluent-card) !important;
   border: 1px solid var(--fluent-card-stroke) !important;
@@ -387,26 +160,6 @@ body#paneLayout {
   padding: 2px var(--fluent-gutter) !important;
 }
 
-/* The folder pane's toolbar -- Get Messages / Write Message / More
- * (about3Pane.xhtml:66-84). The bar itself stays bare; each button gets its
- * own box. One card around all three would read as a single segmented control,
- * which these are not -- they are three unrelated commands.
- *
- * margin-inline is --fluent-gutter and padding is zero, against stock's 9px
- * --sidebar-header-spacing (variables.css:72). It only bounds the cluster --
- * the buttons are centred, so this is the minimum they will ever sit from the
- * pane edge, not where they sit. Nothing here lines up with the row fills
- * below, which are inset further; a centred cluster has no edge to align.
- *
- * gap is a literal 12px rather than a token. Stock's 9px packed the three
- * boxes tightly enough to read as one strip; 12px is the gap-to-button ratio
- * of the reference this was modelled on, at this theme's button size. No
- * existing token is that value and one consumer does not earn a new one.
- *
- * justify-content overrides stock's space-between (containers.css:9). With
- * three separate boxes, space-between pinned the outer two to the pane edges
- * and left a hole in the middle; centred, they group as one cluster of
- * commands and the gap between them holds at any pane width. */
 #folderPaneHeaderBar {
   background-color: transparent !important;
   margin-inline: var(--fluent-gutter) !important;
@@ -416,34 +169,6 @@ body#paneLayout {
   justify-content: center !important;
 }
 
-/* Each button is its own small card. Write Message loses its primary
- * treatment -- stock gives it .button-primary, a solid accent fill and
- * weight 600 (widgets.css:137-142). Fluent does not put a filled accent button
- * in a nav pane; the accent belongs to the selection pill, and two accent
- * surfaces in one pane compete. Neutral card, same as its two neighbours.
- *
- * The subtle-fill ladder used everywhere else in this theme cannot be used
- * here. Those fills are translucent and assume a transparent-rest control on
- * an opaque surface (fluent-chrome.css:144-158); these buttons rest on a fill
- * of their own over a transparent pane, so a translucent hover would composite
- * against the backdrop and come out DARKER than the rest state. The solid
- * ladder gives an opaque step instead. Note it runs the same direction in both
- * schemes -- in dark, pressed lifts rather than dips, which is not what Fluent
- * does; correcting that needs a token below --fluent-card that does not exist
- * yet, and the ladder reads correctly as-is. */
-/* Radius and height are the thread pane header card's, not a control's. These
- * three buttons and that card are one row of surfaces across the top of the
- * window, and they were 4px/30px against its 8px/39px -- close enough to look
- * like a miss rather than a distinction. A card next to a card matches it.
- *
- * The height is spelled out the long way -- padding to zero, border subtracted
- * from the total -- because box-sizing must stay content-box here. Setting it
- * to border-box makes the total 40px in one line, and truncates "New Message"
- * to "New Mess...": stock floors these buttons at min-inline-size: 6em
- * (widgets.css:18), the pane is narrow enough that the floor is what the
- * button actually gets, and under border-box that 6em has to pay for the
- * inline padding too. The block axis is the only one being pinned; the inline
- * axis must be left exactly as stock computes it. */
 #folderPaneHeaderBar > .button {
   background-color: var(--fluent-card) !important;
   color: var(--fluent-text-primary) !important;
@@ -468,40 +193,10 @@ body#paneLayout {
   box-shadow: none !important;
 }
 
-/* Both scroll affordances on the folder tree assume an opaque pane behind
- * them, so both have to go now that there is not one (containers.css:27-48).
- *
- *   ::after   a 4px bar filled with var(--sidebar-background), which
- *             fluent-tokens.css:189 maps to --fluent-card -- an opaque
- *             card-coloured stripe straight across the top of a pane that no
- *             longer has a card.
- *   ::before  a black radial gradient meant to read as a shadow on white;
- *             over Mica it is a smudge.
- *
- * `background: none` rather than a transparent colour, because ::before's is a
- * background-IMAGE and a colour would not clear it. */
 #folderTree::before,
 #folderTree::after {
   background: none !important;
 }
-
-/* ---------------------------------------------------------------------------
- * ACCOUNT CENTRAL -- the fourth card
- *
- * #accountCentralBrowser is a SIBLING of the three panes in body#paneLayout,
- * not a child of #messagePane (about3Pane.xhtml:513). When the selected row is
- * an account root, about3Pane.css:105 swaps the grid to
- * "folders folderPaneSplitter account-central" and hides #threadPane,
- * #messagePaneSplitter and #messagePane -- so this browser IS the whole
- * right-hand side and needs a card of its own, or it renders as a bare slab
- * beside the folder pane's.
- *
- * It carries no type attribute, so the page inside is a CHROME docshell and
- * userChrome.css reaches it; its interior is fluent-account-central.css.
- * That file makes the page's own html and body transparent, which is what
- * lets the fill and radius below be the ones that show -- a browser does not
- * reliably clip its document to a border-radius, so nothing inside may paint.
- * ------------------------------------------------------------------------- */
 
 #accountCentralBrowser {
   background-color: var(--fluent-card) !important;
@@ -509,14 +204,6 @@ body#paneLayout {
   border-radius: var(--fluent-radius-card) !important;
   box-shadow: var(--fluent-shadow-card) !important;
 }
-
-/* ---------------------------------------------------------------------------
- * MESSAGE PANE
- * <message-pane> hosts browsers. Browsers do not always respect an ancestor's
- * border-radius in Gecko, so the radius is restated on the inner browser.
- * If the corners still square off in testing, the fallback is a wrapper with
- * its own clip -- verify before assuming this is enough.
- * ------------------------------------------------------------------------- */
 
 #messagePane browser,
 #messagepaneBox,
@@ -527,29 +214,6 @@ body#paneLayout {
   background-color: var(--fluent-card) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * STANDALONE MESSAGE TAB
- * Double-clicking a message opens a mailMessageTab: one <browser
- * src="about:message"> in a <stack> (mailTabs.js:16, messenger.xhtml:6605).
- * Its interior is already themed -- it is the same document #messageBrowser
- * shows -- but stock gives it no outer surface, so it ran edge to edge while
- * every other tab sat on a card. In the 3-pane tab that surface is
- * #messagePane (:266); here nothing provides one, so the stack becomes it.
- *
- * Matched on src, not id: mailTabs.js:16 and :65 number both the browser and
- * the panel per tab (mailMessageTabBrowser2, ...), so an id selector would
- * skin the first message tab only. Same reasoning as the about:3pane rules
- * at :693. #messageBrowser inside about:3pane also carries src="about:message"
- * but is out of reach -- a descendant selector rooted at #tabpanelcontainer
- * stops at the document boundary.
- *
- * The card goes on the stack, not the browser: a browser does not reliably
- * clip its subdocument to a border-radius (see the MESSAGE PANE note above).
- * Same shape as #chat-notification-top (:604), clip rather than hidden so no
- * scroll container is created. The gutter matches body#paneLayout's padding
- * (:249), so switching between this tab and the 3-pane tab does not shift the
- * card edge. */
-
 #tabpanelcontainer stack:has(> browser[src="about:message"]) {
   margin: var(--fluent-gutter) !important;
   background-color: var(--fluent-card) !important;
@@ -559,63 +223,9 @@ body#paneLayout {
   overflow: clip !important;
 }
 
-/* The browser takes the card fill too, the way the 3-pane message browsers do
- * at :523, so nothing inside paints a different colour against the stack. */
 #tabpanelcontainer browser[src="about:message"] {
   background-color: var(--fluent-card) !important;
 }
-
-/* ---------------------------------------------------------------------------
- * WEB CONTENT TABS -- the Thundermail sign-in page, and anything else remote
- *
- * specialTabs.js:794 clones ONE template for every content tab, so Saved Files
- * and the sign-in page arrive as the same boxes: a .contentTabInstance holding
- * a .contentTabToolbox over a <stack> with the browser in it. What tells them
- * apart is remoteness. The template sets maychangeremoteness (:815), and a tab
- * that navigates to https flips out of process and the browser element carries
- * a `remote` attribute; the about: pages, which are privileged and stay in
- * process, do not.
- *
- * `[remote]:not([remote="false"])` rather than `[remote="true"]`, which is the
- * obvious spelling and does not match: this is a BOOLEAN attribute and the
- * inspector shows it bare, with no value at all. The :not() is there for the
- * skipLoad path at specialTabs.js:832, which sets it through toggleAttribute
- * and so can leave a literal "false" behind.
- *
- * The card is on a box above the browser, never on the browser, for the reason
- * the MESSAGE PANE note at :501 gives -- a browser does not reliably clip its
- * subdocument to its own border-radius, so a radius set there rounds nothing.
- * On an ancestor with overflow: clip, the corners are cut by an element that
- * does clip. The gutter is the same one the standalone message tab above
- * takes, so switching between the two tabs does not move the card edge.
- *
- * The fill is the CARD, and the first pass had it wrong. The reasoning then
- * was that this tab is a page rather than a pane, so it should take
- * --fluent-base like the inside of every other content tab. What that missed
- * is what the gutter exposes. Under Mica everything between here and the
- * window veil is already transparent, so the ring is the veil itself --
- * measured #23222B, against a base of #202020. Eight pixels of a colour three
- * levels off the one beside it is not a gutter, it is a seam nobody can see;
- * the card step is the one that reads. The document inside takes the same
- * token (userContent.css's auth.tb.pro block) so the two agree edge to edge.
- *
- * THE TOOLBOX IS INSIDE THE CARD
- * The card sits on .contentTabInstance rather than on the stack, so the back,
- * forward, padlock and URL bar are enclosed by it. The first pass put it on
- * the stack and left the toolbox full-width above, on the theory that a tab
- * toolbar is chrome and belongs with the tab strip. On screen it read as a
- * floating bar with a card sliding under it: the gutter started below the
- * toolbar, so the card's top edge cut across the tab rather than bounding it.
- * A web content tab is one object -- address bar and page together, the way
- * every browser draws it -- and the card is what says so.
- *
- * That makes the toolbox a surface inside a surface, so its own fill goes.
- * fluent-chrome.css:699 paints every .contentTabToolbox --fluent-base-chrome,
- * which is the right answer for a toolbar that IS the tab's chrome and the
- * wrong one for a toolbar sitting on a card. Clearing it leaves one card
- * surface from the URL bar down to the page, which is also why the browser
- * below keeps the same token.
- * ------------------------------------------------------------------------- */
 
 #tabpanelcontainer .contentTabInstance:has(> stack > browser[remote]:not([remote="false"])) {
   margin: var(--fluent-gutter) !important;
@@ -635,40 +245,11 @@ body#paneLayout {
   background-color: var(--fluent-card) !important;
 }
 
-/* ---------------------------------------------------------------------------
- * COLLAPSED PANES
- * A collapsed pane must not leave a floating stroke or shadow behind.
- * #folderPane is not listed: it has neither to leave behind any more.
- * ------------------------------------------------------------------------- */
-
 #messagePane.collapsed-by-splitter {
   border: none !important;
   box-shadow: none !important;
 }
 
-/* ---------------------------------------------------------------------------
- * CHAT
- * The one tab that needed no add-on. #chatTabPanel is static markup inside
- * messenger.xhtml (:5468), not a document in a browser, so nothing here sits
- * under a root content document: there is no canvas backstop to suppress, no
- * `transparent` attribute to set, and userChrome.css reaches every box in the
- * pane directly. Compare the five content tabs in the MICA block at the end of
- * this file, which need all three.
- *
- * The one exception is #conv-log-browser, a real content browser holding the
- * conversation transcript. That document is styled by chrome://chat/skin/
- * conv.css and is deliberately left alone; the card below clips it.
- *
- * Geometry follows about:3pane exactly. The panel is the surface the card
- * floats on, the contact list is a nav pane and gets no card, and the splitter
- * between them becomes the gutter.
- * ------------------------------------------------------------------------- */
-
-/* The panel itself is the backdrop, so it takes --fluent-base-chrome and goes
- * transparent under Mica with everything else. The gutter is NOT padded here:
- * #chat-toolbar is a chrome toolbar and belongs full-bleed, like the unified
- * toolbar above it. #chatPanel carries the padding instead, so the ring of
- * backdrop starts below the toolbar. */
 #chatTabPanel {
   background-color: var(--fluent-base-chrome) !important;
 }
@@ -678,29 +259,12 @@ body#paneLayout {
   box-sizing: border-box !important;
 }
 
-/* The contact list is a nav pane: no card, no fill, no hairline -- the same
- * call as #folderPane above, for the same WinUI reason.
- *
- * Two stock rules paint it and both are beaten here. chat.css:24 hands it
- * --layout-background-1 through a :root:not([lwt-tree], [lwtheme]) descendant,
- * and shared/chat.css:84 draws `border-inline-end: 1px solid
- * var(--sidebar-border)` -- the hairline in the screenshot. That hairline is
- * what the gutter replaces, so it goes rather than being recoloured. */
 #listPaneBox {
   background-color: transparent !important;
   background-image: none !important;
   border: none !important;
 }
 
-/* The splitter becomes the gutter between the pane and the card, the same move
- * the 3pane splitters made above.
- *
- * Stock is 5px wide with `margin-inline-end: -5px` (shared/chat.css:631-650),
- * which pulls it back over the conversation column so that only its 1px border
- * shows. Negative margin and gutter cannot both be true: the margin is zeroed,
- * the width becomes --fluent-gutter, and the whole 8px band stays draggable.
- * The collapsed-state accent border (shared/chat.css:647) is left alone -- it
- * only paints while the pane is collapsed and dragged over. */
 #listSplitter {
   appearance: none !important;
   inline-size: var(--fluent-gutter) !important;
@@ -709,12 +273,6 @@ body#paneLayout {
   border: none !important;
 }
 
-/* The conversation column is the card. #chat-notification-top rather than
- * #conversationsBox inside it, so a notification bar (added there lazily,
- * messenger.xhtml:5551) lands inside the card instead of floating above it.
- *
- * clip, not hidden: keeps the transcript browser inside the rounded corners
- * without creating a scroll container. */
 #chat-notification-top {
   background-color: var(--fluent-card) !important;
   border: 1px solid var(--fluent-card-stroke) !important;
@@ -723,14 +281,6 @@ body#paneLayout {
   overflow: clip !important;
 }
 
-/* Everything between the card and its content must stop painting, or the card
- * fill is covered by a second opaque sheet at the same size.
- *
- *   #conversationsBox        chat.css:29, --imbox-selected-background-color
- *   .im-placeholder-screen   shared/chat.css:19, `background-color: Field`
- *                            -- the flat surface that filled the whole tab
- *   .convBox / .conv-top     the live conversation, once one is open
- */
 #conversationsBox,
 #chatTabPanel .im-placeholder-screen,
 #chatTabPanel .convBox,
@@ -744,18 +294,11 @@ body#paneLayout {
   color: var(--fluent-text-primary) !important;
 }
 
-/* The empty state. Stock rules the title off with `border-block-end: 1px solid
- * var(--sidebar-border)` (shared/chat.css:58) and runs it at `font-weight:
- * lighter`, both of which are the stock look rather than ours: Fluent titles
- * are semibold and a divider inside a card is --fluent-divider. */
 #chatTabPanel .im-placeholder-title {
   font-weight: var(--fluent-weight-strong) !important;
   border-block-end-color: var(--fluent-divider) !important;
 }
 
-/* The innerbox is held at 0.8 opacity (shared/chat.css:48), which drags the
- * title down with it. Our own two text tokens carry that distinction already,
- * and they keep the title at full contrast. */
 #chatTabPanel .im-placeholder-innerbox {
   opacity: 1 !important;
   color: var(--fluent-text-secondary) !important;
@@ -765,19 +308,10 @@ body#paneLayout {
   color: var(--fluent-text-primary) !important;
 }
 
-/* The conversation's own header strip, once a chat is open. Same divider
- * treatment as everywhere else inside a card (shared/chat.css:347). */
 #chatTabPanel .conv-top-info {
   background-color: transparent !important;
   border-block-end-color: var(--fluent-divider) !important;
 }
-
-/* ---------------------------------------------------------------------------
- * AUTO-HIDDEN TAB BAR
- * "Auto hide tab bar" removes the tab strip when only one tab is open. Pin it
- * to zero height when hidden so the cards below do not shift by a partial row
- * as tabs come and go.
- * ------------------------------------------------------------------------- */
 
 #tabs-toolbar[collapsed="true"],
 #tabs-toolbar[hidden="true"] {
@@ -787,81 +321,23 @@ body#paneLayout {
   margin: 0 !important;
 }
 
-/* ---------------------------------------------------------------------------
- * MICA: THE about:3pane CHAIN
- * Everything here is gated, so with the backdrop off the gutters go straight
- * back to the opaque base and nothing below is reachable.
- * ------------------------------------------------------------------------- */
-
 @media (-moz-windows-mica) {
-  /* THE VEIL, and this is the only place it is painted. Every base surface
-   * above resolves to transparent under Mica, so the window is a single sheet
-   * of glass and this is the one layer of tint on it -- see the note on
-   * --fluent-veil in fluent-tokens.css for why it cannot ride on
-   * --fluent-base-chrome with the rest. At the default 0 this is transparent
-   * and the rule costs nothing.
-   *
-   * Scoped to the main window for the reason the token block in
-   * fluent-tokens.css spells out: as a bare :root this made the root of EVERY
-   * chrome window transparent, and the dialogs that keep the native Windows
-   * title bar answered with a black band across the title row. */
+
   #messengerWindow[customtitlebar] {
     background-color: var(--fluent-veil) !important;
   }
 
-  /* Chrome side: the browser and the stack that wraps it. Descendant
-   * selectors stop at the document boundary, so this cannot leak into the
-   * message browsers -- those live inside about:3pane and are still painted
-   * card-coloured further up this file. */
   #tabpanelcontainer browser[src="about:3pane"],
   #tabpanelcontainer stack:has(> browser[src="about:3pane"]) {
     background-color: transparent !important;
   }
 
-  /* --- CONTENT TABS: THE CHROME SIDE ------------------------------------
-   * Gated twice: on Mica, like everything in this block, and on a marker
-   * attribute that only the Thunderbird Fluent add-on sets. Without
-   * the add-on installed and enabled these rules match nothing and the pages
-   * stay on --fluent-base, which is the whole point of gating them -- see
-   * below.
-   *
-   * WHY AN ADD-ON IS IN THE LOOP AT ALL
-   * These tabs' browsers are type="content" (messenger.xhtml:6951-6958,
-   * specialTabs.js:810). Under a root content document Gecko composes an
-   * opaque backstop beneath the root element's background, in
-   * PresShell::UpdateCanvasBackground -- below the cascade, where no user
-   * sheet reaches. Dropping the paint in CSS alone does not expose the DWM
-   * backdrop, it exposes that backstop (#1C1B22 in dark, = --color-gray-90).
-   * Three earlier attempts stopped there and concluded it was impossible.
-   *
-   * It is not. Gecko skips the compose when the embedder element carries a
-   * `transparent` attribute; stock uses it on three browsers of exactly this
-   * kind (calendar-creation.js:601, preferences/compose.js:604,
-   * inline-options-browser.mjs:100). CSS sets no attributes, so an add-on
-   * does it. extension/api.js, and its header carries the full reasoning.
-   *
-   * WHY THE MARKER RATHER THAN A LIST OF TAB IDS
-   * Two reasons, and the second is the important one. First, it keeps this
-   * generic: :has() walks whatever wrapper chain a tab type happens to use,
-   * and the five pages use three different ones -- Address Book and Settings
-   * each clone their own vbox/hbox, contentTab uses a toolbox plus a stack.
-   * Second, CSS and add-on are useless apart, and the CSS half ALONE is worse
-   * than stock: it lands the page on the backstop. Keying on something only
-   * the add-on can set means removing or disabling the add-on restores
-   * --fluent-base with no CSS change. The content-side half of this gate is
-   * in userContent.css, on the same marker.
-   *
-   * The :has() is bounded to #tabpanelcontainer's subtree, which is a handful
-   * of boxes per open tab. */
   #tabpanelcontainer browser[thunderbird-fluent],
   #tabpanelcontainer :has(browser[thunderbird-fluent]) {
     background-color: transparent !important;
   }
 }
 
-/* Content side: the canvas of the about:3pane document itself. The root
- * element's background is what Gecko propagates to the canvas, so leaving
- * :root painted would put an opaque sheet under a transparent body. */
 @-moz-document url("about:3pane") {
   @media (-moz-windows-mica) {
     :root {

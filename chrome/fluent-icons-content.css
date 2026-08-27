@@ -1,52 +1,6 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- ICONS FOR CONTENT TABS
- *
- * Split out of userContent.css so that it has a kill switch, and for no other
- * reason: the rules below are unchanged. userContent.css @imports it as its
- * first statement, so commenting that one line out is the content-tab twin of
- * commenting @import url("fluent-icons.css") out of userChrome.css. A manual
- * install that does one and not the other gets half a result -- the chrome
- * window on stock art and Settings, the Add-ons Manager and the Address Book
- * still on ours -- which is why the two switches exist as a pair.
- *
- * WHAT COMMENTING IT OUT DOES. Two jobs stop together. The token overrides
- * stop repointing --icon-* at resource://thunderbird-fluent/, so the pages
- * fall back to Thunderbird's own art; and the fill pass stops handing filled
- * art a fill value, which stock art does not want anyway. Both have to go at
- * once. Dropping only the fill pass leaves Microsoft's glyphs unpainted;
- * dropping only the tokens leaves stock's outline art with a filled body,
- * which is a dark ring around every icon in light mode.
- *
- * CASCADE. Moving these rules from the end of userContent.css to an @import at
- * its top moves them to the FRONT of that sheet, and within one origin a later
- * rule beats an earlier one at equal importance. Checked before the move:
- * nothing ahead of them declared --icon-*, an alias, fill, stroke or a content
- * URL. The only three `content` declarations in the file are `::before` on
- * tree rows, which these rules never touch.
- *
- * The same three blocks fluent-icons.css installs in the chrome window: the
- * --icon-* token overrides, the alias families that shadow them, and the fill
- * pass that filled art needs. They are restated rather than imported for the
- * reason at the top of userContent.css -- a custom property set on the
- * messenger window's :root does not reach a document in a content docshell, so
- * every page here would otherwise keep Thunderbird's art while the chrome
- * around it showed Microsoft's. That is the seam the Settings sidebar, the
- * Add-ons Manager sidebar and the Address Book tabs were sitting on.
- *
- * Cheap to duplicate now and it was not before: these are 211 URLs, where the
- * first working version of the icon mechanism was a 143 KB inline blob.
- *
- * --button-icon-fill IS THE ONE THAT MATTERS MOST HERE. aboutExtra.css sets it
- * to a 20% wash on .sticky-container/.main-heading/.main-search, and every
- * moz-button in the Add-ons Manager reads it. See the note in fluent-icons.css
- * for why the redefinition is on `*` and not on :root.
- *
- * RESOURCE:// FROM A CONTENT DOCSHELL is the assumption under this whole
- * section. These are privileged about: pages, so it should resolve exactly as
- * it does in chrome -- but "should" is not "measured", and if these pages come
- * back with no icons at all rather than stock ones, that is the thing to test
- * first.
- * ========================================================================== */
+/* The same icon work restated for content tabs: custom properties do not cross
+ * a document boundary. Split out of userContent.css only so it has a kill
+ * switch; it is the pair of fluent-icons.css. See CLAUDE.md. */
 
 @-moz-document url-prefix("about:accountsettings"),
                url-prefix("chrome://messenger/content/am-"),
@@ -328,8 +282,6 @@
     --spaces-icon-tasks: var(--icon-tasks) !important;
   }
 
-  /* Light mode softens the fill; see LIGHT MODE GETS A SOFTER ICON in
-   * fluent-icons.css for the ratio and why dark mode is left alone. */
   :root {
     --fluent-icon-fill: light-dark(
       color-mix(in srgb, currentColor 72%, transparent),
@@ -654,13 +606,6 @@
     fill: var(--vcard-delete-button-color) !important;
   }
 
-  /* The rules that declare -moz-context-properties WITHOUT `fill`, where
-   * context-fill falls back to the CSS initial value and paints BLACK. Same
-   * block as part 4 of fluent-icons.css; see its header for the full account.
-   * Reaches vcard-edit's selects, the contact photo placeholders and the
-   * number-input spinners, all of which live on these pages.
-   * No namespace prefixes -- see part 4's header for what they cost. */
-
   #AbPickerHeader #abContextMenuButton,
   #NextButton,
   #PreviousButton,
@@ -757,65 +702,42 @@
     fill: color-mix(in srgb, currentColor 30%, transparent) !important;
   }
 
-  /* SETTINGS DRAWS ITS SIDEBAR FROM HARDCODED URLS, NOT TOKENS.
-   * preferences.xhtml puts the path straight in the markup
-   * (`<html:img class="category-icon" src="chrome://...">`), so nothing in the
-   * token layer reaches these and they stayed on Thunderbird's outline art.
-   * That is worse than merely unthemed: `.category-icon` and
-   * `.sidebar-footer-icon` are in the fill pass, so each one rendered as a
-   * full-strength outline around a softened body -- a dark ring, obvious in
-   * light mode. Same defect the Add-ons Manager sidebar had.
-   *
-   * Matching the src and replacing the rendered image is the same move part 2c
-   * makes for tab icons, and stock's own idiom on this kind of element. The
-   * attribute itself is left alone. */
-
-  /* General */
   img[src="chrome://messenger/skin/icons/new/touch/settings.svg"] {
     content: var(--icon-settings) !important;
   }
 
-  /* Appearance -- upstream draws a palette, the set has no palette */
   img[src="chrome://messenger/skin/icons/new/touch/paint-palette.svg"] {
     content: var(--icon-paint-brush) !important;
   }
 
-  /* Composition */
   img[src="chrome://messenger/skin/icons/new/touch/pencil.svg"] {
     content: var(--icon-pencil) !important;
   }
 
-  /* Privacy & Security */
   img[src="chrome://messenger/skin/icons/new/touch/lock.svg"] {
     content: var(--icon-lock) !important;
   }
 
-  /* Chat */
   img[src="chrome://messenger/skin/icons/new/touch/chat.svg"] {
     content: var(--icon-chat) !important;
   }
 
-  /* Calendar */
   img[src="chrome://messenger/skin/icons/new/touch/calendar.svg"] {
     content: var(--icon-calendar) !important;
   }
 
-  /* Export for Mobile */
   img[src="chrome://messenger/skin/icons/lg/mobile-export.svg"] {
     content: var(--icon-mobile-export-lg) !important;
   }
 
-  /* Account Settings, in the sidebar footer */
   img[src="chrome://messenger/skin/icons/new/compact/account-settings.svg"] {
     content: var(--icon-account-settings) !important;
   }
 
-  /* Add-ons and Themes, in the sidebar footer */
   img[src="chrome://messenger/skin/icons/new/compact/extension.svg"] {
     content: var(--icon-extension) !important;
   }
 
-  /* the update / info notices */
   img[src="chrome://global/skin/icons/info.svg"] {
     content: var(--icon-info) !important;
   }

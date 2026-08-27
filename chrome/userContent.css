@@ -1,83 +1,11 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird -- CONTENT TABS
+/* Content tabs. Every rule is scoped in @-moz-document, so rendered mail is
+ * never touched. Keep it that way.
  *
- * Account Settings, Address Book, Settings and its sub-dialogs, Advanced
- * Preferences, the Add-ons Manager, Import and Saved Files. All of them are
- * content-type docshells, so userChrome.css cannot reach them and none of the
- * theme's chrome modules apply here. This file is the whole theme for these
- * pages.
- *
- * One block at the end of the file is not one of Thunderbird's pages at all:
- * the Thundermail sign-in page, served from auth.tb.pro. It is here because
- * this is the sheet that reaches content, and it is scoped and reasoned about
- * separately -- see its own header. It is deliberately NOT enrolled in the
- * shared block below.
- *
- * WHY THIS FILE EXISTS SEPARATELY FROM THE CHROME MODULES
- * Custom properties do not cross a document boundary. Every one of these pages
- * is its own document, so fluent-tokens.css's :root block -- which lives in the
- * messenger window -- resolves to nothing here. The palette has to be restated
- * inside each document this sheet targets. That is the duplication below; it is
- * not an oversight.
- *
- * CASCADE
- * Like userChrome.css this is a USER sheet, and author-normal beats user-normal,
- * so nearly everything Thunderbird also sets needs !important. Note the one
- * place that rule does NOT apply: a custom property set directly on an element
- * by Thunderbird beats an inherited value, !important or not. accountManage.css
- * relies on that for #deleteAccount's red -- it stays red, correctly, despite
- * the --button-* mapping below.
- *
- * REACHABILITY -- measured, not assumed
- * Two canary rounds, pixel-sampled with System.Drawing:
- *   - Every page matched its about: URI. Blocks keyed on the chrome:// URL the
- *     page is served from never fired, so about: is the scope that works.
- *   - Account Settings is two documents. AccountManager.xhtml is a shell around
- *     <iframe id="contentFrame"> holding chrome://messenger/content/am-*.xhtml,
- *     which is where every actual setting lives. The about: scope covers 10% of
- *     the surface; the am- prefix covers the other 78%. Both are needed.
- *   - Nested chrome:// documents inside these content docshells ARE reachable
- *     (proven on the am-* panes and on Settings' dialogFrame). Scope any further
- *     sub-dialog by its chrome path; no restart needed to find out.
- *
- * >>> THE SWITCH <<<  This file has its own color-scheme, below in the shared
- * block, because these documents cannot see userChrome.css's. It MUST be kept
- * equal to the one in userChrome.css. Change one, change the other, or the
- * content tabs render light against dark chrome.
- *
- * SCOPE DISCIPLINE
- * Every rule sits inside an @-moz-document. Nothing is unscoped, so message
- * display -- Tier 4, out of scope by decision -- is untouched. Do not add a
- * bare rule to this file.
- *
- * NOT DONE HERE, ON PURPOSE
- *   - Fluent's card-per-settings-group treatment of the am-* panes and of the
- *     Settings panes. Upstream uses borderless fieldsets on both; turning those
- *     into cards is a layout redesign, not a retokenizing, and it belongs in
- *     its own pass. Every pass in this file so far does palette, geometry,
- *     controls, rows and focus, and leaves the group structure alone.
- * ========================================================================== */
+ * The @import below is the icon kill switch and must stay above every rule.
+ * Comment it out together with fluent-icons.css in userChrome.css, never on its
+ * own -- see CLAUDE.md. */
 
-/* KILL SWITCH -- comment the line out to drop Microsoft's icons from the
- * content tabs and fall back to Thunderbird's own. It has to be here, above
- * every rule: CSS drops an @import that follows a style rule. See the header
- * of the imported file for what the two jobs it turns off actually are, and
- * for why userChrome.css's fluent-icons.css line has to be commented out with
- * it rather than on its own. */
 @import url("fluent-icons-content.css");
-
-
-/* ============================================================================
- * SHARED -- palette and token mapping for every page in this file.
- *
- * Three vocabularies meet on these pages and all three have to be mapped or
- * half the surface stays stock:
- *   1. --layout-*        messenger's semantic ladder (messenger/layout.css)
- *   2. Acorn/in-content  toolkit's design system (design-system/tokens-*.css)
- *   3. --color-*-base    messenger's own semantic colours (colors.css)
- * The chrome modules only ever needed the first. The Acorn layer is new work,
- * and it is the layer Settings, about:config and Add-ons will also need.
- * ========================================================================== */
 
 @-moz-document url-prefix("about:accountsettings"),
                url-prefix("chrome://messenger/content/am-"),
@@ -100,23 +28,8 @@
                url("chrome://pippki/content/certManager.xhtml"),
                url("chrome://pippki/content/device_manager.xhtml") {
 
-  /* --- 1. Fluent tokens. Values mirror fluent-tokens.css section 1. Mica is
-   * deliberately absent: these pages sit inside a tab, on the card surface,
-   * with the window backdrop already resolved behind them. --- */
   :root {
-    /* >>> THE SWITCH <<<  see the two overrides below.
-     * !important is NOT optional here, for the reason this file's header
-     * gives about every other declaration: in-content/common-shared.css:32
-     * sets `color-scheme: light dark` on :root, that is an AUTHOR rule, and
-     * author-normal beats user-normal. Without it this line loses -- which
-     * went unnoticed for as long as the answer was dark either way, since
-     * `light dark` under a dark OS resolves to exactly what we asked for.
-     * Asking for light is what made the loss visible.
-     *
-     * That the base value now MATCHES the stock author rule does not make the
-     * !important redundant: it is what the overrides below need in order to
-     * beat that same author rule, and not every page this sheet reaches loads
-     * common-shared.css to inherit `light dark` from in the first place. */
+
     color-scheme: light dark !important;
 
     --fluent-base:              light-dark(#F3F3F3, #202020);
@@ -130,11 +43,6 @@
     --fluent-text-tertiary:     light-dark(#A4A4A4, rgba(255, 255, 255, .54));
     --fluent-text-disabled:     light-dark(rgba(0, 0, 0, .36), rgba(255, 255, 255, .36));
 
-    /* Transparent, matching the chrome sheet -- no box outline anywhere in the
-     * theme. The full reasoning and the original values are in the Strokes
-     * block of fluent-tokens.css; keep the two sheets in step. --fluent-divider
-     * stays painted for the same reason it does there: it draws separators, not
-     * outlines. */
     --fluent-divider:           light-dark(rgba(0, 0, 0, .08), rgba(255, 255, 255, .08));
     --fluent-card-stroke:       transparent;
     --fluent-control-stroke:    transparent;
@@ -142,12 +50,6 @@
     --fluent-subtle-hover:      light-dark(rgba(0, 0, 0, .037), rgba(255, 255, 255, .06));
     --fluent-subtle-pressed:    light-dark(rgba(0, 0, 0, .024), rgba(255, 255, 255, .04));
 
-    /* Accent. The chrome reads --sidebar-highlight-background-color first, to
-     * honour Thunderbird's own Appearance accent -- that variable is set by the
-     * lightweight-theme machinery on the messenger window and does not exist in
-     * a content document, so there is nothing to prefer here and the live
-     * Windows accent is used directly. Taking --selected-item-color as the
-     * source instead would be circular: it is mapped FROM this token below. */
     --fluent-accent:             AccentColor;
     --fluent-accent-text:        AccentColorText;
     --fluent-accent-hover:       color-mix(in srgb, AccentColor 90%, light-dark(#000000, #FFFFFF));
@@ -155,28 +57,6 @@
     --fluent-accent-tint:        color-mix(in srgb, AccentColor 20%, transparent);
     --fluent-accent-tint-strong: color-mix(in srgb, AccentColor 35%, transparent);
 
-    /* Accent as TEXT, which is a different colour from accent as a fill.
-     *
-     * --fluent-accent is the raw Windows AccentColor, chosen to sit BEHIND
-     * AccentColorText; nothing guarantees it reads as text on our own
-     * surfaces. Measured with this machine's accent at #4A5459 it gave roughly
-     * 1.6:1 against the #2B2B2B card -- links were there and could not be read.
-     *
-     * Windows has the same problem and solves it with a tint ladder: accent
-     * text on a dark surface is AccentLight2, on a light surface AccentDark2,
-     * never the base. That palette lives in the registry, not in CSS, but
-     * mixing toward white/black reproduces it closely -- against this accent,
-     * 55% + white renders #9BA1A5 where Windows' own Light2 is #9EABAE, 5.35:1
-     * against the card. The mix also degrades correctly for a saturated
-     * accent, which is what a stock Windows dark theme's pale-blue link is.
-     *
-     * Measured on tools\remote.png, on Settings' "Learn more about the privacy
-     * issues of remote content". The sub-dialog overlay was up, so the page
-     * behind it is dimmed by a ~50% black scrim -- white text sampled #7F7F7F,
-     * which pins the factor at 0.498; the link's underline, a solid run with no
-     * antialiasing, sampled #4D5052, i.e. #9BA1A5 undimmed. Stock would have
-     * been --color-cyan-30 #4CC4E1 or --color-blue-40 #5A87FD, both of which
-     * dim to something obviously blue (#266270 / #2D437E). */
     --fluent-accent-link: light-dark(
       color-mix(in srgb, AccentColor 60%, #000000),
       color-mix(in srgb, AccentColor 55%, #FFFFFF));
@@ -187,17 +67,7 @@
     --fluent-radius-row:        4px;
     --fluent-row-inset:         4px;
     --fluent-control-height:    32px;
-    /* The four below arrived with the Address Book's rework and are the same
-     * values fluent-tokens.css:126-152 carries; the reasoning for each number
-     * is written out there and is not repeated here.
-     *
-     * They are in this sheet because a content document cannot see the chrome
-     * one, and an undefined var() takes the WHOLE declaration with it rather
-     * than falling back -- so a rule written against a token that only exists
-     * in the other file does not misdraw, it silently does not apply at all.
-     * That is exactly what happened on the first pass here: the book rows kept
-     * their content height and the header buttons kept stock's 30px, because
-     * every declaration naming one of these four was dropped at parse time. */
+
     --fluent-card-inset:        12px;
     --fluent-row-fill-height:   28px;
     --fluent-row-gap:           3px;
@@ -213,21 +83,10 @@
     --fluent-ease-decelerate:   cubic-bezier(0, 0, 0, 1);
     --fluent-ease-standard:     cubic-bezier(.33, 0, .67, 1);
 
-    /* Family and weight only, no size -- see the typography note in
-     * fluent-tokens.css section 1 for why the ramp is not restated. */
     --fluent-font:              "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     --fluent-weight-strong:     600;
   }
 
-  /* >>> THE SWITCH <<<  the two fixed halves, kept equal to userChrome.css's.
-   * These documents cannot see userChrome.css, so the pref has to be read
-   * again here. -moz-pref is chrome-only syntax allowed by the sheet's USER
-   * origin rather than by the document's, which is why it can be used on
-   * content pages at all -- the same distinction that decides which sheet
-   * reaches these pages in the first place.
-   *
-   * No block for `system`: that is the base value above, so the pref being
-   * absent and the pref reading "system" land on the same rule. */
   @media -moz-pref("extensions.thunderbird-fluent.colorScheme", "light") {
     :root {
       color-scheme: light !important;
@@ -240,12 +99,6 @@
     }
   }
 
-  /* --- 2. messenger's --layout-* ladder ---
-   * Same mapping as fluent-tokens.css section 2, with one deliberate
-   * difference: background-0 is the PAGE canvas on these pages, not a pane, so
-   * it takes the window base rather than card white. The panes are promoted to
-   * cards by the per-page blocks further down, which is what gives these tabs
-   * the same floating-pane reading as the 3-pane window. */
   :root {
     --layout-background-0: var(--fluent-base) !important;
     --layout-background-1: var(--fluent-card) !important;
@@ -268,11 +121,6 @@
     --sidebar-border: var(--fluent-divider) !important;
   }
 
-  /* --- 3. Toolkit Acorn tokens ---
-   * The layer the chrome modules never needed. accountManage.css and
-   * aboutAddressBook.css both read these directly, and they are what
-   * about:config and the Add-ons Manager are built on almost exclusively --
-   * this block is the reusable part of today's work. */
   :root {
     --background-color-canvas: var(--fluent-base) !important;
     --background-color-box: var(--fluent-card) !important;
@@ -295,25 +143,17 @@
     --color-accent-primary-hover: var(--fluent-accent-hover) !important;
     --color-accent-primary-active: var(--fluent-accent-pressed) !important;
 
-    /* Fluent's radius ladder. controlCornerRadius for controls,
-     * overlayCornerRadius for anything card- or flyout-shaped. */
     --border-radius-xsmall: 2px !important;
     --border-radius-small: var(--fluent-radius-control) !important;
     --border-radius-medium: var(--fluent-radius-control) !important;
     --border-radius-large: var(--fluent-radius-card) !important;
 
-    /* Legacy in-content names. Still referenced by accountManage.css and
-     * aboutAddressBook.css but no longer defined by the toolkit in TB 153 --
-     * mapped anyway because the cost is a line each and a stale reference that
-     * silently resolves to nothing is exactly the sort of gap that reads as
-     * "the theme missed a spot". */
     --border-color-box-info: var(--fluent-divider) !important;
     --in-content-box-border-color: var(--fluent-control-stroke) !important;
     --in-content-box-info-border: var(--fluent-divider) !important;
     --in-content-deemphasized-text: var(--fluent-text-secondary) !important;
   }
 
-  /* --- 4. messenger's colors.css semantics + selection --- */
   :root {
     --color-surface-base: var(--fluent-card) !important;
     --color-surface-subtle: var(--fluent-solid-tertiary) !important;
@@ -327,31 +167,11 @@
     --selected-item-text-color: var(--fluent-accent-text) !important;
     --panel-background-color-dimmed: var(--fluent-subtle-hover) !important;
 
-    /* Links. Stock is blue-40 (messenger variables.css) or cyan-30 (toolkit
-     * tokens-platform.css) depending on which sheet a page imports -- either
-     * way the one interactive colour on these pages that ignores the accent.
-     *
-     * This has to live in the SHARED block, not on one page: two rules read
-     * these tokens and between them they cover every document this file
-     * touches -- common-shared.css's `html|a, .text-link, ::part(support-link)`
-     * for the in-content pages, and global-shared.css's `.text-link, a,
-     * ::part(support-link)` for the XUL ones (the am-* panes and every
-     * sub-dialog). Scoping them to about:addons, as the first pass did, left
-     * Settings and the account panes on stock blue beside an accent-tinted
-     * neighbouring tab.
-     *
-     * --link-color-visited is deliberately absent: both vocabularies declare
-     * it as `var(--link-color)` on the same :root (tokens-shared.css:409,
-     * variables.css:228), so it resolves against the value below on its own.
-     * Under forced-colors it stays VisitedText, which is correct. */
     --link-color: var(--fluent-accent-link) !important;
     --link-color-hover: color-mix(in srgb, var(--fluent-accent-link) 85%, light-dark(#000000, #FFFFFF)) !important;
     --link-color-active: color-mix(in srgb, var(--fluent-accent-link) 70%, light-dark(#000000, #FFFFFF)) !important;
   }
 
-  /* --- 5. Controls ---
-   * Fluent's neutral control: a quiet solid fill, a hairline stroke, 4px
-   * corners, 32px tall. The hover step is a subtle overlay, not a colour swap. */
   :root {
     --button-background-color: var(--fluent-solid-quart) !important;
     --button-background-color-hover: var(--fluent-subtle-hover) !important;
@@ -378,9 +198,6 @@
     --input-border-color: var(--fluent-control-stroke) !important;
   }
 
-  /* --- 6. Lists. Same tokens fluent-lists.css retokenizes for the chrome; the
-   * component CSS (list-container.css, tree-listbox.css) is shared, so the
-   * values carry over unchanged. --- */
   :root {
     --listbox-border-radius: var(--fluent-radius-row) !important;
     --list-item-min-height: var(--fluent-control-height) !important;
@@ -398,7 +215,6 @@
     --list-container-background-selected-current-focused: var(--fluent-subtle-hover) !important;
   }
 
-  /* --- 7. Motion, focus, scrollbars --- */
   :root {
     --transition-duration: var(--fluent-duration-fast) !important;
     --transition-timing: var(--fluent-ease-standard) !important;
@@ -411,19 +227,12 @@
     scrollbar-color: light-dark(rgba(0, 0, 0, .35), rgba(255, 255, 255, .35)) transparent !important;
   }
 
-  /* --- 8. Typography --- */
   :root,
   body {
     font-family: var(--fluent-font) !important;
     font-optical-sizing: auto !important;
   }
 
-  /* --- 9. Nav-pane rows.
-   * Both trees on these pages are nav panes, so both get the folder-pane
-   * treatment from fluent-lists.css rather than the message-list one: a neutral
-   * subtle fill, and the accent carried only by a 3x16 pill on the leading
-   * edge. list-container.css draws selection as a border, which Fluent does not
-   * do -- section 6 zeroes those borders, and the pill replaces them. --- */
   :is(ul, ol)[role="tree"] .container {
     min-height: var(--fluent-control-height) !important;
     margin-inline: var(--fluent-row-inset) !important;
@@ -449,55 +258,11 @@
     to   { transform: translateY(-50%) scaleY(1); }
   }
 
-  /* --- 10. Flyouts and menus.
-   * Character for character the recipe fluent-chrome.css carries for chrome
-   * popups, moved here because the sheet split cuts popups in half exactly the
-   * way it cuts pages (README.md:85-97). about:3pane declares its 64
-   * menupopups in a chrome docshell and userChrome.css reaches them; every
-   * page in this file is a content docshell, so its popups -- 12 in
-   * aboutAddressBook.xhtml, 76 in preferences.xhtml, more in the rest -- were
-   * reached by nothing at all. Right-clicking a contact gave a stock popup
-   * next to an Inbox that gave a Fluent one.
-   *
-   * It goes in the SHARED block and not in a per-page one because every page
-   * in the list has popups; per page this would be the same rule written seven
-   * times.
-   *
-   * The popups are not inside <body>. aboutAddressBook.xhtml:817-901 declares
-   * all five as direct children of <html>, after </body>, and the other pages
-   * do the same -- so nothing here may be scoped under body, and the tokens
-   * these rules read have to stay on :root where section 1 puts them. Move one
-   * to body and the popups silently lose it.
-   *
-   * 8px radius, 4px inner padding, and menu items inset 4px so hover fills a
-   * floating pill inside the menu rather than spanning edge to edge.
-   *
-   * The shadow IS ours, and it has to be. The chrome block used to carry a
-   * note saying the opposite -- leave it to Gecko's native popup shadow,
-   * adding one produces a double halo -- and that was true right up until the
-   * popup lost `appearance: auto`. Taking the native path away takes the
-   * native shadow with it: measured straight down past the popup's bottom
-   * edge, the fill steps 44 to 43 and stops, with no falloff anywhere. Without
-   * elevation a #2C2C2C menu sits on a #2B2B2B pane, one level apart out of
-   * 255, and disappears. --- */
   menupopup,
   panel {
-    /* The popup paints itself, not the OS. menu.css:48-55 hands every
-     * menupopup `appearance: auto` whenever (-moz-windows-mica-popups)
-     * matches, and that feature keeps matching after widget.windows.mica.popups
-     * is turned off -- the pref moves the widget, not the media query. A
-     * natively-appearing popup with no backdrop under it paints nothing, which
-     * is how menus ended up see-through. Ours is an opaque surface, so it has
-     * no use for the native path either way. */
+
     appearance: none !important;
 
-    /* Follow the switch, do not restate it. popup.css:42 sets
-     * `color-scheme: light dark` on menupopup itself, which overrides what
-     * section 1 forces on :root -- and every --fluent-* token is a
-     * light-dark(), resolved against the ELEMENT's computed scheme. Left
-     * alone, a machine in Windows light mode would get light popups inside a
-     * dark theme. `inherit` puts them back under the one switch at :root
-     * instead of adding a second place to edit. */
     color-scheme: inherit !important;
 
     --panel-border-radius: var(--fluent-radius-card) !important;
@@ -505,53 +270,23 @@
     --panel-color: var(--fluent-text-primary) !important;
     --panel-border-color: var(--fluent-card-stroke) !important;
 
-    /* Block only. An inline value here is paid TWICE, because every menu item
-     * already carries its own margin-inline: the pill ends up inset by the
-     * sum, and 4 + 4 reads as a menu that cannot decide where its edge is.
-     * Stock lands on the same split for the same reason (contextMenu.css:27). */
     --panel-padding: 4px 0 !important;
 
-    /* Both names, and they are not interchangeable. --panel-background is the
-     * arrowpanel-era token; what a popup paints is --panel-background-color,
-     * read by popup.css:76 on ::part(content). */
     --panel-background: var(--fluent-flyout) !important;
     --panel-background-color: var(--fluent-flyout) !important;
 
-    /* Stock draws its separator on menuseparator::before (menu.css:130-136),
-     * not on the element. Recolouring the token gets that line; painting our
-     * own border on the element gets a SECOND line 4px above it. */
     --panel-separator-color: var(--fluent-divider) !important;
 
-    /* Elevation. The margin is not decoration -- popup.css:44-45 sizes the
-     * popup WINDOW by it and pulls the content back with a negative margin, so
-     * it is the room the shadow has to render into. Stock's 4px is cut for a
-     * 0-offset 4px blur; --fluent-shadow-flyout is offset 8 and blurred 16, so
-     * it needs 24 or it renders clipped square at the bottom. */
     --panel-box-shadow: var(--fluent-shadow-flyout) !important;
     --panel-box-shadow-margin: 24px !important;
   }
 
-  /* The fill, painted rather than delegated. Belt and braces with the token
-   * above: --panel-background-color reaches this same surface through
-   * popup.css:76, but only as a variable, and a variable is one more thing
-   * that can be blanked out from under the theme. This declaration is the
-   * paint itself. */
   menupopup::part(content),
   panel::part(content) {
     background-color: var(--fluent-flyout) !important;
     background-image: none !important;
     box-shadow: var(--fluent-shadow-flyout) !important;
   }
-
-  /* Tooltips are deliberately NOT themed, on this side either. The default
-   * tooltip is native anonymous content, so no user or author sheet can reach
-   * it -- xul.css:380 says as much in a comment, and its Windows branch
-   * (xul.css:396-407) paints background #2b2a33 and border #f9f9fb outright,
-   * which is what the shipped build renders. A `tooltip { ... !important }`
-   * rule was tried on the chrome side and changed nothing, measured pixel for
-   * pixel. Do not add it back here: it cannot work for the tooltips users
-   * actually see, and it WOULD take the handful declared in markup, leaving
-   * the two kinds looking different. */
 
   menupopup > menuitem,
   menupopup > menu {
@@ -570,46 +305,13 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* Menu separators are removed outright, on the same instruction that took
-   * the box outlines and the button-group ticks: this theme separates by
-   * spacing and by the fill under the pointer, not by drawn rules.
-   *
-   * display: none rather than a transparent line, because the rule was the
-   * whole element -- stock's menuseparator is a 0-height box whose ::before
-   * paints the line (menu.css:130-136), so hiding the line and keeping the box
-   * would leave a few pixels of dead space that nothing explains. The groups a
-   * menu used to separate now run together; that is the trade, and it is
-   * deliberate. #bookContext has one (aboutAddressBook.xhtml:828), and without
-   * this it would be the only menu in the theme still drawing rules.
-   *
-   * --panel-separator-color is still mapped above and is now unread here. It
-   * is left in place because it is a stock token other popup furniture can
-   * pick up, and mapping it costs nothing. */
   menuseparator {
     display: none !important;
   }
 }
 
-
-/* ============================================================================
- * ACCOUNT SETTINGS -- the shell (AccountManager.xhtml)
- * Account tree on the left, iframe on the right. 10% of the visible surface.
- * ========================================================================== */
-
 @-moz-document url-prefix("about:accountsettings") {
 
-  /* THE GUTTER GOES ON THE GRID, NOT ON THE PANES.
-   *
-   * The first attempt gave each pane its own margin and set the iframe to
-   * inline-size/block-size: auto so the margin would not overflow. That
-   * collapsed the pane to a 300x150 box in the corner of an empty tab, and the
-   * reason is worth keeping: an iframe is replaced content. It has no intrinsic
-   * size to shrink-wrap to, so `auto` is not "fill the cell" -- it is the CSS
-   * default width/height for a replaced element, literally 300x150. Measured
-   * off the capture, the collapsed card was exactly that.
-   *
-   * So the frame keeps upstream's 100%/100% and the spacing moves up to body,
-   * which is already the grid container. */
   html,
   body {
     block-size: 100% !important;
@@ -621,43 +323,9 @@
     padding: var(--fluent-gutter) !important;
     gap: var(--fluent-gutter) !important;
 
-    /* AND THE ROW HAS TO BE PINNED, or the one card left loses its bottom
-     * corners. Upstream declares columns only, so the single row is implicit
-     * and auto, and an auto track is sized to its items max-content.
-     * #accountTreeBox is a flex column: overflow-y on #accounttree zeroes its
-     * *min*-content but leaves its max-content alone, so the track asks for
-     * the height of the entire account tree and grows past body content box.
-     * Everything in the row stretches to that overflowing track, and
-     * AccountManager.xhtml:16 carries scrolling=false on <html>, so the excess
-     * is silently clipped instead of scrolled -- taking #contentFrame's bottom
-     * corners and the bottom gutter with it.
-     *
-     * The pin outlived the rail's card and gained a second job with it.
-     * minmax(0, 1fr) sizes the row from the container rather than from the
-     * content, which is also what holds the now card-less rail to the viewport
-     * instead of letting it grow to its tree's max-content -- without it the
-     * rail stops scrolling and simply runs off the page, where before it only
-     * lost a corner. The 0 minimum keeps the automatic minimum size out of
-     * it. */
     grid-template-rows: minmax(0, 1fr) !important;
   }
 
-  /* MICA. Same gate and same reasoning as Address Book -- see the note on
-   * that block, and the CONTENT TABS note in fluent-layout.css. The gutter
-   * this page shows is body's padding, and there is one card left to keep its
-   * fill: #contentFrame, painted by its own document. #accountTreeBox is a
-   * bare nav pane now, so on this page the backdrop reaches everything except
-   * the frame.
-   *
-   * :root HAS TO BE LISTED, and a first pass that left it out measured
-   * rgb(32, 32, 32) on the root with a transparent body under it. The
-   * temptation is to reason that body's background propagates to the canvas
-   * and is therefore the only one that matters. That only holds while the
-   * root is unpainted, and it is not: accountManager.css:10 imports
-   * in-content/common.css, which paints :root from --background-color-canvas
-   * (common-shared.css:54-57) -- a token section 2 of this file maps to
-   * --fluent-base. So the root paints, propagation never happens, and a
-   * transparent body just uncovers an opaque html. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent],
     :root[thunderbird-fluent] body {
@@ -665,24 +333,6 @@
     }
   }
 
-  /* The rail is a navigation pane, and the last of the four to give its card
-   * up -- #folderPane (fluent-layout.css:289), #booksPane (ADDRESS BOOK below)
-   * and the Settings rail went first, all for the same reason: WinUI does not
-   * put a NavigationView on a surface. It sits on the window backdrop and only
-   * the content beside it gets one. Dropping the fill is also what lets Mica
-   * reach the rail, which a nav pane should have.
-   *
-   * transparent rather than deleted, because stock repaints it --
-   * accountManager.css:48 sets background-color: var(--sidebar-background),
-   * which section 2 of this file maps to --fluent-card. radius and box-shadow
-   * are not restated: there is no surface left to round or to lift. box-sizing
-   * stays, because upstream's min/max-inline-size floors on this flex column
-   * are written against border-box.
-   *
-   * block-size is the older half of this rule and still load-bearing:
-   * upstream pins the sidebar to 100vh (accountManager.css:45), which with
-   * body's padding overflows the viewport by exactly that padding. Height goes
-   * back to the grid's own stretch instead of the viewport's. */
   #accountTreeBox {
     block-size: auto !important;
     box-sizing: border-box !important;
@@ -691,10 +341,6 @@
     box-shadow: none !important;
   }
 
-  /* The pane iframe is the card -- the only one on this page now that the rail
-   * beside it is bare. Its own document paints the fill (see
-   * the am- block below) -- a background set here would sit behind an opaque
-   * child document and never be seen, so the shell supplies only geometry. */
   #contentFrame {
     box-sizing: border-box !important;
     inline-size: 100% !important;
@@ -704,14 +350,6 @@
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* The sub-dialog frame. Same intent as the .dialogBox rule at the end of the
-   * SETTINGS block, with one addition. AccountManager.xhtml loads
-   * inContentDialog.css, NOT preferences/subdialog.css, and grepping this
-   * build's omni.ja for `.dialogBox` finds it only in subdialog.css and
-   * shared/messenger.css -- neither of which this document loads. So unlike
-   * Settings' dialog box this one has no fill, no radius and no shadow of its
-   * own, and the fill has to be stated here or the .dialogTitleBar strip above
-   * the frame shows the dimmed page through it. */
   .dialogBox {
     background-color: var(--fluent-card) !important;
     border-radius: var(--fluent-radius-card) !important;
@@ -719,24 +357,6 @@
     box-shadow: var(--fluent-shadow-flyout) !important;
   }
 
-  /* The rail's toolbar -- one button, Add Account (AccountManager.xhtml:
-   * 56-62). It is the same object #folderPaneHeaderBar and #booksPaneHeaderBar
-   * are, down to the class: all three are .sidebar-panel-header. So it takes
-   * the same answer (fluent-layout.css:410) -- the bar stays bare and the
-   * button gets its own box. None of the Address Book's "three buttons must
-   * not read as one segmented control" argument is needed here; there is only
-   * the one.
-   *
-   * margin-inline is the gutter and padding is zero, against stock's
-   * --sidebar-header-spacing (containers.css:12), so the button sits on the
-   * same edge the row fills below it do. justify-content is NOT restated:
-   * unlike the other two bars, accountManager.css:52 already centres this one,
-   * and with a single child there is nothing for space-between to strand.
-   *
-   * The font-weight this rule used to be is gone with the primary button it
-   * would have contradicted. It was semibold on the bar, and the button
-   * inherits through the font-weight: inherit below -- keeping it would have
-   * put back by inheritance the very weight 600 the next rule takes off. */
   #accountTreeHeaderBar {
     background-color: transparent !important;
     margin-inline: var(--fluent-gutter) !important;
@@ -744,29 +364,6 @@
     padding: 0 !important;
   }
 
-  /* Add Account is its own small card, exactly as in fluent-layout.css:447,
-   * and it loses its primary treatment on the way -- stock ships it
-   * class="button button-primary icon-button" (AccountManager.xhtml:57-58),
-   * a solid accent fill at weight 600 (widgets.css:137-142). The accent in a
-   * nav pane belongs to the selection, and two accent surfaces in one pane
-   * compete. Same call New Contact and Write Message both got.
-   *
-   * The subtle-fill ladder cannot be used for the states. Those fills are
-   * translucent and assume a transparent-rest control on an opaque surface;
-   * this one rests on a fill of its own over a transparent pane, so a
-   * translucent hover would composite against the backdrop and come out DARKER
-   * than the rest state. The solid ladder gives an opaque step.
-   *
-   * Height is the header card's, spelled out the long way -- padding to zero,
-   * the border subtracted from the total -- because box-sizing must stay
-   * content-box: this is an .icon-button with a min-inline-size floor
-   * (widgets.css:18), and under border-box that floor has to pay for the
-   * inline padding too. It also beats stock's own min-block-size: 24px
-   * (accountManager.css:58). Only the block axis is being pinned, and nothing
-   * touches the inline one deliberately: the icon is a background-image, so
-   * stock reserves its lane out of the label's own start padding
-   * (widgets.css:67-74) and any padding written here collapses that lane and
-   * lands the label on the icon. */
   #accountTreeCreateAccount {
     background-color: var(--fluent-card) !important;
     color: var(--fluent-text-primary) !important;
@@ -791,43 +388,6 @@
     box-shadow: none !important;
   }
 
-  /* Account rows read as folder rows, because that is what they are: the same
-   * li > .container shape (AccountManager.xhtml:66-77), the same nav list, now
-   * on the same bare pane. Every number here is #folderTree's
-   * (fluent-lists.css:91) and the long note there argues each one. The two
-   * that matter most:
-   *
-   *   - the fill floats in the row slot rather than being the slot. 28px of
-   *     fill plus 3px of margin per side makes a 34px slot with 6px of
-   *     backdrop between fills, and the label keeps the room it had.
-   *   - margin-inline is the gutter, not the 16px that reads better inside a
-   *     pane, because #accountTreeBox is the leftmost paintable thing in this
-   *     window too and any larger stacks on body's padding into a band of
-   *     empty Mica before the first account name.
-   *
-   * This is deliberately NOT the Settings rail's answer, which is the nearest
-   * precedent and the wrong one to copy. There the 6px had to be CARVED out of
-   * the row height rather than added around it, because #categories is
-   * overflow: visible with min-block-size: auto (preferences.css:320-323) and
-   * a list that cannot scroll spills every pixel it gains past the rail's
-   * foot. #accounttree is a real scroll container -- accountManager.css:72-74
-   * gives it flex-grow: 1 and overflow-y: auto -- so the folder-pane model
-   * applies unchanged and the height these rows gain is absorbed by the
-   * scroll.
-   *
-   * The outer margin does not disturb the sub-rows' indentation: stock indents
-   * them with padding-inline-start: 42px INSIDE the container
-   * (shared/accountManager.css:174), not with anything on the container.
-   *
-   * No fills are written. list-container.css is loaded on this page too
-   * (AccountManager.xhtml:32) and drives every state from the
-   * --list-container-* family, which section 6 of the shared block above
-   * already retokenizes, borders included.
-   *
-   * All three geometry declarations override section 9's generic
-   * :is(ul, ol)[role="tree"] .container, which is written for nav rows that
-   * sit inside a card and is still right for the ones that do. This rail's no
-   * longer does. */
   #accounttree li > .container {
     position: relative !important;
     min-height: var(--fluent-row-fill-height) !important;
@@ -837,80 +397,23 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* Reserve the scrollbar's lane whether or not it is showing, as on
-   * #folderTree (fluent-lists.css:111) and #books. Without it the bar overlays
-   * the content box, the row fills run underneath it, and the whole list
-   * shifts sideways as the bar comes and goes -- and this is the list that
-   * gains and loses a scrollbar every time an account is expanded. */
   #accounttree {
     scrollbar-gutter: stable !important;
   }
 
-  /* Both scroll affordances go, exactly as they did on #folderTree
-   * (fluent-layout.css:471) and #books (ADDRESS BOOK below) -- #accounttree
-   * carries the same .sidebar-panel-scroll class (AccountManager.xhtml:63) and
-   * containers.css:27-48 hangs the same pair off it, both of which assume an
-   * opaque pane behind them:
-   *
-   *   ::after   a 4px bar filled with var(--sidebar-background), which this
-   *             sheet maps to --fluent-card -- an opaque card-coloured stripe
-   *             across the top of a pane that no longer has a card.
-   *   ::before  a black radial gradient meant to read as a shadow on white;
-   *             over Mica it is a dark smudge under the Add Account button.
-   *
-   * `background: none` rather than a transparent colour, because ::before's is
-   * a background-IMAGE and a colour would not clear it. */
   #accounttree::before,
   #accounttree::after {
     background: none !important;
   }
 
-  /* And no selection pill, which the folder pane, the books pane and the
-   * Settings rail all do without. Section 9 puts one on every nav row in these
-   * pages and it worked while these fills had 4px corners: the pill is 3x16 at
-   * inset-inline-start 0, and a 4px curve still had fill behind all of it. At
-   * 8px it does not -- at x=0 an 8px radius starts the fill at y=8, while a
-   * 16px pill centred in a 28px row starts at y=6, so the pill's ends hang off
-   * the fill and onto the backdrop. Measured against the corner, not guessed.
-   *
-   * The deeper reason is the one at fluent-lists.css:140: a neutral row fill
-   * on the backdrop has no second layer to paint a bar onto, so the indicator
-   * reads as a notch bitten out of the fill rather than a marker beside it.
-   * The subtle fill is the selection marker here. `position: relative` stays
-   * on the row above -- it costs nothing and it is what an indicator would
-   * need if one ever came back. */
   #accounttree li.selected > .container::before {
     content: none !important;
   }
 
-  /* Semibold, never bold -- Fluent uses semibold throughout chrome. Upstream
-   * asks for 500 here, which reads as regular against Segoe UI Variable. */
   #accounttree > li > div > .name {
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* The rail's two footer links -- Settings and Add-ons, html:a
-   * .sidebar-footer-link in .sidebar-footer-list (AccountManager.xhtml:
-   * 104-122). They were control-radius rows with stock's margin left alone,
-   * which was right while the rail was a card: they read as quiet rows on it.
-   * On the backdrop they would be the only unshaped things left in a column of
-   * 8px objects, so they take the rows' shape at the rows' inset, and the rows'
-   * 6px of separation with it -- these two touch each other exactly the way the
-   * accounts above them do. Stock gives them 6px of inline margin and
-   * --button-border-radius (shared/accountManager.css:238-241) and no block
-   * margin at all. Nothing is taken back off their height: they have no
-   * min-height to take it from (they size to their content), and there are only
-   * two of them.
-   *
-   * The hover fill this block used to write is gone, not lost.
-   * .sidebar-footer-link is a toolkit button and reads
-   * --button-background-color-hover (common-shared.css:1024), which section 5
-   * of the shared block above already maps to that same overlay -- the rule was
-   * restating what the token layer does anyway.
-   *
-   * What is left is character for character the SETTINGS block's rule below.
-   * The two pages ship the same markup and the same stock CSS, and now that
-   * both rails are bare there is nothing left to tell them apart. */
   .sidebar-footer-link {
     margin-inline: var(--fluent-gutter) !important;
     margin-block: var(--fluent-row-gap) !important;
@@ -920,35 +423,20 @@
 
 }
 
-
-/* ============================================================================
- * ACCOUNT SETTINGS -- the panes (chrome://messenger/content/am-*.xhtml)
- * All 16 of them: am-main, am-server, am-copies, am-addressing, am-junk,
- * am-e2e, am-offline, am-mdn, am-im, am-smtp, am-identities-list and the
- * -advanced / -edit / -retention / -serverwithnoidentities variants.
- * This is 78% of the visible surface of Account Settings.
- * ========================================================================== */
-
 @-moz-document url-prefix("chrome://messenger/content/am-") {
 
-  /* The pane fills the iframe, so it paints the card fill the shell cannot. */
   html,
   body {
     background-color: var(--fluent-card) !important;
     color: var(--fluent-text-primary) !important;
   }
 
-  /* Section headings. Upstream fieldsets are borderless with a legend doing the
-   * work of a heading -- kept flat here on purpose (see NOT DONE HERE at the
-   * top); only the type is brought onto Fluent's scale. */
   legend,
   .heading {
     font-weight: var(--fluent-weight-strong) !important;
     color: var(--fluent-text-primary) !important;
   }
 
-  /* Controls. Radii and height come from the shared token block; these are the
-   * cases where upstream sets the property directly and a token cannot reach. */
   button,
   menulist,
   select {
@@ -971,14 +459,6 @@
     outline-offset: var(--focus-outline-offset) !important;
   }
 
-  /* Blocks of content inside the pane -- the identity list, the archive tree.
-   * These are the one place the pane is not flat, so they take the tertiary
-   * surface and card corners rather than a border.
-   *
-   * The pane's own info boxes (.content-blocking-category, .openpgp-status and
-   * friends) are NOT listed here and do not need to be: they are already built
-   * on --background-color-box-info and --border-color-box-info, both mapped in
-   * the shared block, so they follow the palette without a selector. */
   richlistbox,
   tree {
     background-color: var(--fluent-solid-tertiary) !important;
@@ -988,13 +468,6 @@
 
 }
 
-
-/* ============================================================================
- * ADDRESS BOOK (about:addressbook)
- * Three panes: books, cards, details. Structurally the closest of the five to
- * the 3-pane window, so it gets the same floating-card reading.
- * ========================================================================== */
-
 @-moz-document url-prefix("about:addressbook") {
 
   :root,
@@ -1003,24 +476,6 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* MICA. The chrome half of this and the whole reasoning are in the CONTENT
-   * TABS note inside fluent-layout.css's MICA block; the ceiling it clears is
-   * the NO MICA note at the end of this block. Short version: a content tab
-   * cannot reach the backdrop by CSS alone, so the Thunderbird Fluent add-on
-   * add-on sets one attribute, and this is gated on a marker only that add-on
-   * sets. No add-on, no match, page stays --fluent-base.
-   *
-   * (-moz-windows-mica) is kept as well, and it does match in here: measured
-   * on this document, with the backdrop showing through the gutters and the
-   * chrome's own samples in the same capture to compare against.
-   *
-   * The gutters move, and so do two of the three panes. #booksPane and
-   * #cardsPane gave their cards up to the rows inside them (see below), so
-   * they are transparent here as well and Mica reaches straight through them.
-   * #detailsPane is the one card left on this page and stays opaque. That is
-   * the same reading the 3-pane window already has, where the folder and
-   * thread panes are transparent and only the message pane is a card
-   * (fluent-layout.css:266, 289, 307). */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent],
     :root[thunderbird-fluent] body {
@@ -1028,44 +483,11 @@
     }
   }
 
-  /* The outer gutter, and the only one the panes themselves contribute to.
-   * This page is laid out the same way as the 3-pane window, so it gets the
-   * same construction (fluent-layout.css): the window base is the body, the
-   * gutter around the cards is the body's padding, and the gutter *between*
-   * the cards is the splitter. Pane margins are deliberately not used, and an
-   * earlier pass that did use them measured wrong twice:
-   *
-   *   - A splitter still occupies a grid track between two panes, so 8px of
-   *     margin on each pane with the inner edge collapsed measured 9px
-   *     (8 + the stock 1px --splitter-occupy-size), against a true 8px on
-   *     Settings, which has no splitter.
-   *   - margin-inline-start only reaches the inline seams. Under
-   *     body.layout-table the details pane moves below the cards pane
-   *     (aboutAddressBook.css grid-template), so that seam is on the block
-   *     axis and kept both margins: 8 + 1 + 8 = 17px. Both measured on this
-   *     build, in both layouts.
-   *
-   * Padding plus splitter is axis-agnostic, so one pair of rules covers both
-   * layouts. It also survives the collapsed states, which a zeroed inner
-   * margin would not: with no card selected in Table layout,
-   * aboutAddressBook.js sets #sharedSplitter.isCollapsed, and
-   * aboutAddressBook.css takes the splitter out of the grid with display:none.
-   * A cards pane whose inner margin had been zeroed would then sit flush
-   * against the window edge. Body padding cannot collapse.
-   *
-   * box-sizing because shared/messenger.css gives body block-size/inline-size
-   * 100% and overflow: clip -- content-box padding would push 16px of the grid
-   * out of the window and clip it. */
   body {
     padding: var(--fluent-gutter) !important;
     box-sizing: border-box !important;
   }
 
-  /* The one card left on the window base. No margin: see above.
-   *
-   * #detailsPane keeps it for the reason #messagePane keeps its
-   * (fluent-layout.css:266): it is one contiguous surface holding one
-   * document, so it gets one surface to hold it. Nothing inside it is a row. */
   #detailsPane {
     box-sizing: border-box !important;
     background-color: var(--fluent-card) !important;
@@ -1074,25 +496,6 @@
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* The other two have no card, and for the two different reasons the 3-pane
-   * window already worked out. All three panes shared one rule until now;
-   * splitting it is the whole of this change at pane level.
-   *
-   * #booksPane is #folderPane (fluent-layout.css:289): a navigation pane, and
-   * WinUI does not put one on a surface -- NavigationView sits on the window
-   * backdrop and only the content beside it gets a card. Dropping the fill is
-   * also what lets Mica reach the pane, which a nav pane should have.
-   *
-   * #cardsPane is #threadPane (fluent-layout.css:307): its card MOVED onto the
-   * contacts themselves, further down. A card of cards is one surface too
-   * many -- the contact cards would sit on a fill one step from their own and
-   * the shadow that separates them would land on nothing.
-   *
-   * radius and box-sizing are not restated. There is no surface left to round,
-   * and with no border and no padding the two box models compute the same.
-   * Neither pane needs clipping either: aboutAddressBook.css:151 and :303
-   * already give them overflow of their own. Keeping the cards clear of the
-   * pane edges is the row margins' job below, not this rule's. */
   #booksPane,
   #cardsPane {
     background-color: transparent !important;
@@ -1100,13 +503,6 @@
     box-shadow: none !important;
   }
 
-  /* The inter-card gutters, as in fluent-layout.css:
-   *   --splitter-occupy-size  = space taken in the grid  (the visual gap)
-   *   --splitter-content-size = the clickable/draggable band
-   * Both at the gutter makes the whole gap draggable. Stock's 5px band with a
-   * 1px track put 4px of that band on top of the next card instead. Neither
-   * splitter may paint -- the gap between cards is the window base showing
-   * through, not a line. */
   #booksSplitter,
   #sharedSplitter {
     --splitter-occupy-size: var(--fluent-gutter) !important;
@@ -1115,22 +511,6 @@
     border-color: transparent !important;
   }
 
-  /* The books pane's toolbar -- New Address Book / New Contact / New List
-   * (aboutAddressBook.xhtml:46-61). It is the same object #folderPaneHeaderBar
-   * is, down to the class: both are .sidebar-panel-header, both hold three
-   * unrelated commands, one of which ships .button-primary. So it takes the
-   * same answer (fluent-layout.css:410) -- the bar stays bare and each button
-   * gets its own box, because one card around all three would read as a single
-   * segmented control, which these are not.
-   *
-   * The bottom divider this rule used to draw is gone with the pane's card.
-   * A hairline needs two surfaces to separate; there is one surface here now,
-   * and the strip's edge is the gutter below it.
-   *
-   * margin-inline is the gutter and padding is zero, against stock's 9px
-   * --sidebar-header-spacing (containers.css:12). justify-content overrides
-   * stock's space-between (containers.css:9), which with three separate boxes
-   * pins the outer two to the pane edges and leaves a hole in the middle. */
   #booksPaneHeaderBar {
     background-color: transparent !important;
     border-bottom: none !important;
@@ -1141,29 +521,6 @@
     justify-content: center !important;
   }
 
-  /* Each button is its own small card, exactly as in fluent-layout.css:447,
-   * and #booksPaneImport at the foot of the pane (aboutAddressBook.xhtml:79)
-   * joins them: it is the same kind of object standing on the same bare pane,
-   * and left alone it would be the one loose command floating on Mica.
-   *
-   * New Contact loses its primary treatment -- stock gives it .button-primary,
-   * a solid accent fill and weight 600 (widgets.css:137-142). The accent in
-   * this pane belongs to the selection, and two accent surfaces in one pane
-   * compete. Same call the folder pane's Write Message got.
-   *
-   * The subtle-fill ladder cannot be used for the states. Those fills are
-   * translucent and assume a transparent-rest control on an opaque surface;
-   * these rest on a fill of their own over a transparent pane, so a
-   * translucent hover would composite against the backdrop and come out
-   * DARKER than the rest state. The solid ladder gives an opaque step.
-   *
-   * Height is the header card's, not a control's, so the three buttons and
-   * the search card across the splitter read as one row of surfaces at one
-   * height. It is spelled out the long way -- padding to zero, the border
-   * subtracted from the total -- because box-sizing must stay content-box:
-   * these are icon-buttons with a min-inline-size floor, and under border-box
-   * that floor has to pay for the inline padding too. Only the block axis is
-   * being pinned. */
   #booksPaneHeaderBar > .button,
   #booksPaneImport {
     background-color: var(--fluent-card) !important;
@@ -1178,24 +535,6 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* NOTHING sets the inline padding here, deliberately -- the folder pane's
-   * buttons do not either (fluent-layout.css:447), and this is the rule that
-   * keeps New Contact identical to New Message.
-   *
-   * Two passes tried to widen it and both were wrong. These are .icon-buttons:
-   * the icon is a BACKGROUND-IMAGE, not a child, so it occupies no space and
-   * stock reserves a lane for it out of the label's own start padding --
-   * background-position: var(--button-padding) center against
-   * padding-inline-start: calc(var(--button-padding) * 2 + var(--icon-size)),
-   * i.e. 6 | icon | 6 | label (widgets.css:67-74). A flat `padding-inline: 12px`
-   * collapses that lane and the label lands ON the icon; restating the lane at
-   * 12 | icon | 12 fixes the overlap but sets the icon twice as far from the
-   * label as the inbox has it. Stock's 6px is the number the inbox is using,
-   * because the inbox does not touch it. Leave it alone.
-   *
-   * Only the block axis is this theme's business on these buttons, and the
-   * rule above pins it. */
-
   #booksPaneHeaderBar > .button:enabled:hover,
   #booksPaneImport:enabled:hover {
     background-color: var(--fluent-solid-tertiary) !important;
@@ -1209,52 +548,16 @@
     box-shadow: none !important;
   }
 
-  /* The Import button's own strip. Stock ends it flush against the pane edge
-   * (aboutAddressBook.css:160); with the pane's card gone that is the window
-   * gutter, so the button needs the same inset the rows above it have. */
   .books-pane-bottom {
     margin-inline: var(--fluent-gutter) !important;
     margin-block-end: var(--fluent-gutter) !important;
   }
 
-  /* The contact count under it. Stock rules it off from the list with a
-   * border-block-start in --sidebar-border (aboutAddressBook.css:966-973) --
-   * a line that needed the pane's card under it to divide anything. On the
-   * backdrop it is a hairline hanging in the open. */
   #cardCount {
     border-block-start: none !important;
     padding-inline: var(--fluent-gutter) !important;
   }
 
-  /* Book rows read as folder rows, because that is what they are: the same
-   * li > .container shape (aboutAddressBook.xhtml:63-75), the same nav list,
-   * now on the same bare pane. Every number here is #folderTree's
-   * (fluent-lists.css:91) and the long note there argues each one -- read it
-   * before changing any of them. The two that matter most:
-   *
-   *   - the fill floats in the row slot rather than being the slot. Stock
-   *     sizes the container to the full row (list-container.css:36), so two
-   *     adjacent filled rows share an edge and read as one block. 28px of fill
-   *     plus 3px of margin per side makes a 34px slot with 6px of backdrop
-   *     between fills -- the same 6px the contact cards get.
-   *   - margin-inline is the gutter, not the 16px that reads better inside a
-   *     pane, because #booksPane is the leftmost paintable thing in this
-   *     window too. Any larger and it stacks on body's 8px padding into a band
-   *     of empty Mica before the first book name. The window edge wins, in
-   *     both windows, for the same reason.
-   *
-   * The card radius, not the row radius: these fills sit beside the three
-   * button cards above them and the contact cards across the splitter, all of
-   * which are 8px.
-   *
-   * No fills are written here. list-container.css drives every state from the
-   * --list-container-* family and section 6 of the shared block above already
-   * retokenizes all of it, borders included.
-   *
-   * All three geometry declarations override section 9's generic
-   * :is(ul, ol)[role="tree"] .container, which is written for nav rows that
-   * sit inside a card and is still right for the ones that do. This pane's
-   * no longer does. */
   #books li > .container {
     position: relative !important;
     min-height: var(--fluent-row-fill-height) !important;
@@ -1264,70 +567,19 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* Reserve the scrollbar's lane whether or not it is showing, as on
-   * #folderTree (fluent-lists.css:111). Without it the bar overlays the
-   * content box, the row fills run underneath it, and the whole list shifts
-   * sideways as the bar comes and goes. */
   #books {
     scrollbar-gutter: stable !important;
   }
 
-  /* Both scroll affordances go, exactly as they did on #folderTree
-   * (fluent-layout.css:471) -- #books carries the same .sidebar-panel-scroll
-   * class (aboutAddressBook.xhtml:62) and containers.css:27-48 hangs the same
-   * pair off it, both of which assume an opaque pane behind them:
-   *
-   *   ::after   a 4px bar filled with var(--sidebar-background), which this
-   *             sheet maps to --fluent-card -- an opaque card-coloured stripe
-   *             across the top of a pane that no longer has a card.
-   *   ::before  a black radial gradient meant to read as a shadow on white;
-   *             over Mica it is the dark smudge under the buttons.
-   *
-   * `background: none` rather than a transparent colour, because ::before's is
-   * a background-IMAGE and a colour would not clear it. */
   #books::before,
   #books::after {
     background: none !important;
   }
 
-  /* And no selection pill, which the folder pane also does without
-   * (fluent-lists.css:140). Section 9 puts one on every nav row in these
-   * pages, and it worked while these fills had 4px corners: the pill is 3x16
-   * at inset-inline-start 0, and a 4px curve still had fill behind all of it.
-   * At 8px it does not -- the fill's leading edge at the pill's top and bottom
-   * has curved 2px inward by then, so the pill's ends hang outside the fill
-   * and onto the backdrop. Measured against the corner, not guessed: at x=0 an
-   * 8px radius starts the fill at y=8, and a 16px pill centred in a 28px row
-   * starts at y=6.
-   *
-   * The subtle fill is the selection marker here, exactly as in the folder
-   * pane. `position: relative` stays above -- it costs nothing and it is what
-   * an indicator would need if one ever came back. */
   #books li.selected > .container::before {
     content: none !important;
   }
 
-  /* The search strip is #threadPaneHeaderBar (fluent-layout.css:348), and it
-   * gets a card where the books pane's toolbar does not -- the difference is
-   * what is in them: that one is three unrelated commands with nothing to
-   * group, this one is a single contiguous strip belonging to the list under
-   * it. On a pane with no card left, a bare strip would read as floating.
-   *
-   * `border` rather than `border: none` is deliberate: it replaces the divider
-   * this rule used to draw rather than leaving it to be found again later.
-   *
-   * The inline margin is --fluent-card-inset, the same one the contact cards
-   * below use, so the strip and the list share one edge down both sides. The
-   * block margin below is the gutter, and there is none above.
-   *
-   * Height is pinned to --fluent-header-height for the reason the thread
-   * pane's is: left to its content this bar and the buttons across the
-   * splitter sit at the same y at two different heights, which reads as two
-   * strips that missed each other rather than as a distinction. Border-box
-   * here against content-box on the buttons, so 40px is what a ruler reads on
-   * both. Padding is 2px on the block axis -- #searchInput is
-   * --fluent-control-height (32px) and has to fit inside -- and the gutter on
-   * the inline axis, because 3px does not clear an 8px corner. */
   #cardsPaneHeader {
     background-color: var(--fluent-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
@@ -1339,98 +591,20 @@
     padding: 2px var(--fluent-gutter) !important;
   }
 
-  /* The cards list is a message list, not a nav pane, so it takes the thread
-   * pane's model from fluent-lists.css: an accent-tinted fill plus a 3px accent
-   * bar on the leading edge. A neutral-only fill is too quiet to track a
-   * selection across a long contact list -- the same reasoning that split the
-   * two selection models in the chrome. */
   #cards {
     --listbox-selected-bg: var(--fluent-subtle-hover) !important;
     --listbox-focused-selected-bg: var(--fluent-accent-tint) !important;
     --listbox-selected-color: var(--fluent-text-primary) !important;
     background-color: transparent !important;
-    /* The hairline between the search strip and the list, and the one that
-     * actually drew it -- aboutAddressBook.css:352 puts border-block-start:
-     * 1px solid var(--sidebar-border) on this element, and section 2 maps that
-     * to --fluent-divider. It divided a header from a list when both sat on
-     * #cardsPane's card; with the card gone it is a full-width line lying on
-     * the backdrop, attached to neither.
-     *
-     * Measured at #313030 across the pane, one pixel, on the list's first row
-     * of pixels -- rgba(255,255,255,.08) over the #201E1E backdrop. Two other
-     * suspects were eliminated first and are worth naming so they are not
-     * re-investigated: the sticky thead's ::after (tree-listbox.css:340-347),
-     * which cannot be it because aboutAddressBook.js:1680 sets thead.hidden in
-     * Cards layout, and the column headers' own border below, which is behind
-     * the same hidden thead. */
+
     border-block-start: none !important;
   }
-  /* The --tree-card-* family is deliberately absent. Every one of those tokens
-   * feeds background-color or border on .card-container (tree-listbox.css:
-   * 306-307), and both are declared outright below, so none of them had a
-   * reader left. Stock switches state by reassigning --tree-card-background,
-   * which cannot reach past an !important fill. Same removal as the thread
-   * pane's, for the same reason. */
 
-  /* Rows are tr[is="ab-card-row"], and they ARE .card-layout: the custom
-   * element adds that class and builds td > div.card-container inside itself
-   * (aboutAddressBook.js:1217-1250), the same shape the thread pane's cards
-   * have. A comment here used to say the opposite -- that the thread pane's
-   * class names appear nowhere in this document -- and every fill below was
-   * painted on the <tr> because of it.
-   *
-   * That is why this list had no gap between rows while the thread pane did.
-   * A <tr> cannot be separated from the next one: it takes no margin, and the
-   * row height is fixed in JS (aboutAddressBook.js:1471-1474) exactly as it is
-   * for messages, so the space has to be carved out of the row with td padding
-   * and the fill moved onto the container inside it. 3px per side is 6px
-   * between rows, which is the number the thread pane and the folder pane both
-   * use -- see --fluent-row-gap.
-   *
-   * No height is set on the row. --list-item-min-height in the shared block is
-   * what tree-listbox.css actually reads, and it already carries Fluent's 32px.
-   * (--ab-card-table-row-height looks like the obvious lever and is not one: it
-   * is declared in aboutAddressBook.css and read by nothing in this build.)
-   *
-   * padding-inline goes to zero, as on the thread pane's cells: stock puts 3px
-   * there (tree-listbox.css:302) and the container's own margin below is the
-   * whole inline inset, so the card and the search strip above it can share
-   * one --fluent-card-inset edge instead of missing each other by 3px. */
   #cards tr[is="ab-card-row"] > td {
     padding-block: 3px !important;
     padding-inline: 0 !important;
   }
 
-  /* The card. This is where #cardsPane's card went, and the construction is
-   * the message cards' (fluent-lists.css:316) rather than a rounded fill,
-   * because the two are now the same object in the same position.
-   *
-   * The row used to be a pill: transparent base, one tint layer, 4px corners,
-   * inset by --fluent-row-inset. Every part of that depended on the pane's
-   * card being underneath it -- a translucent tint could replace a transparent
-   * base and the pane still showed through. There is no pane fill left, so the
-   * same tint would be painted onto Mica. So: the fill is background-COLOR and
-   * never moves, and hover and selection are background-IMAGE layers over it.
-   * The thread pane hit this exactly and the write-up above that rule is the
-   * long version.
-   *
-   * The tint layer is flat and full-bleed. It must not start
-   * --fluent-indicator-width in to leave room for the accent bar, which is how
-   * the old rule painted one: both states then read as a notch cut out of the
-   * highlight. The bar is its own layer above the tint instead, so the tint
-   * fills the card edge to edge in every state and the bar is painted over it
-   * rather than carved out of it.
-   *
-   * background-origin is border-box for both layers because the card keeps a
-   * 1px transparent border from stock; at the padding-box default the layers
-   * stop 1px short and the border strip shows the fill alone, an untinted rim
-   * all round.
-   *
-   * margin-inline is --fluent-card-inset (12px), not the 4px this list used.
-   * Message cards use 12px, #cardsPaneHeader above now uses it too, and the
-   * three edges line up. The block gap is the td's padding, not a margin --
-   * see above: the row pitch is fixed in JS and a taller row desynchronises
-   * the list from its own scrollbar. */
   #cards tr[is="ab-card-row"] > td > .card-container {
     --fluent-row-tint: transparent;
     --fluent-row-accent: transparent;
@@ -1457,51 +631,24 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* Selection also lights the leading bar, as on the message cards
-   * (fluent-lists.css:335). A tint this weak is not enough on its own to say
-   * which card is selected once the cards are separate objects on a backdrop
-   * rather than pills on a shared surface. */
   #cards tr[is="ab-card-row"].selected > td > .card-container {
     --fluent-row-tint: var(--fluent-accent-tint);
     --fluent-row-accent: var(--fluent-accent);
   }
 
-  /* Focused selection is the stronger tint; unfocused stays quiet so the pane
-   * plainly reads as inactive -- same split as the thread pane. */
   #cards:focus-within tr[is="ab-card-row"].selected > td > .card-container {
     --fluent-row-tint: var(--fluent-accent-tint-strong);
   }
 
-  /* Column headers, Table layout only. They used to sit on #cardsPane's card;
-   * the pane has none now, so painting a surface here would put a strip of
-   * fill on the backdrop above the list. Same rule the thread pane's headers
-   * ended up with (fluent-lists.css:361) and for the same reason. */
   #cards thead th {
     background-color: transparent !important;
     border-bottom: 1px solid var(--fluent-divider) !important;
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* The header's OWN divider, and it is a second one: thead is sticky and
-   * hangs a zero-height ::after off itself carrying border-block-end: 1px
-   * solid var(--sidebar-border) (tree-listbox.css:340-347), while the rule
-   * above already gives every column header the same line. Two hairlines, one
-   * on top of the other, in Table layout.
-   *
-   * This is NOT the bar that appeared between the search strip and the cards
-   * -- that one is #cards' own border-block-start, killed where the pane's
-   * tokens are set. In Cards layout thead is hidden outright
-   * (aboutAddressBook.js:1680), so nothing here can paint at all. */
   #cards thead[is="tree-view-table-header"]::after {
     border-block-end: none !important;
   }
-
-  /* Detail pane sections need no rule here. Upstream already builds
-   * "#detailsBody section" from --background-color-box-info,
-   * --in-content-box-info-border and --button-border-radius, all three mapped
-   * in the shared block, so they come out as tertiary blocks with 4px corners
-   * on their own. Tertiary is also the right answer: a card inside a card
-   * flattens the elevation ladder Fluent uses to separate the two. */
 
   #detailsActions button,
   #editButton {
@@ -1510,43 +657,6 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* The search field, built to read as the quick filter bar's does
-   * (fluent-chrome.css:366-395 for the widget, :469 for the fill). This is a
-   * <search-bar>, the same shadow-DOM widget the 3-pane uses, but that sheet
-   * is chrome-only and never reached this page -- which is why the field sat
-   * on stock styling inside an otherwise themed strip: a bright 1px box with
-   * a 4px corner in the middle of 8px cards.
-   *
-   * Only the host is selectable from out here, so the box is the host's and
-   * the field inside is made to disappear underneath it. Three things follow,
-   * all three worked out in the chrome sheet's note and repeated in short:
-   *
-   *   1. The shadow <form> is block-size: 100% and never resolves it -- every
-   *      child is absolutely positioned, so its content height is zero and it
-   *      falls back to 1.2em + 2 * --search-padding, top-aligned in whatever
-   *      box the host has. Giving the host a definite height does not fix it.
-   *      Column flex with justify-content centre does, at any font size.
-   *   2. The field paints its own stroke and fill from --search-bar-*, and
-   *      --search-bar-border-color is stock --color-gray-40 -- that is the
-   *      bright box. Custom properties inherit through a shadow boundary even
-   *      though selectors do not, so handing it transparent is how it goes.
-   *   3. It also draws a 2px focus ring at offset -1px, removed the same way,
-   *      through --focus-outline-color. As in the chrome, that leaves this
-   *      control with no focus feedback at all; same decision, stated so it is
-   *      not rediscovered.
-   *
-   * The fill is the header card's own, deliberately, and this is where the
-   * page parts company with #qfb-qs-textbox. That field takes
-   * --fluent-solid-tertiary, one step up the solid ladder, so that a box sat
-   * on a card is still visible as a box. Here there is nothing to see: the
-   * strip holds one field and one button, the field IS the strip, and a second
-   * rectangle inside the first only says so twice. Asked for on that basis.
-   * The placeholder and the search glyph are what mark it as a field.
-   *
-   * Radius is the card's, not the control's, so that on the rare occasion the
-   * field does paint -- forced colors, where the stroke tokens stop being
-   * transparent -- its corners follow the card's rather than cutting inside
-   * them. */
   #searchInput {
     box-sizing: border-box !important;
     display: flex !important;
@@ -1557,9 +667,6 @@
     border-radius: var(--fluent-radius-card) !important;
     background-color: var(--fluent-card) !important;
 
-    /* Inherited into the shadow tree; see (2) and (3). --button-border-radius
-     * is the shadow input's own corner (search-bar.css:30), kept in step with
-     * the host it hides under. */
     --button-border-radius: var(--fluent-radius-card) !important;
     --search-bar-border-color: transparent !important;
     --search-bar-background: transparent !important;
@@ -1567,11 +674,6 @@
     --focus-outline-color: transparent !important;
   }
 
-  /* Display options, the second thing in that strip. It is the quick filter
-   * bar's icon buttons (fluent-chrome.css:167): transparent at rest so the
-   * header card shows through, subtle fills for the states. The translucent
-   * ladder is right here and wrong on the books pane's buttons above -- these
-   * rest on an opaque card, those rest on the backdrop. */
   #displayButton {
     min-block-size: var(--fluent-control-height) !important;
     border: 1px solid transparent !important;
@@ -1592,117 +694,14 @@
     background-color: var(--fluent-accent-tint) !important;
   }
 
-  /* ---- NO MICA HERE, AND IT IS NOT REACHABLE ----------------------------
-   *
-   * Do not try again without reading this. Three restarts went into it.
-   *
-   * The goal was the 3-pane's look: cards floating on the DWM backdrop, with
-   * the gutters showing it through. fluent-layout.css's note on that chain
-   * already flagged why it might not carry over -- "the browser is a chrome
-   * browser in the same process with no type='content', so it composites into
-   * the parent's layer tree and transparency propagates -- a remote content
-   * browser would not." These pages are content browsers.
-   *
-   * Transparency does not cross a content docshell. Dropping the background
-   * does not expose the backdrop, it exposes Gecko's DEFAULT CANVAS, which in
-   * dark mode is #1C1B22 -- and that is not a backdrop colour, it is literally
-   * --color-gray-90 in this build's design-system/tokens-shared.css.
-   *
-   * The trap: #1C1B22 has B > R,G, so it reads as "violet-tinted" and looks
-   * exactly like a Mica sample next to our flat #202020. It is not. Two things
-   * tell them apart, and both are cheap to check:
-   *   - it is perfectly flat. 16 samples across 1500px, all #1C1B22; every row
-   *     band from y=880 to y=1180, 100% #1C1B22. A real backdrop varies with
-   *     whatever is behind the window.
-   *   - the chrome that DOES get the backdrop samples #1D1D1D in the same
-   *     capture. Same backdrop would mean the same colour.
-   *
-   * No user sheet can fix this: the canvas colour comes from the docshell, not
-   * the cascade.
-   *
-   * --- REOPENED. There is an escape hatch, and it is not CSS. ---
-   * Gecko composes that backstop in PresShell::UpdateCanvasBackground and
-   * skips it when the embedder element carries a `transparent` attribute.
-   * Stock TB 153 uses it on three type="content" browsers for this exact
-   * purpose -- calendar-creation.js:601 ("Allow keeping dialog background
-   * color without jumping through hoops"), preferences/compose.js:604,
-   * inline-options-browser.mjs:100.
-   *
-   * So the ceiling is not "impossible", it is "no attribute, no transparency,
-   * and CSS sets no attributes". Clearing it takes privileged JS. Of the three
-   * ways to deliver that -- autoconfig, a userChrome.js loader, a MailExtension
-   * experiment -- this repo took the last: extension/, packaged by
-   * tools/pack-extension.ps1, profile-only, nothing written to the install
-   * directory. It is unsigned, which this build permits
-   * (xpinstall.signatures.required defaults false in greprefs.js:1154, and
-   * MOZ_REQUIRE_SIGNING is false, which is also what lets an unsigned add-on
-   * hold an Experiment API at all).
-   *
-   * The rules above are the CSS half and are gated on a marker only that
-   * add-on sets, so they are genuinely inert without it rather than merely
-   * useless: no add-on and the page is exactly what it was before any of this.
-   * ---------------------------------------------------------------------- */
 }
-
-
-/* ============================================================================
- * ADVANCED PREFERENCES -- about:config
- *
- * The shared block above already does nearly all of this page. Measured on a
- * capture with the two URIs newly added and nothing else written: canvas
- * #202020 (--fluent-base), row hover #2D2D2D (our .06 overlay), table border
- * #303030 and search-field border #3A3A3A (our .07 stroke resolved against
- * #202020 and #2B2B2B respectively), field fill #2B2B2B (--fluent-card).
- *
- * The row striping is ours too, though not through a token this file maps
- * directly. Thunderbird injects chrome://messenger/skin/aboutExtra.css into
- * this page (aboutAddonsExtra.js does it, despite the name) and that sheet
- * restates the striping as --layout-background-1, which section 2 above maps
- * to --fluent-card. So the toolkit's own
- * --table-row-background-color-alternate never gets a chance to matter here
- * and is deliberately NOT mapped: it would be a rule that fires on nothing.
- *
- * That leaves two things the palette cannot express, both below.
- * ========================================================================== */
 
 @-moz-document url-prefix("about:config") {
 
-  /* Modified prefs. aboutconfig.css marks them with --font-weight-bold, which
-   * the toolkit defines as 700. Fluent's strong weight is 600 -- 700 on Segoe
-   * UI Variable is heavier than anything else the theme uses. */
   #prefs > tr.has-user-value {
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* --- PANE GEOMETRY ---
-   * The base-vs-card split from fluent-layout.css, applied to this page.
-   * #toolbar is BASE: it is the page's chrome, it stays flush and keeps the
-   * window colour, which is what aboutExtra.css already gives it. #prefs is
-   * the only CONTENT surface here, so it becomes the card -- inset by one
-   * gutter, 8px radius, stroke, elevation. Same treatment the folder and
-   * thread panes get in the 3-pane window. */
-
-  /* --- THE CARD IS body, NOT #prefs ---
-   * First attempt made body a viewport-height flex column and asked #prefs to
-   * be the scroller. It did nothing, and the reason is structural: #prefs is a
-   * <table>. A table box cannot be sized below its own content, so `flex: 1`
-   * and `min-block-size: 0` could not shrink it, and Gecko ignores `overflow`
-   * on a table box, so it never became a scroller either. Measured: the whole
-   * page rendered pixel-identical to the previous build.
-   *
-   * There is no wrapper around the table to scroll instead -- but body is one.
-   * So body becomes the card and the scroller, and #prefs goes back to being a
-   * plain table drawn on it. The search toolbar ends up inside the card rather
-   * than on the base beside it, which is the one visible difference from the
-   * original plan, and it matches how #content works on about:addons: one card
-   * per page, its own header bands included.
-   *
-   * The overflow propagation is load-bearing and worth stating. The first of
-   * html/body with a non-visible overflow hands it to the VIEWPORT and is then
-   * treated as visible itself. html: hidden stops the document scrolling and
-   * leaves html unclipped; body: auto is therefore still honoured on body, and
-   * body becomes the scroll container. Reverse the two and the page scrolls as
-   * a document again and the card stops closing. */
   :root {
     block-size: 100vh !important;
     padding: var(--fluent-gutter) !important;
@@ -1711,29 +710,6 @@
     overflow: hidden !important;
   }
 
-  /* MICA. Same gate and same reasoning as Address Book -- see the note on
-   * that block, and the CONTENT TABS note in fluent-layout.css. The paint is on
-   * :root here and body is the card, so this is the whole page base: the
-   * gutter ring around the card, and nothing else.
-   *
-   * THE TRANSPARENT GRADIENT IS LOAD-BEARING. Every other page in this file
-   * takes :root and body to transparent together; this one cannot, because
-   * body IS the card and has to keep --fluent-card. That trips CSS background
-   * propagation: when the root element's background-color is transparent and
-   * its background-image is none, the canvas background is taken from body
-   * instead (nsCSSRendering::FindCanvasBackground, gated on
-   * nsStyleBackground::IsTransparent). So body's card fill was painting across
-   * the whole viewport -- gutter ring included, and square through the card's
-   * own rounded corners -- while every box still computed rgba(0, 0, 0, 0).
-   * That is why the ring read opaque and measured transparent at once, and it
-   * is also why it hid from instrumentation: a debug background-image on :root
-   * stops propagation, so the ring went lime and the bug went away exactly
-   * while it was being looked at.
-   *
-   * A fully transparent gradient is enough to make IsTransparent false. The
-   * root keeps its own background, propagation never runs, and what the root
-   * paints is nothing. A background-color cannot do this job: any value that
-   * stops propagation is by definition opaque. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent] {
       background-color: transparent !important;
@@ -1753,16 +729,12 @@
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* Sticky within the card now rather than within the document. It needs the
-   * card colour under it or rows scroll through it. */
   #toolbar {
     padding: var(--fluent-gutter) !important;
     padding-bottom: 0 !important;
     background-color: var(--fluent-card) !important;
   }
 
-  /* Stripped back to a plain table: body carries the surface, the border, the
-   * radius and the elevation, and body's radius clips these square corners. */
   #prefs {
     margin: var(--fluent-gutter) !important;
     width: calc(100% - 2 * var(--fluent-gutter)) !important;
@@ -1772,104 +744,22 @@
     box-shadow: none !important;
   }
 
-  /* The striping has to move up a step. aboutExtra.css sets it to
-   * --layout-background-1, which section 2 maps to --fluent-card -- the colour
-   * the table itself just became. Left alone the stripes would be invisible.
-   * --fluent-solid-tertiary is the next surface in the Fluent ladder, and the
-   * .06 hover overlay still resolves clear of both (#37 over the card, #3B
-   * over a stripe). */
   #prefs > tr:not(:hover).odd {
     background-color: var(--fluent-solid-tertiary) !important;
   }
 
-  /* aboutconfig.css draws the blank strip above the "add a pref" row with
-   * --background-color-canvas, on the assumption that the table sits on the
-   * page background. It sits on the card now, so that strip has to follow or
-   * it punches a window-coloured band through the card. */
   #prefs[has-visible-prefs] > .add > th::before,
   #prefs[has-visible-prefs] > .add > td::before {
     background-color: var(--fluent-card) !important;
   }
 }
 
-
-/* ============================================================================
- * IMPORT AND EXPORT -- about:import
- *
- * Reached from Address Book > Import and from Tools > Import. It is a content
- * tab, opened through openTab("contentTab") the same way about:addons is
- * (mailCore.js:519-522), so this sheet reaches it and userChrome.css does not.
- * The chrome side needs nothing: the Mica rules in fluent-layout.css:771-772
- * key on the add-on's marker attribute rather than on a tab id, so they cover
- * a new page for free.
- *
- * The page was not in the shared block's URI list until this pass, which is
- * why it was stock in full rather than stale -- canvas, card fill, buttons,
- * radios, fields and text colours all came straight from in-content/common.css.
- * Enrolling it does most of the work. What is left is the page's own
- * composition, plus two regressions the enrolment itself causes; both are
- * below and both are marked.
- *
- * THE CARD IS body, and this is the second page built that way -- read the
- * about:config note above first, the overflow and background-propagation traps
- * it documents apply here unchanged.
- *
- * The reason is composition rather than the table box that forced it there.
- * Stock lays the page out as a 600px column (aboutImport.css:140-144, #main
- * { margin: 4em; max-inline-size: 600px }) inside a body that is already the
- * flex column and already the scroller (aboutImport.css:20-26). body is the
- * only box that spans the tab, so it is the only box that can be the card;
- * everything inside it is a step of one flow rather than a separate surface.
- * The stepper and the footer come inside the card with it, which is what
- * happened to about:config's search toolbar and to about:addons' header bands
- * as well: one card per page, its own furniture included.
- *
- * Sibling .tabPane divs exist for the start, app, calendar and export flows
- * and the page's JS shows one <section> at a time, so anything written at that
- * level covers every import flow, not just the address-book one this was found
- * through.
- *
- * NOT DONE: two hardcoded fills in the calendar pane -- #calendar-item-list at
- * rgba(215, 215, 219, .2) (aboutImport.css:220-226) and .calendar-item-wrapper
- * at --color-surface-base (:228). Out of the flow this page was skinned for,
- * left for a calendar pass.
- * ========================================================================== */
-
 @-moz-document url-prefix("about:import") {
 
-  /* --primary is the icon colour beside every step heading (aboutImport.css:
-   * 181) and on the inline info icons (:360). messenger/shared/variables.css:122
-   * defines it as --color-primary-default, a fixed light blue (#58c9ff in
-   * dark, colors.css:131) that ignores the Windows accent entirely, and no
-   * part of this file maps it. It takes --fluent-accent-link rather than
-   * --fluent-accent for the reason the accent-as-text note in section 1 gives:
-   * these icons are drawn as a currentColor STROKE over the card, so they have
-   * a legibility floor to clear and the raw AccentColor does not clear it.
-   *
-   * --step-size is left alone. aboutImport.css:398 derives it from
-   * --button-height, which section 5 already maps to --fluent-control-height,
-   * so the stepper's circles arrive at 32px on their own. */
   :root {
     --primary: var(--fluent-accent-link) !important;
   }
 
-  /* --- PANE GEOMETRY ---
-   * :root is the page base: one gutter of it shows as the ring around the
-   * card, and nothing else.
-   *
-   * The overflow swap is the load-bearing half, and this page starts from the
-   * opposite side of it than about:config did. Stock is html visible with body
-   * auto (aboutImport.css:20-26), so body's overflow is the first non-visible
-   * one and gets handed to the VIEWPORT -- the document scrolls and body is
-   * not a scroll container at all. Pinning html to hidden stops that: the
-   * viewport takes html's hidden instead, body's auto is honoured on body, and
-   * body becomes the scroller. Without it the card cannot close, because the
-   * page it is drawn on is what scrolls.
-   *
-   * block-size and inline-size are not restated: aboutImport.css:15-18 already
-   * sets both to 100% on :root and body, and 100% on the root resolves against
-   * the viewport. box-sizing is, so the gutter comes out of that 100% rather
-   * than pushing past it. */
   :root {
     padding: var(--fluent-gutter) !important;
     box-sizing: border-box !important;
@@ -1877,18 +767,6 @@
     background-color: var(--fluent-base) !important;
   }
 
-  /* MICA. Inert for now, and deliberately so: the marker is set by the add-on
-   * only on the pages in TRANSPARENT_PAGES (extension/api.js:75-81), and
-   * about:import is not in that list yet. That list's own header says the CSS
-   * lands first and the page is stamped afterwards, so this rule is written
-   * now and starts firing when the sixth entry is added.
-   *
-   * The transparent gradient is the same load-bearing trick about:config needs
-   * and for the same reason -- body IS the card here too, so it keeps
-   * --fluent-card while the root goes clear, and without a background-image on
-   * the root the canvas would be taken from body and paint the card's fill
-   * across the whole viewport, gutter ring and square corners included. The
-   * full mechanism is written out in the about:config block. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent] {
       background-color: transparent !important;
@@ -1896,9 +774,6 @@
     }
   }
 
-  /* body becomes the card and stays the scroller. Its own wash goes with it:
-   * aboutImport.css:25 paints rgba(0, 0, 0, .03) over whatever the canvas is,
-   * which was the page's only surface treatment and is now a smudge on ours. */
   body {
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -1910,42 +785,15 @@
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* Stripped back to plain content. aboutImport.css:161-165 gives each step's
-   * section --background-color-box, which the shared block maps to
-   * --fluent-card (:228) -- the colour body just became. Left alone it would be
-   * card on card and read as nothing at all, so the fill and the radius go and
-   * body carries the surface for the whole flow. The padding stays: it is what
-   * holds the step icons clear of the heading text. */
   .tabPane > section {
     background-color: transparent !important;
     border-radius: 0 !important;
   }
 
-  /* --- REGRESSION 1: the stepper's connector ---
-   * aboutImport.css:424 draws the dashes between steps as
-   * border-block-start: 2px dashed var(--button-border-color), and section 5
-   * maps --button-border-color to --fluent-control-stroke, which is transparent
-   * by design -- no box outline anywhere in the theme. So enrolling the page
-   * erased the line. --fluent-divider is the token for exactly this case: it
-   * draws separators, not outlines.
-   *
-   * The .completed and .current segments are excluded rather than overridden.
-   * They restate the same border at :436-439 in
-   * --button-primary-background-color, i.e. --fluent-accent, and that is right
-   * already -- but this is a user sheet, so an !important matching them here
-   * would outrank theirs and flatten the whole strip to one colour. */
   #stepNav li:not(.completed, .current):not(:first-child)::before {
     border-block-start-color: var(--fluent-divider) !important;
   }
 
-  /* --- REGRESSION 2: borders drawn in the text colour ---
-   * aboutImport.css:110-113 rules the CSV field-map table and :293-295 boxes
-   * the calendar item description, both with 1px solid var(--text-color). The
-   * shared block maps --text-color to --fluent-text-primary (:234), which is
-   * pure #FFFFFF in dark, so enrolling the page turned both into white rules.
-   * The field map is step 2 of a CSV address-book import, so this one sits in
-   * the middle of the flow rather than at its edge. Same token as above: these
-   * are separators. */
   #csvFieldMap th,
   #csvFieldMap td,
   .item-description {
@@ -1954,86 +802,25 @@
 
 }
 
-
-/* ============================================================================
- * SAVED FILES -- about:downloads
- *
- * The attachment download manager, opened from Tools > Saved Files
- * (mailCore.js:651, via openContentTab). A content docshell, so this file is
- * what reaches it, and the about: URI is the scope that fires -- the chrome
- * path it is served from does not, for the reason the REACHABILITY note at the
- * top of this file gives.
- *
- * The page loads global.css, messenger.css, icons.css AND
- * in-content/common.css (aboutDownloads.xhtml:24-27), so it is enrolled in the
- * shared block above and arrives with the whole Acorn layer already mapped:
- * text, the Clear List button's fill, the row buttons' hover. What is left is
- * the shape. Stock is a toolbar strip over a list, both edge to edge on one
- * flat fill; this theme's content tabs are cards on a base.
- *
- * TWO CARDS, NOT ONE
- * body is a XUL box column of exactly two children -- #downloadTopBox and
- * #downloadBottomBox -- and the list inside the second scrolls itself. That is
- * the 3-pane window's thread header over its list, so it takes that window's
- * treatment: fluent-layout.css:349 for the strip, a card for the pane below.
- * Making body the card instead, the way about:import and about:config do,
- * would have welded a toolbar into the top edge of a card and put a scroll
- * container inside it.
- *
- * NO OVERFLOW SWAP
- * Every other page in this file needed one to stop the viewport scrolling the
- * card away. Not here: aboutDownloads.xhtml:14 carries scrolling="false" on
- * <html>, so the viewport never scrolls and the richlistbox is the only
- * scroller on the page.
- * ========================================================================== */
-
 @-moz-document url-prefix("about:downloads") {
 
-  /* The page base. One gutter of it shows as the ring around the two cards.
-   * box-sizing so that gutter comes out of the viewport rather than pushing
-   * past it. */
   :root {
     padding: var(--fluent-gutter) !important;
     box-sizing: border-box !important;
     background-color: var(--fluent-base) !important;
   }
 
-  /* body carries no surface of its own. Stock gives it --color-surface-base
-   * (aboutDownloads.css:8), which section 4 maps to --fluent-card -- card
-   * colour spread across the whole page, underneath the cards. */
   body {
     background: transparent !important;
     color: var(--fluent-text-primary) !important;
   }
 
-  /* MICA. Live rather than inert: "about:downloads" is in the add-on's
-   * TRANSPARENT_PAGES, so the marker does land here. The chrome half and the
-   * whole reasoning are in fluent-layout.css's MICA block.
-   *
-   * No transparent background-image beside it, unlike about:config and
-   * about:import. Those two make BODY the card, so the canvas would be taken
-   * from body and paint the card's fill across the gutter ring; here neither
-   * :root nor body is a card, so clearing the root's colour clears the canvas
-   * with it and there is nothing left to propagate. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent] {
       background-color: transparent !important;
     }
   }
 
-  /* The command strip -- Clear List, then the search field at the far end.
-   * Same card, same gutter below it, as #threadPaneHeaderBar
-   * (fluent-layout.css:349): one contiguous strip titling the list under it.
-   *
-   * `border` rather than `border: none`. Stock draws a border-block-end in
-   * --chrome-content-separator-color (aboutDownloads.css:14) -- a visible rule
-   * running between what are now two cards. Restating all four sides in the
-   * transparent card stroke replaces it rather than leaving it to be found
-   * again later.
-   *
-   * Padding is the theme's own rather than stock's 10px 18px: the gutter on
-   * both axes, which clears the 8px corner inline and gives the 32px controls
-   * inside it their own breathing room in block. */
   #downloadTopBox {
     background-color: var(--fluent-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
@@ -2043,11 +830,6 @@
     padding: var(--fluent-gutter) !important;
   }
 
-  /* The list card. overflow: clip because the rows run the full width of it
-   * and a square-cornered fill inside a rounded one is the defect this theme
-   * keeps finding -- clip rather than hidden so no scroll container is created
-   * here and the richlistbox stays the only scroller (same shape and the same
-   * reason as fluent-layout.css:553). */
   #downloadBottomBox {
     background-color: var(--fluent-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
@@ -2057,10 +839,6 @@
     overflow: clip !important;
   }
 
-  /* The list is not a second surface. Every other richlistbox in this file
-   * takes a tertiary fill inside a card, because there it is a block of
-   * content sitting on a pane; here the list IS the card's content, and a fill
-   * of its own would read as a box in a box. */
   #msgDownloadsRichListBox {
     background-color: transparent !important;
     border: none !important;
@@ -2068,13 +846,6 @@
     padding: 0 !important;
   }
 
-  /* Rows. Stock rules each one off with 1px of hsla(0, 0%, 50%, .3)
-   * (aboutDownloads.css:33-35) -- one mid-grey at the same weight in both
-   * schemes -- and rounds it 3px. The theme's separator token replaces the
-   * line and the radius joins the row ladder.
-   *
-   * The hover fill is new. Stock has none on this list at all, and every other
-   * row surface in the theme answers the pointer. */
   #msgDownloadsRichListBox > .download {
     border-block-end: 1px solid var(--fluent-divider) !important;
     border-radius: var(--fluent-radius-row) !important;
@@ -2084,27 +855,12 @@
     background-color: var(--fluent-subtle-hover) !important;
   }
 
-  /* Selection. Stock gates its own selected colours on :root:not([lwt-tree])
-   * (aboutDownloads.css:41-45), and this theme keeps a built-in Thunderbird
-   * theme enabled at all times, so which branch fires depends on whether that
-   * theme carries tree colours. It does not need settling: this is a USER
-   * sheet and a user !important outranks an author !important, so this rule
-   * wins over either branch.
-   *
-   * --button-text-color-hover comes along for the reason stock sets it here
-   * too -- the row's own button sits inside the accent fill, and its hover
-   * text has to stay legible against that rather than against the card. */
   #msgDownloadsRichListBox > .download[selected] {
     background-color: var(--fluent-accent) !important;
     color: var(--fluent-accent-text) !important;
     --button-text-color-hover: var(--fluent-accent-text) !important;
   }
 
-  /* Size and date. Stock dims both with opacity .7 over whatever colour the
-   * row has (aboutDownloads.css:76-79), which on a selected row dims the
-   * accent text as well and leaves two greys where the theme has one. The
-   * token is the theme's own secondary; on the accent fill it steps back to
-   * the accent's text colour so the row reads as one block again. */
   .size,
   .startDate {
     color: var(--fluent-text-secondary) !important;
@@ -2116,19 +872,11 @@
     color: var(--fluent-accent-text) !important;
   }
 
-  /* Clear List. Its fill and text arrive from the shared block's --button-*
-   * mapping; aboutDownloads.css:57-62 sets the radius on the element itself,
-   * which the mapping cannot reach, so it is restated. */
   #clearDownloads {
     border-radius: var(--fluent-radius-control) !important;
     min-block-size: var(--fluent-control-height) !important;
   }
 
-  /* The search field -- the same tertiary fill, control radius and transparent
-   * stroke every other search box in this file takes. Stock's 22em width
-   * (aboutDownloads.css:65) is deliberately left alone: the strip is a flex
-   * row with a spacer between the two controls, so that width is the only
-   * thing holding the field off the trailing edge. */
   #searchBox {
     background-color: var(--fluent-solid-tertiary) !important;
     border: 1px solid var(--fluent-control-stroke) !important;
@@ -2142,11 +890,6 @@
     outline-offset: var(--focus-outline-offset) !important;
   }
 
-  /* The per-row Show/Open button. Its hover fill is already the theme's --
-   * stock reads --button-hover-background-color (aboutDownloads.css:110) and
-   * section 5 maps that -- but stock also rounds it to a circle, the one
-   * pill-shaped hover target in a window whose every other icon button is a
-   * rounded square. */
   .downloadButton:hover > .button-box,
   .downloadButton:hover:active > .button-box {
     border-radius: var(--fluent-radius-control) !important;
@@ -2154,134 +897,29 @@
 
 }
 
-/* ============================================================================
- * ADD-ONS MANAGER -- about:addons
- *
- * Also mostly done by the shared block. Measured on the same capture: canvas
- * #202020, sidebar and cards #2B2B2B (--fluent-card, the sidebar via
- * --sidebar-background which aboutExtra.css reads), buttons #383838 with a
- * #464646 hairline (--fluent-solid-quart under our .07 stroke).
- *
- * The category rail used to be left to the tokens, and this banner used to
- * say it was right by accident of them: the shadow sheet reads
- * --page-nav-button-background-color-selected from --button-background-color
- * and its radius from --button-border-radius (overrides/
- * moz-page-nav-button.css:6,11), both mapped in section 5, so selection
- * measured #383838 at the 4px control radius with no rule written. That was a
- * CONTROL's treatment on a nav row, and it stopped being enough when the rail
- * gave its card up: a bare rail needs the row shape, the row inset and the row
- * separation the theme's four other nav panes have, and none of those three
- * arrive by accident. They still arrive through custom properties -- see RAIL
- * ROWS below -- because that is the only thing that crosses into
- * moz-page-nav-button's shadow root.
- *
- * WHAT IS NOT DONE, AND WHY
- * The accent pill that marks selection on every other nav surface in this
- * theme (section 9, and fluent-lists.css in the chrome) cannot be drawn here.
- * It needs a pseudo-element on the selected row, and the row is a <button>
- * inside moz-page-nav-button's shadow root. The three ways out are all closed:
- * the host does not reflect `selected` to an attribute (moz-page-nav.mjs
- * declares it `{ type: Boolean }` with no `reflect`), so no host selector can
- * see the state; ::before on a shadow host is generated but never slotted, so
- * it does not render; and :has() does not cross a shadow boundary. Custom
- * properties are the only thing that gets in, which is why this block is
- * tokens and two rules.
- *
- * Notification banners (addon-updates-message, message-bar-stack) are shadow
- * DOM as well and are left native by decision -- they are transient, and
- * reaching them would mean ::part() plumbing for a surface that is usually
- * not on screen.
- * ========================================================================== */
-
 @-moz-document url-prefix("about:addons") {
 
   :root {
-    /* Cards. The toolkit derives --card-border-color from currentColor, which
-     * lands at #373737 over the card -- close to ours by luck, not by rule.
-     * Pin it so light mode does not inherit a text-derived stroke. */
+
     --card-border-color: var(--fluent-card-stroke) !important;
 
-    /* Elevation. The stock --box-shadow-level-2 reads as a wide dark halo on
-     * all four sides (4px of it sampled to the LEFT of a card at #1D1D1D);
-     * Fluent's card shadow is a short drop. */
     --card-box-shadow: var(--fluent-shadow-card) !important;
     --card-box-shadow-hover: var(--fluent-shadow-flyout) !important;
 
-    /* aboutExtra.css's recommended-card hover reads --card-shadow-hover, a name
-     * that exists nowhere in omni.ja -- an upstream typo for the token above,
-     * so that hover currently resolves to nothing. Defining it costs one line
-     * and makes the hover work; if the typo is ever fixed the line simply
-     * stops being read. */
     --card-shadow-hover: var(--fluent-shadow-flyout) !important;
 
-    /* Links were mapped in this block first -- this is the page the contrast
-     * measurement was taken on. They now live in the shared block, section 4:
-     * the same tokens are read on every document in this file, so a per-page
-     * mapping left the other pages on stock blue. */
   }
 
-  /* aboutExtra.css sets .card's radius to --button-border-radius, i.e. the 4px
-   * control radius. Cards take the 8px overlay radius everywhere else in this
-   * theme. This has to be a rule rather than a token: the value it overrides
-   * is a direct declaration, not a custom property. */
   .card {
     border-radius: var(--fluent-radius-card) !important;
   }
 
-  /* No transition rule here on purpose. common-shared.css already animates
-   * box-shadow at 150ms, the same as --fluent-duration-fast, and .addon.card
-   * adds `opacity` to that shorthand -- which is what fades the dimmed
-   * inactive add-ons. An !important transition here would win the shorthand
-   * and silently kill that fade for no gain. */
-
-  /* --- PANE GEOMETRY ---
-   * Only the rail needs this one. #content is already right: aboutExtra.css
-   * puts .main-heading and the search row on --layout-background-0, and the
-   * add-on cards float on it at the theme's radius and elevation, which is
-   * exactly the BASE-with-cards-on-it arrangement fluent-layout.css describes.
-   * Carding #content as well would nest cards inside a card.
-   *
-   * #sidebar is the surface that is wrong, and this note used to say so for
-   * the opposite reason: aboutExtra.css:34 paints it --sidebar-background,
-   * i.e. --fluent-card, flush to all four window edges with square corners, so
-   * it read as a wall rather than a pane -- and the answer was to card it, the
-   * way the folder pane was carded. The folder pane has since given its own
-   * card up (fluent-layout.css:289), and so have #booksPane, the Settings rail
-   * and #accountTreeBox. What was wrong with the wall was never the missing
-   * corners; it was the fill. A NavigationView sits on the window backdrop and
-   * only the content beside it gets a surface, so the fill goes and the rows
-   * carry the shape instead. */
-
-  /* The page becomes a viewport-height row, for the same reason about:config
-   * becomes a column: a card has to be able to close. #content is thousands
-   * of pixels of add-on list, so the document stops scrolling and #content
-   * scrolls inside its own border. */
   body {
     block-size: 100vh !important;
     margin: 0 !important;
     overflow: hidden !important;
   }
 
-  /* MICA. Same gate and same reasoning as Address Book -- see the note on that
-   * block, and the CONTENT TABS note in fluent-layout.css.
-   *
-   * The paint is not ours and not on body: in-content/common-shared.css:54-57
-   * sets :root's background-color to --background-color-canvas, which the
-   * shared block above maps to --fluent-base. Overriding the token instead of
-   * the declaration would be wrong -- .sticky-container, .main-search and
-   * .main-heading read the same token (aboutaddons.css:67,75,102) and are
-   * already pinned to --fluent-card below, but the toolkit reads it in places
-   * this file does not track. So this overrides the one declaration.
-   *
-   * #sidebar goes to the backdrop with it, and it takes an explicit rule to
-   * get there. An earlier pass here claimed the rail "has never had a fill of
-   * its own" and offered a one-line override to give it --fluent-card if that
-   * read better; both halves were wrong. aboutExtra.css:34 does paint it, with
-   * --sidebar-background, which section 2 maps to --fluent-card -- so it is
-   * zeroed below rather than merely left alone -- and giving it a card back is
-   * the opposite of what a nav rail wants. A rail on the backdrop is what this
-   * theme does in the 3-pane window and on all three other nav panes; see the
-   * note at fluent-layout.css's #folderPane block. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent] {
       background-color: transparent !important;
@@ -2292,32 +930,6 @@
     block-size: 100vh !important;
   }
 
-  /* The rail is a navigation pane and takes no card -- the fifth and last one
-   * in this theme to be settled that way, after #folderPane
-   * (fluent-layout.css:289), #booksPane, the Settings rail and #accountTreeBox
-   * (ACCOUNT SETTINGS above). WinUI does not put a NavigationView on a
-   * surface: it sits on the window backdrop and only the content beside it
-   * gets one, which here is #content. Dropping the fill is also what lets Mica
-   * reach the rail.
-   *
-   * transparent is stated rather than the rule deleted, because deleting it
-   * hands the pane straight back to stock: aboutExtra.css:34 paints #sidebar
-   * with --sidebar-background, which section 2 of this file maps to
-   * --fluent-card. radius, border and shadow are not restated for the opposite
-   * reason -- there is no surface left to round and nothing left to lift.
-   *
-   * The margin stays and is load-bearing at both edges, exactly as
-   * #pref-category-box's is (SETTINGS below). Leading: 8px of pane margin plus
-   * the rows' own 8px is the 16px between the window border and the first
-   * label that every other rail leaves. Trailing: it is what holds the rows
-   * off #content's card.
-   *
-   * top and height stay too, and their reason is now only half of what it was.
-   * aboutaddons.css:45-47 pins the rail `position: sticky; top: 0; height:
-   * 100vh` so it stays put while #content scrolls. The cropping argument goes
-   * with the card -- there are no corners left to crop -- but the pair is
-   * still what holds the rows off the top and bottom window edges, and the
-   * height is what the block-size chain below resolves its 100% against. */
   #sidebar {
     margin: var(--fluent-gutter) !important;
     background-color: transparent !important;
@@ -2327,131 +939,28 @@
     height: calc(100vh - 2 * var(--fluent-gutter)) !important;
   }
 
-  /* The rail's whole height chain has to be sized, not just its ends.
-   * categories-box renders into the light DOM (createRenderRoot returns
-   * `this`), so it sits between #sidebar and moz-page-nav as a plain
-   * auto-height block -- and a percentage block-size on the host resolves
-   * against it, finds `auto`, and falls back to the host's own :host rule of
-   * `100vh`. That is 100vh of nav plus the 70px/24px margins its shadow sheet
-   * puts around the <nav>, inside a rail that is 100vh minus two gutters:
-   * about 110px of overflow, and a scrollbar down the inside of the rail with
-   * the footer links pushed out of sight below it. Sizing the intermediate
-   * fixes it. The <nav> itself is in the shadow root and carries no part=, so
-   * it can only ever be reached this way -- by giving its flex parent a real
-   * height to shrink into. */
   #sidebar categories-box,
   #sidebar moz-page-nav {
     block-size: 100% !important;
     min-block-size: 0 !important;
   }
 
-  /* --- RAIL ROWS ---
-   * The rows take the Settings rail's shape, which is the folder pane's a
-   * fifth time: 8px corners, the window's own 8px inset, 6px of backdrop
-   * between fills, a neutral subtle overlay and nothing at rest. The rule
-   * being ported is #categories > .category (SETTINGS below) and every number
-   * in it is argued there and at fluent-lists.css:59-107. The rest state is
-   * not written: --page-nav-button-background-color is already transparent
-   * upstream (overrides/moz-page-nav-button.css:9), and restating it would
-   * override nothing.
-   *
-   * It has to be done through custom properties. The paintable box -- the
-   * thing carrying the fill, the radius and the padding -- is an a[href] or a
-   * button inside moz-page-nav-button's shadow root
-   * (overrides/moz-page-nav-button.css:22-23), and it has no part=, so
-   * ::part() is closed as well. What is open is that moz-page-nav-button is
-   * itself a light-DOM element -- categories-box.mjs slots the buttons into
-   * moz-page-nav -- and its shadow sheet drives nearly everything from the
-   * --page-nav-button-* family declared on :host, i.e. on that same light-DOM
-   * element. A rule here matches it, and a USER !important outranks an author
-   * declaration whatever tree it comes from, so the values land inside.
-   *
-   * The two margins are why this is a rule and not only a token block:
-   *
-   *   inline. moz-page-nav-button.css:29 hard-declares margin-inline: 6px on
-   *     the inner box and no property reaches it. The host margin and that 6px
-   *     stack, so the gutter is asked for minus what is already spent, and the
-   *     fill lands at the same 8px inset off the rail's edge every other nav
-   *     pane uses -- 16px from the window once #sidebar's own margin is added.
-   *   block. The fill floats in the row slot rather than being the slot, and
-   *     3px per side is the 6px of backdrop between fills that
-   *     --fluent-row-gap names. The inner box has no block margin of its own
-   *     and the nav groups are grid-auto-rows: min-content with no gap
-   *     (overrides/moz-page-nav.css:30-32), so the host margin is all of it.
-   *
-   * That 6px is ADDED around the row, not carved out of its height the way
-   * 2993c12 carved it out of Settings'. The carve was forced there because
-   * #categories cannot scroll and every pixel its rows gain spills past the
-   * rail's foot. This nav does scroll -- moz-page-nav.css:17-18 gives <nav>
-   * overflow-y: auto with a stable scrollbar gutter, and the rule above gives
-   * it a real height to shrink into -- so the folder-pane model applies
-   * unchanged and the added height is absorbed by the scroll.
-   *
-   * Which is also why --page-nav-button-height is left alone, and that one
-   * matters: it is declared PER GROUP, 48px on .primary-nav-group and 44px on
-   * #secondary-nav-group (overrides/moz-page-nav.css:36,43), and reaches the
-   * buttons by flat-tree inheritance. A single value written here would beat
-   * both -- a declaration on the element always beats an inherited one -- and
-   * flatten the footer group to the categories' height.
-   *
-   * The 70px band above the first row is upstream's (moz-page-nav.css:20) and
-   * stays for the same reason Settings keeps its: it is what lines the first
-   * category up with the content beside it.
-   *
-   * No pill, on either count. There is none to remove -- messenger's override
-   * replaces the toolkit sheet wholesale and its button[selected] block has no
-   * ::before -- and none to add, both because the banner above spells out that
-   * a pseudo-element cannot be reached in there at all, and because the four
-   * other rails all went without one on request (fluent-lists.css:145-166). */
   #sidebar moz-page-nav-button {
     --page-nav-button-border-radius: var(--fluent-radius-card) !important;
     --page-nav-button-background-color-hover: var(--fluent-subtle-hover) !important;
 
-    /* Stock leaves this one undefined in messenger -- nothing declares
-     * --button-text-color-hover, so `color` on hover and on the selected row
-     * resolves to invalid-at-computed-value and falls back to the inherited
-     * colour. It happens to look right; pinning it says so, and matches the
-     * explicit colour the Settings categories write on both states. */
     --page-nav-button-text-color-hover: var(--fluent-text-primary) !important;
 
-    /* Selection is the SAME overlay as hover, which is what the folder pane,
-     * the books pane and both Settings rails do -- see fluent-lists.css:51-56.
-     * Stock sends it to --button-background-color, which section 5 maps to
-     * --fluent-solid-quart: an opaque control fill, and it read as one
-     * (#383838 measured) while the rail was a card. In a bare nav pane a
-     * control fill is the wrong object.
-     *
-     * What tells selection from hover is the weight, exactly as in Settings --
-     * and here it already ships: moz-page-nav-button.css:77 puts
-     * font-weight: 500 on button[selected]. It cannot be raised to
-     * --fluent-weight-strong from out here, since that is a direct declaration
-     * on the shadow button and no custom property carries it, so this rail's
-     * selected row is one step lighter than the Settings rail's semibold
-     * rather than equal to it. The fill is held while the selected row is
-     * hovered, because stock scopes its hover rule :not([selected])
-     * (moz-page-nav-button.css:64). */
     --page-nav-button-background-color-selected: var(--fluent-subtle-hover) !important;
 
     margin-inline: calc(var(--fluent-gutter) - 6px) !important;
     margin-block: var(--fluent-row-gap) !important;
   }
 
-  /* The pressed step, which the shadow sheet has no token for -- it declares
-   * rest, hover and selected and stops there. :active matches the host while
-   * the box inside it is being pressed, so retargeting the HOVER token under
-   * :active is the way in: a row cannot be pressed without being hovered.
-   * Same pair of overlays the Settings categories step through. */
   #sidebar moz-page-nav-button:active {
     --page-nav-button-background-color-hover: var(--fluent-subtle-pressed) !important;
   }
 
-  /* --- #content AS A CARD ---
-   * Earlier this block argued #content should stay BASE with the add-on cards
-   * floating on it, on the grounds that carding it would nest cards inside a
-   * card. Overruled by the user, and the nesting objection is answerable: the
-   * inner cards move up one step on the surface ladder instead of sitting at
-   * the same value as their container, which is how Fluent layers a card on a
-   * card anywhere else. */
   #content {
     margin-block: var(--fluent-gutter) !important;
     margin-inline-end: var(--fluent-gutter) !important;
@@ -2463,38 +972,16 @@
     min-block-size: 0 !important;
   }
 
-  /* aboutExtra.css puts these three on --layout-background-0, the window
-   * colour, because they used to sit on the page background. They are inside
-   * the card now, so left alone they punch base-coloured bands across it --
-   * and .sticky-container is sticky, so the band would track the scroll. */
   .sticky-container,
   .main-search,
   .main-heading {
     background: var(--fluent-card) !important;
   }
 
-  /* The add-on cards were --background-color-box, which is the colour #content
-   * just became; on their own they would disappear into it. One step up the
-   * ladder keeps them legible without a heavier border. */
   #content .card {
     background-color: var(--fluent-solid-tertiary) !important;
   }
 }
-
-
-/* ============================================================================
- * SETTINGS (about:preferences)
- *
- * One document: a category sidebar (#pref-category-box) and a scrolling pane
- * (#preferencesContainer), both inside #prefBox.main-content. The sub-dialogs
- * it opens are separate documents and are themed by the block after this one;
- * the overlay and the box AROUND them are markup in THIS document
- * (#dialogTemplate at the end of preferences.xhtml), so they are styled here.
- *
- * Vocabulary is hybrid and both halves are already mapped in the shared block:
- * messenger's --layout-* from variables.css, plus toolkit's Acorn tokens from
- * in-content/common.css. Only the structure below is page-specific.
- * ========================================================================== */
 
 @-moz-document url-prefix("about:preferences") {
 
@@ -2504,17 +991,6 @@
     color: var(--fluent-text-primary) !important;
   }
 
-  /* MICA. Same gate and same reasoning as Address Book -- see the note on that
-   * block, and the CONTENT TABS note in fluent-layout.css. Both elements are
-   * listed because both are painted above. What is left on the backdrop is the
-   * margin ring around #preferencesContainer, plus the category rail itself:
-   * it gives its fill up below, so Mica runs edge to edge behind its rows.
-   *
-   * The sub-dialogs are NOT affected and must not be. They are separate
-   * documents in a nested browser, which is not a root content document, so no
-   * backstop is composed for them in the first place and none of this applies;
-   * they are opaque because the block further down paints them, which is what
-   * a dialog over a page should be. */
   @media (-moz-windows-mica) {
     :root[thunderbird-fluent],
     :root[thunderbird-fluent] body {
@@ -2522,16 +998,6 @@
     }
   }
 
-  /* ONE CARD AND A NAV RAIL, GUTTER AS MARGIN -- NOT AS BODY PADDING.
-   *
-   * preferences.css pins .main-content to 100vh. Padding on the body would
-   * therefore overflow the viewport by exactly that padding, which is the trap
-   * the Account Settings shell hit from the other direction. #prefBox is an
-   * hbox and stretches its children, so a margin on the panes shortens the card
-   * instead of pushing it out -- the same reasoning as Address Book, where the
-   * gutter also had to live on the panes.
-   *
-   * Both panes take the margin. Only the content pane takes the card. */
   #pref-category-box,
   #preferencesContainer {
     box-sizing: border-box !important;
@@ -2545,93 +1011,20 @@
     box-shadow: var(--fluent-shadow-card) !important;
   }
 
-  /* The category rail gets NO card. It is #folderPane (fluent-layout.css:289)
-   * and #booksPane (ADDRESS BOOK above) a third time: a navigation pane, and
-   * WinUI does not put one on a surface -- NavigationView sits on the window
-   * backdrop and only the content beside it gets a card. Dropping the fill is
-   * also what lets Mica reach the rail, which a nav pane should have.
-   *
-   * transparent is stated rather than the rule deleted, because deleting it
-   * only hands the pane back to stock: shared/preferences/preferences.css:57-61
-   * paints #pref-category-box with --sidebar-background. Its 18em width comes
-   * from that same rule and is left alone.
-   *
-   * The margin stays, and is load-bearing at both edges. Leading: 8px of pane
-   * margin plus the rows' own 8px is the 16px the folder pane already leaves
-   * between the window border and the first name. Trailing: it is what holds
-   * the rows off the content card, and #preferencesContainer's
-   * margin-inline-start is zeroed below so the pair never doubles.
-   *
-   * radius, border and shadow go with the fill: no surface left to round, and
-   * nothing left to lift off the backdrop. */
   #pref-category-box {
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
   }
 
-  /* Both panes carry the gutter on every side; between them it would double. */
   #preferencesContainer {
     margin-inline-start: 0 !important;
   }
 
-  /* The search row is sticky and paints --layout-background-0 to hide content
-   * scrolling under it. That token is the window base, which is now OUTSIDE the
-   * card -- left alone the strip reads as a hole at the top of the pane. */
   .sticky-container {
     background-color: var(--fluent-card) !important;
   }
 
-  /* --- Category list: a nav pane, so it takes the folder-pane model ---
-   * Upstream (in-content/common-shared.css) draws selection as accent-coloured
-   * text on a transparent row. These take the theme's row treatment instead:
-   * neutral subtle fill, nothing at rest.
-   *
-   * The geometry is the folder pane's, not a card-inset list's, because with
-   * the rail's card gone these are the same kind of object. Both numbers are
-   * argued in full above #folderTree li > .container (fluent-lists.css:59-107)
-   * and the argument transfers whole:
-   *
-   *   - margin-inline is the GUTTER, over stock's 6px (shared/common.css:60).
-   *     16px reads better inside a pane, but the rail is the leftmost paintable
-   *     thing in this window too, so anything larger stacks on the pane margin
-   *     into a band of empty backdrop before the first category name.
-   *   - the CARD radius, over stock's --border-radius-small
-   *     (common-shared.css:563). --fluent-radius-row still describes rows that
-   *     sit INSIDE a card, which these no longer do, and 4px corners beside the
-   *     8px content card read as a tighter kind of object.
-   *
-   * The fill floats in the row slot rather than being the slot, the third
-   * thing this list borrows from the folder pane: stock sizes the row to the
-   * full 48px (common-shared.css:564), so two adjacent filled rows share an
-   * edge and read as one block instead of as two rows -- which is exactly what
-   * they did once the pane behind them stopped separating them.
-   *
-   * The gap is taken OUT of the row, not added to it. #categories is
-   * overflow: visible with min-block-size: auto
-   * (shared/preferences/preferences.css:320-323), so it does not scroll: any
-   * height the rows gain here spills past the rail instead, and upstream has
-   * already spent 70px of the rail on the alignment band above. So the
-   * min-height comes down by exactly the two margins and the PITCH stays at
-   * upstream's 48px, with 42px of fill and 6px of backdrop between fills. 6px
-   * is the folder pane's gap and the thread pane's -- see --fluent-row-gap.
-   *
-   * 42px of fill is still generous, which is the point: this is page-level
-   * navigation with 24px icons (--icon-size-large), not a dense list, and
-   * Fluent's own Settings nav is taller than its list rows. The folder pane's
-   * fill is 28px.
-   *
-   * margin-inline is a shorthand on purpose. Stock indents the rows with
-   * margin-inline-start: var(--space-xxlarge) (common-shared.css:567) for a
-   * list with no sidebar surface to sit on, and messenger already overrides it
-   * with 6px (shared/common.css:60); one longhand here would leave whichever
-   * of the two won still holding the other side.
-   *
-   * The 70px of backdrop above the first row is upstream's too
-   * (common-shared.css:537-543) and is kept on purpose: it is what lines the
-   * first category up with the search row in the pane beside it. On a card it
-   * read as pane padding; on the backdrop it has to carry that alignment
-   * alone, which it still does. */
   #categories > .category {
     position: relative !important;
     min-block-size: calc(var(--size-item-xlarge) - 2 * var(--fluent-row-gap)) !important;
@@ -2651,10 +1044,6 @@
     background-color: var(--fluent-subtle-pressed) !important;
   }
 
-  /* Upstream tints the label instead of filling the row, and explicitly forces
-   * the background back to transparent when selected-and-not-hovered. Both are
-   * overridden: Fluent reads selection as a filled row plus the pill, with the
-   * label at full contrast and semibold. */
   #categories > .category[selected],
   #categories > .category.selected {
     background-color: var(--fluent-subtle-hover) !important;
@@ -2662,42 +1051,6 @@
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* There is NO accent pill on the selected category. One was drawn here --
-   * 3x16 on fluent-pill-in -- and it came out with the rail's card, on request,
-   * the same way the folder pane's and the address book's book rows did.
-   *
-   * The mechanism is written out at fluent-lists.css:145-166 and is exactly
-   * what changed here: a card can be tinted with accent and carry a bar painted
-   * over that tint as a second background layer, with nothing carved out. A
-   * neutral row fill on the backdrop has no second layer to spare, so the pill
-   * reads as a notch bitten out of the fill instead of a marker beside it.
-   * These rows became that kind of row the moment the pane's fill went. The
-   * subtle fill and the semibold label are what mark selection here.
-   *
-   * `position: relative` stays on the row above: it is what an indicator would
-   * need if one ever came back, and it costs nothing. */
-
-  /* The rail's two footer links -- Account Settings and Add-ons, html:a
-   * .sidebar-footer-link in .sidebar-footer-list (preferences.xhtml:179-196).
-   * Nothing in this block touched them before, and while the rail was a card
-   * that was fine: they read as quiet rows on it. On the backdrop they would be
-   * the only unshaped things left in a column of 8px objects, so they take the
-   * rows' shape at the rows' inset, and the rows' 6px of separation with it --
-   * these two touch each other exactly the way the categories did. Stock gives
-   * them 6px of inline margin and --button-border-radius
-   * (shared/preferences/preferences.css:325-328) and no block margin at all.
-   * Nothing is taken back off their height: they have no min-height to take it
-   * from (they size to their content), and there are only two of them.
-   *
-   * No fills are written. .sidebar-footer-link is a toolkit button and reads
-   * --button-background-color-hover / -active, both already retokenized to the
-   * subtle overlays in section 5 of the shared block above -- the same pair the
-   * rows use. Only the transition is missing there.
-   *
-   * The ACCOUNT SETTINGS block writes this rule verbatim for the same class on
-   * the same markup. It used to differ -- control radius, stock's margin -- and
-   * that was right while #accountTreeBox was a card. It is not one any more, so
-   * the two pages agree rather than diverge. */
   .sidebar-footer-link {
     margin-inline: var(--fluent-gutter) !important;
     margin-block: var(--fluent-row-gap) !important;
@@ -2705,16 +1058,10 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* Pane titles. Upstream asks for weight 300; Fluent's ramp has no light
-   * weight and titles are semibold. Size is left alone. */
   h1 {
     font-weight: var(--fluent-weight-strong) !important;
   }
 
-  /* Controls. The token block carries the rest; these are the properties
-   * preferences.css sets directly. Narrower than the am-* pane list on
-   * purpose: this document has 52 buttons and 42 menulists but no <select>
-   * and no <textarea> at all, so neither is listed. */
   button,
   menulist {
     border-radius: var(--fluent-radius-control) !important;
@@ -2722,7 +1069,6 @@
     transition: background-color var(--fluent-duration-fast) var(--fluent-ease-standard) !important;
   }
 
-  /* Includes #searchInput, which is input[type="search"]. */
   input:not([type="checkbox"], [type="radio"]) {
     border-radius: var(--fluent-radius-control) !important;
     border-color: var(--fluent-control-stroke) !important;
@@ -2735,92 +1081,24 @@
     outline-offset: var(--focus-outline-offset) !important;
   }
 
-  /* Blocks of content inside the pane -- #tagList, #cloudFileView. Tertiary on
-   * card, like the am-* panes. #categories is excluded: it is the nav pane
-   * above, and upstream excludes it from its own richlistbox rule for the same
-   * reason. The pane's info boxes need nothing here -- .info-box-container is
-   * built on --background-color-box-info, mapped in the shared block. */
   richlistbox:not(#categories) {
     background-color: var(--fluent-solid-tertiary) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
     border-radius: var(--fluent-radius-control) !important;
   }
 
-  /* The one surface on the page upstream hardcodes: rgba(12, 12, 13, .2),
-   * applied in both colour schemes. */
   #telemetry-container {
     background-color: var(--fluent-subtle-hover) !important;
     border-radius: var(--fluent-radius-control) !important;
   }
 
-  /* The sub-dialog frame. --panel-border-radius resolves to
-   * --border-radius-medium, which the shared block maps to the 4px CONTROL
-   * radius -- correct for controls, wrong for an overlay, so the dialog takes
-   * the card radius and the flyout shadow explicitly. The fill is left alone:
-   * .dialogBox is --color-surface-base, already mapped to the card, and the
-   * dialog's own document paints the same value through dialog.css. */
   .dialogBox {
     border-radius: var(--fluent-radius-card) !important;
     border: 1px solid var(--fluent-card-stroke) !important;
     box-shadow: var(--fluent-shadow-flyout) !important;
   }
 
-  /* MICA IS ON FOR THIS PAGE. This comment used to say the opposite; it
-   * predates the add-on and contradicted the working gate at the top of this
-   * block. about:preferences is in TRANSPARENT_PAGES (extension/api.js:75-81),
-   * so the document is stamped [thunderbird-fluent] and :root and body reach
-   * the backdrop -- which is what carries the rail above, at no extra cost.
-   *
-   * The sub-dialogs stay opaque, and that is the point rather than a ceiling:
-   * they are nested browsers, not root content documents, so Gecko composes no
-   * backstop for them and there is nothing for the add-on to switch off. The
-   * escape hatch that made any of this possible is documented at the end of
-   * the ADDRESS BOOK block; api.js:70-73 makes the same exclusion. */
 }
-
-
-/* ============================================================================
- * SETTINGS SUB-DIALOGS
- * Every document that opens into <browser class="dialogFrame"> inside
- * about:preferences. Three prefixes plus seven exact URLs, because these are
- * two different populations.
- *
- * THE THREE PREFIXES are the dialogs Settings ships next to its own panes --
- * Connection, Offline, Passwords, Cookies, Fonts, Languages, Permissions, the
- * calendar's Edit Category and toolkit's primary-password dialogs. Each matched
- * its chrome path during the canary round (16.2% coverage) while the page
- * itself stayed on about:preferences, so the prefixes hit the dialogs only,
- * never the page.
- *
- * THE SEVEN URLS are the ones that live outside those three trees and so
- * rendered stock inside a themed page. Verified against this build's omni.ja:
- *   newTagDialog                general.js:1418,1428  General > Tags > New/Edit
- *   systemIntegrationDialog     general.js:836        General > System Integration
- *   pref-editdirectories        compose.js:158        Composition > Edit Directories
- *   update/history              general.js:1850       General > Show Update History
- *   appPicker                   general.js:2573       General > Files, app chooser
- *   certManager                 privacy.js:477        Privacy > Manage Certificates
- *   device_manager              privacy.js:505        Privacy > Security Devices
- *
- * WHY url() AND NOT url-prefix(). Four of the seven are toolkit, global or
- * pippki documents. url-prefix("chrome://global/content/") and
- * url-prefix("chrome://pippki/content/") would drag in every other document in
- * those trees and break this file's scope discipline. @-moz-document has no
- * url-suffix, but url() matches one document exactly, and every call site above
- * passes a bare URL -- no query string -- so the exact form is safe here.
- *
- * WHY THE SHARED BLOCK REACHES THEM. Measured, not assumed: all seven load
- * chrome://global/skin/global.css (pref-editdirectories reaches it through
- * messenger.css), which imports global-shared.css and from there
- * design-system/tokens-platform.css. That is the same Acorn token layer the
- * three prefixes already ride, so the shared block's --color-*, --layout-* and
- * --background-color-canvas mappings land on all seven. Three documents need
- * more than the shared vocabulary; they get their own blocks below.
- *
- * NOT ADDED HERE: junkLog.xhtml (privacy.js:297). It opens through
- * window.browsingContext.topChromeWindow.openDialog, so it is a separate chrome
- * window and userChrome.css already reaches it.
- * ========================================================================== */
 
 @-moz-document url-prefix("chrome://messenger/content/preferences/"),
                url-prefix("chrome://calendar/content/preferences/"),
@@ -2833,31 +1111,11 @@
                url("chrome://pippki/content/certManager.xhtml"),
                url("chrome://pippki/content/device_manager.xhtml") {
 
-  /* The dialog box itself needs no fill rule: dialog.css paints dialog/window
-   * from --color-surface-base, mapped to the card in the shared block, which is
-   * what .dialogBox around it already uses.
-   *
-   * The CANVAS BEHIND that box does. The <dialog> element does not cover the
-   * last row of its document -- toolkit's dialog.css gives :host an asymmetric
-   * padding-block of 8px/10px -- so the root canvas shows through as a hairline
-   * along the bottom edge. Upstream hides it by making the two colours equal:
-   * common-shared.css has a :root[dialogroot] rule that moves
-   * --background-color-canvas to --color-gray-80, next to the dialog surface.
-   * The shared block above maps that token to the window base instead, which is
-   * right for a page and wrong here, so it is moved back to the card.
-   *
-   * Measured on tools\settings4.png before this rule: a 1px #202020 line at
-   * y=1003 running the full width of the Connection dialog, with #2B2B2B above
-   * and below it and the dialog's own #3A3A3A stroke at y=1014. The other three
-   * edges were clean, which is what pointed at the padding rather than at the
-   * fill. */
   :root {
     --background-color-canvas: var(--fluent-card) !important;
     background-color: var(--fluent-card) !important;
   }
 
-  /* No <select> in any of these documents either; textarea IS listed because
-   * connection.xhtml has one. */
   button,
   menulist {
     border-radius: var(--fluent-radius-control) !important;
@@ -2879,13 +1137,6 @@
     outline-offset: var(--focus-outline-offset) !important;
   }
 
-  /* Every list surface in these dialogs. Verified in this build's markup:
-   * tree is #permissionsTree, #signonsTree and #cookiesList; richlistbox is
-   * #selectedLocales plus the application-manager and attachment-reminder
-   * lists. Tertiary on card, the same block treatment the am-* panes give
-   * richlistbox and tree. Row
-   * selection is not touched: treechildren::-moz-tree-row(selected) reads
-   * --selected-item-color, mapped to the accent in the shared block. */
   richlistbox,
   tree {
     background-color: var(--fluent-solid-tertiary) !important;
@@ -2895,48 +1146,6 @@
 
 }
 
-
-/* ============================================================================
- * SUB-DIALOG DOCUMENTS WITH THEIR OWN VOCABULARY
- * Two of the seven above load a stylesheet the shared block does not speak.
- * Each is named exactly, because in each case the fix belongs to that document
- * and to no other.
- *
- * A THIRD WAS EXPECTED AND IS NOT HERE. update/history.xhtml loads updates.css,
- * which predates the token layer and hardcodes two colours: a 1px dotted
- * #c0c0c0 row divider and a #990000 .update-type label -- the latter about
- * 1.3:1 on the card, which would have been unreadable. Both are dead in this
- * build. history.js:34 builds each row as richlistitem.update, so updates.css's
- * bare `update` element selector never matches, and nothing in that file sets
- * an .update-type class at all. The one interactive colour the document really
- * does draw is its details link (history.js:47, label is="text-link"), and the
- * shared block's --link-color mapping already covers it. Left alone on purpose;
- * do not add a rule here on the strength of grepping updates.css.
- * ========================================================================== */
-
-/* newTagDialog is the only one of the seven that loads themeableDialog.css, and
- * that sheet carries a FOURTH vocabulary -- --box-*, --field-*, --tab-* --
- * beside the three the shared block maps. Its dark values do exist, but they
- * are keyed on :host and on :root[lwtheme]. A document in a sub-dialog frame is
- * a plain :root with no lwtheme attribute, so it falls through to the
- * system-colour defaults at the top of that sheet: Menu, Field, FieldText,
- * ThreeDShadow. Those follow the color-scheme the shared block sets, so text
- * and fills land close on their own. The greys do not -- --field-border-color
- * is a flat rgba(128, 128, 128, .6), and the tab washes are
- * hsla(0, 0%, 50%, .15) and .25.
- *
- * Two of that sheet's tokens are deliberately absent. --richlist-button-background
- * has nothing to colour: this document is one input, one colour picker and two
- * labels, with no richlistbox. And themeableDialog.css:499's hardcoded #0aa5ff
- * link is dropped for the same reason db96547 dropped its selectors -- it keys
- * on :root[lwt-tree-brighttext], and this document has neither that attribute
- * nor a link.
- *
- * #tagColorPicker needs no exception to the block's input rule above. Firefox
- * paints an <input type="color"> as a button with ::-moz-color-swatch inside
- * it, so background-color reaches the button and never the swatch. The calendar
- * Edit Category dialog already proved this: it has a type="color" too, and has
- * been inside the three prefixes since db96547. */
 @-moz-document url("chrome://messenger/content/newTagDialog.xhtml") {
   :root {
     --box-text-color: var(--fluent-text-primary) !important;
@@ -2953,24 +1162,6 @@
   }
 }
 
-
-/* certManager is the only one of the seven with a tab strip, and the only
- * document in this file that reaches toolkit's tabbox.css.
- *
- * The selected-tab indicator needs nothing: tabbox.css already draws
- * tab[visuallyselected] with AccentColor, which is the same Windows accent this
- * theme is built on. What is stock is the strip's ThreeDShadow underline and
- * the two currentColor washes it uses for hover and press --
- * color-mix(currentColor 15%) and 30%, neither of them a theme colour.
- *
- * The indicator's 3px bottom border keeps its toolkit shape on purpose.
- * --fluent-indicator-width and -height exist, but they describe the tabmail
- * pill; reshaping a dialog's tab strip to match it is the group-structure work
- * the file header rules out of these passes.
- *
- * tabbox.css writes its hover and active rules inside :where(), so they carry
- * no specificity at all; the !important here is for the user-sheet origin, not
- * for the selector. */
 @-moz-document url("chrome://pippki/content/certManager.xhtml") {
   tabs {
     border-bottom-color: var(--fluent-divider) !important;
@@ -2985,51 +1176,14 @@
   }
 }
 
-
-/* ============================================================================
- * ACCOUNT SETTINGS SUB-DIALOGS
- * SmtpServerEdit.xhtml (Outgoing Server (SMTP) -> Edit, also reached from Edit
- * Identity) and removeAccount.xhtml (Account Actions -> Remove Account). Both
- * load into AccountManager.xhtml's own <browser class="dialogFrame"> at line
- * 145, a second dialog frame independent of the one in preferences.xhtml, so
- * neither the am- prefix nor the Settings sub-dialog prefixes above reach
- * them. Named exactly rather than by a chrome://messenger/content/ prefix:
- * that prefix would also swallow the am-* panes and every other messenger
- * chrome document, which this file's scope discipline rules out.
- *
- * They take the same rule set as the Settings sub-dialogs for a concrete
- * reason, not by copying: AccountManager.js:78 hands SubDialogManager the same
- * three injected stylesheets preferences.js does -- preferences/dialog.css,
- * preferences/preferences.css and variables.css -- so these two documents
- * carry the same token vocabulary and the same toolkit :host padding as the
- * Settings dialogs.
- *
- * Read out of this build's markup, not assumed:
- *   - SmtpServerEdit has two html:fieldset/html:legend groups, three
- *     html:input (text, text, number) and two menulist. No button of its own.
- *   - removeAccount has two XUL checkbox, description text and one button
- *     (#showLocalDirectory), plus an html:progress on the confirmation step.
- *   - Neither has a select, a textarea, a richlistbox or a tree, so those
- *     selectors are deliberately absent.
- * ========================================================================== */
-
 @-moz-document url-prefix("chrome://messenger/content/SmtpServerEdit.xhtml"),
                url-prefix("chrome://messenger/content/removeAccount.xhtml") {
 
-  /* The canvas hairline. Same cause and same fix as the SETTINGS SUB-DIALOGS
-   * block above -- toolkit dialog.css gives :host an asymmetric padding-block
-   * of 8px/10px, so the root canvas shows under the dialog unless it is moved
-   * off the window base and onto the card. See that block for the measurement
-   * that produced the rule. */
   :root {
     --background-color-canvas: var(--fluent-card) !important;
     background-color: var(--fluent-card) !important;
   }
 
-  /* SmtpServerEdit's two group headings. The same flat semibold treatment the
-   * am-* panes give their fieldsets -- this dialog is built from the same
-   * accountManage.css markup as the pane it is opened from, and it links that
-   * stylesheet directly. */
   legend {
     font-weight: var(--fluent-weight-strong) !important;
     color: var(--fluent-text-primary) !important;
@@ -3056,58 +1210,8 @@
 
 }
 
-
-/* ============================================================================
- * THUNDERMAIL SIGN-IN -- https://auth.tb.pro/
- *
- * The first REMOTE document this theme touches. Everything else in this file
- * is a page Thunderbird ships; this one is a Keycloak login served over the
- * network, opened in a content tab by the built-in thundermail add-on
- * (its background.mjs does tabs.create on <BASE_URL>/login, which redirects
- * to the OIDC endpoint on auth.tb.pro).
- *
- * WHAT THIS BLOCK IS AND IS NOT
- * The sign-in panel itself -- its fields, its buttons, its type -- is the
- * site's, and stays the site's. The only thing wrong with this tab was the
- * surround: a full-bleed navy field, edge to edge, on a tab that every other
- * tab in the window sits inset from. So this block does one thing, which is
- * to stop that field painting and put the theme's page base there instead.
- * The gutter, the radius and the shadow are NOT here -- they are on the stack
- * that wraps the browser, in fluent-layout.css, because a browser does not
- * clip its own subdocument to its own border-radius.
- *
- * NOT ENROLLED IN THE SHARED BLOCK, ON PURPOSE
- * Adding this URL to the selector list at the top of the file would have been
- * one line and would have brought the whole token layer with it. It would also
- * have brought section 8, which sets font-family on body -- restyling the type
- * of a third-party page that is not ours to restyle. The site's own vocabulary
- * is entirely --colour-* (British spelling), --txt-* and --font-sans, so it
- * collides with nothing this file maps; there is simply nothing to gain and a
- * panel to lose.
- *
- * NO color-scheme DECLARATION, ON PURPOSE
- * >>> THE SWITCH <<< appears twice in this theme and both copies are listed in
- * this file's header. This block deliberately does not add a third. Gecko
- * lets a document's own color-scheme feed back into prefers-color-scheme, and
- * the site picks its light or dark palette from that -- so declaring one here
- * would reach past the surround and flip the panel. The pref is read directly
- * into the one token this block needs instead, which gets the same three
- * outcomes with none of that reach.
- *
- * SELECTORS ARE STRUCTURAL, NEVER HASHED
- * The page is a Vue build and every one of its own selectors carries a
- * generated scope id (section[data-v-167dfe44]). Those rotate on the site's
- * next deploy. #app is the mount point named in the served HTML and section is
- * its one child; both survive a rebuild.
- * ========================================================================== */
-
 @-moz-document url-prefix("https://auth.tb.pro/") {
 
-  /* The card fill, restated as a literal pair rather than through light-dark()
-   * -- light-dark() needs a color-scheme to resolve against, and this block
-   * does not declare one (see above). The values are fluent-tokens.css
-   * section 1's, the same two the shared block carries. Dark is the base value
-   * for the same reason it is the base value there. */
   :root {
     --fluent-card: #2B2B2B;
   }
@@ -3130,28 +1234,6 @@
     }
   }
 
-  /* The navy. It is painted by the page's outermost section -- measured off
-   * the site's own stylesheet, where that section takes --colour-ti-base,
-   * which is #1A202C in the palette it ships in light. html and body paint
-   * nothing of their own; they are cleared anyway so that nothing in the
-   * chain can put a second opaque sheet over the one below.
-   *
-   * The card rather than the base, which is the opposite of what this block
-   * said on its first pass. The argument then was that a tab is a page, so it
-   * should take --fluent-base like the inside of every other content tab. It
-   * was measured wrong: the gutter that fluent-layout.css:605 opens around
-   * this browser exposes the window veil at #23222B, and a base of #202020
-   * beside it is a seam nobody can see. The card step is what makes the
-   * gutter read as one. The chrome half takes the same token so the browser
-   * and its document never disagree at the edge.
-   *
-   * NOT transparent, which is the obvious thing to write and the wrong one:
-   * under a root content document Gecko composes an opaque backstop below the
-   * cascade, so clearing this would expose that rather than the theme. The
-   * whole mechanism, and the add-on that switches it off for the pages that
-   * can have it switched off, is written out in fluent-layout.css's MICA
-   * block. This page is not one of them -- it runs out of process, where the
-   * add-on's observer cannot see it (extension/api.js, TRANSPARENT_PAGES). */
   html,
   body {
     background: transparent !important;

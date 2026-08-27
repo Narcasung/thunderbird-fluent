@@ -1,23 +1,7 @@
-/* ============================================================================
- * Fluent 2 for Thunderbird 153 ESR
- * Entry point. Nothing but module imports and the theme switch lives here.
- *
- * LIGHT / DARK SWITCH -- edit the one line marked >>> THE SWITCH <<< below.
- * Also set Thunderbird's own Appearance (Settings > General > Appearance)
- * to the matching Light or Dark so message content agrees with the chrome.
- *
- * KILL SWITCH -- comment out any single @import to disable that module.
- * To disable the whole theme: close Thunderbird, rename this folder to
- * "chrome-disabled", reopen.
- *
- * TWO RULES THIS FILE MUST OBEY:
- *   1. @import must be the FIRST thing after any @charset/@layer. CSS drops
- *      an @import that follows @namespace or a style rule -- silently
- *      disabling every module.
- *   2. NO @namespace declaration. Thunderbird's chrome mixes XUL and HTML;
- *      declaring XUL as the default namespace stops HTML type selectors
- *      (body, hr, div) from matching anything.
- * ========================================================================== */
+/* Entry point. @import must stay FIRST -- CSS silently drops one that follows a
+ * style rule, disabling every module. No @namespace here: it would stop HTML
+ * selectors (body, div, hr) matching. Comment out an @import to drop a module.
+ * See CLAUDE.md. */
 
 @import url("fluent-tokens.css");
 @import url("fluent-layout.css");
@@ -28,28 +12,6 @@
 @import url("fluent-account-central.css");
 @import url("fluent-search-results.css");
 
-/* >>> THE SWITCH <<<  system | light | dark
- * Drives every light-dark() pair in fluent-tokens.css, and tells Gecko how to
- * render native widgets (scrollbars, checkboxes) so they cannot desync.
- *
- * `light dark` is the value in the sheet and the two fixed schemes are
- * overrides, so system is what a profile with no pref set gets: light-dark()
- * resolves against the used color-scheme, and a root that accepts both hands
- * that decision to the OS. The add-on's options page writes the pref; nothing
- * here needs editing to change mode, which is the whole point -- an edit made
- * in the profile survives only until the next version bump redeploys the
- * folder over it.
- *
- * -moz-pref is a chrome-only media feature, and a user sheet is allowed to use
- * it: stock reads widget.windows.mica.toplevel-backdrop the same way in
- * messenger.css:52, and matches a STRING pref the same way this does in
- * variables.css:352-396. Gecko re-evaluates pref media queries when the pref
- * changes, so this applies live.
- *
- * The colour scheme is only half of it. Thunderbird's own surfaces come from
- * whichever built-in theme is enabled, which no media query can reach -- the
- * add-on swaps that in step with this pref, see WHY THE COLOUR SWITCH ALSO
- * SWITCHES THUNDERBIRD'S OWN THEME in api.js. */
 :root {
   color-scheme: light dark !important;
 }
@@ -66,9 +28,6 @@
   }
 }
 
-/* Load canary. If the theme is active, the Developer Toolbox inspector will
- * show this on :root. Quick way to tell "sheet did not load" apart from
- * "sheet loaded but a selector missed". */
 :root {
   --fluent-theme-loaded: "yes";
 }
